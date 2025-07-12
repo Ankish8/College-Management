@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const programId = searchParams.get("programId")
 
-    const whereClause: any = {}
+    const whereClause: Record<string, unknown> = {}
     
     if (programId) {
       whereClause.programId = programId

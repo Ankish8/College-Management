@@ -6,15 +6,15 @@ import { isAdmin } from "@/lib/utils/permissions"
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     let { name, email, employeeId, phone } = body
     const { status } = body
@@ -52,8 +52,8 @@ export async function PUT(
           { id: { not: id } },
           {
             OR: [
-              { email: { equals: email, mode: 'insensitive' } },
-              { employeeId: { equals: employeeId, mode: 'insensitive' } }
+              { email: email },
+              { employeeId: employeeId }
             ]
           }
         ]
@@ -121,15 +121,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if faculty exists
     const existingFaculty = await db.user.findUnique({

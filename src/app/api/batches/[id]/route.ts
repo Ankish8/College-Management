@@ -11,16 +11,11 @@ const updateBatchSchema = z.object({
   maxCapacity: z.number().optional(),
 })
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -28,7 +23,7 @@ export async function GET(
     }
 
     const batch = await db.batch.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         program: {
           select: {
@@ -96,11 +91,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -108,7 +104,7 @@ export async function PUT(
     const validatedData = updateBatchSchema.parse(body)
 
     const batch = await db.batch.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!batch) {
@@ -116,7 +112,7 @@ export async function PUT(
     }
 
     const updatedBatch = await db.batch.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         program: {
@@ -145,7 +141,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       )
     }
@@ -160,16 +156,17 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const batch = await db.batch.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         _count: {
           select: {
@@ -209,7 +206,7 @@ export async function DELETE(
     }
 
     await db.batch.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: "Batch deleted successfully" })

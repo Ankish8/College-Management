@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,32 +54,34 @@ export function BatchList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { toast } = useToast()
 
-  const fetchBatches = async () => {
+  const fetchBatches = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/batches", {
         credentials: 'include'
       })
-      if (!response.ok) throw new Error("Failed to fetch batches")
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch batches")
+      }
       
       const data = await response.json()
       setBatches(data)
-      setFilteredBatches(data)
     } catch (error) {
       console.error("Error fetching batches:", error)
       toast({
         title: "Error",
-        description: "Failed to fetch batches",
+        description: (error as Error).message || "Failed to fetch batches",
         variant: "destructive",
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchBatches()
-  }, [])
+  }, [fetchBatches])
 
   // Refresh data when window regains focus (user returns from config page)
   useEffect(() => {
@@ -89,7 +91,7 @@ export function BatchList() {
 
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  }, [fetchBatches])
 
   useEffect(() => {
     let filtered = batches
@@ -143,7 +145,7 @@ export function BatchList() {
   }
 
   const activeBatches = batches.filter(b => b.isActive).length
-  const totalStudents = batches.reduce((sum, b) => sum + b._count.students, 0)
+  const totalStudents = batches.reduce((sum, b) => sum + (b._count?.students || 0), 0)
 
   if (loading) {
     return (

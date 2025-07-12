@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Plus, Search, Grid, List, Filter, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,6 +57,12 @@ export function FacultyList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null)
   const { toast } = useToast()
+  const toastRef = useRef(toast)
+  
+  // Keep toast ref updated
+  useEffect(() => {
+    toastRef.current = toast
+  }, [toast])
 
   const totalPages = Math.ceil(filteredFaculty.length / ITEMS_PER_PAGE)
 
@@ -70,10 +76,10 @@ export function FacultyList() {
       
       const data = await response.json()
       setFaculty(data)
-      setFilteredFaculty(data)
+      // Don't set filteredFaculty here - let the filter useEffect handle it
     } catch (error) {
       console.error("Error fetching faculty:", error)
-      toast({
+      toastRef.current({
         title: "Error",
         description: "Failed to fetch faculty",
         variant: "destructive",
@@ -81,7 +87,7 @@ export function FacultyList() {
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [])
 
   useEffect(() => {
     fetchFaculty()

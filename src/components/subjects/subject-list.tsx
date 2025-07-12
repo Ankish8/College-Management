@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { SubjectCard } from "./subject-card"
 import { SubjectTable } from "./subject-table"
 import { AddSubjectModal } from "./add-subject-modal"
+import { EditSubjectModal } from "./edit-subject-modal"
 import { useToast } from "@/hooks/use-toast"
 
 interface Subject {
@@ -64,6 +65,7 @@ export function SubjectList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
   const { toast } = useToast()
 
   const fetchSubjects = async () => {
@@ -159,6 +161,10 @@ export function SubjectList() {
       title: "Success",
       description: "Subject deleted successfully",
     })
+  }
+
+  const handleEdit = (subject: Subject) => {
+    setEditingSubject(subject)
   }
 
   // Calculate stats
@@ -367,6 +373,7 @@ export function SubjectList() {
               subject={subject}
               onUpdate={handleSubjectUpdated}
               onDelete={handleSubjectDeleted}
+              onEdit={handleEdit}
             />
           ))}
         </div>
@@ -375,6 +382,7 @@ export function SubjectList() {
           subjects={filteredSubjects}
           onUpdate={handleSubjectUpdated}
           onDelete={handleSubjectDeleted}
+          onEdit={handleEdit}
         />
       )}
 
@@ -383,6 +391,14 @@ export function SubjectList() {
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         onSubjectCreated={handleSubjectCreated}
+      />
+
+      {/* Edit Subject Modal */}
+      <EditSubjectModal
+        open={!!editingSubject}
+        onOpenChange={(open) => !open && setEditingSubject(null)}
+        subject={editingSubject}
+        onSubjectUpdated={handleSubjectUpdated}
       />
     </div>
   )

@@ -7,13 +7,13 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || (!isAdmin(session.user) && !isFaculty(session.user))) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Get user's department to only show faculty from same department
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       select: { departmentId: true }
     })
 
@@ -75,7 +75,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's department
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       select: { departmentId: true }
     })
 
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
     const existingUser = await db.user.findFirst({
       where: {
         OR: [
-          { email: { equals: email, mode: 'insensitive' } },
-          { employeeId: { equals: employeeId, mode: 'insensitive' } }
+          { email: email },
+          { employeeId: employeeId }
         ]
       }
     })

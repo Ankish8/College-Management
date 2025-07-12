@@ -11,12 +11,13 @@ const updateProgramSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -24,7 +25,7 @@ export async function PUT(
     const validatedData = updateProgramSchema.parse(body)
 
     const program = await db.program.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
       include: {
         department: {

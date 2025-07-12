@@ -50,9 +50,10 @@ interface SubjectCardProps {
   subject: Subject
   onUpdate: (subject: Subject) => void
   onDelete: (subjectId: string) => void
+  onEdit: (subject: Subject) => void
 }
 
-export function SubjectCard({ subject, onUpdate, onDelete }: SubjectCardProps) {
+export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCardProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const getExamTypeColor = (examType: string) => {
@@ -120,8 +121,13 @@ export function SubjectCard({ subject, onUpdate, onDelete }: SubjectCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit Subject</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem onClick={() => onEdit(subject)}>
+                Edit Subject
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={() => onDelete(subject.id)}
+              >
                 Delete Subject
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -103,23 +103,33 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     },
   })
 
-  const watchedValues = form.watch()
-  const selectedProgram = programs.find(p => p.id === watchedValues.programId)
-  const selectedSpecialization = selectedProgram?.specializations.find(
-    s => s.id === watchedValues.specializationId
+  // Watch specific fields only to prevent excessive re-renders
+  const watchedProgramId = form.watch("programId")
+  const watchedSpecializationId = form.watch("specializationId")
+  const watchedSemester = form.watch("semester")
+  const watchedStartYear = form.watch("startYear")
+
+  const selectedProgram = useMemo(() => 
+    programs.find(p => p.id === watchedProgramId), 
+    [programs, watchedProgramId]
+  )
+  
+  const selectedSpecialization = useMemo(() => 
+    selectedProgram?.specializations.find(s => s.id === watchedSpecializationId),
+    [selectedProgram, watchedSpecializationId]
   )
 
   // Generate preview of batch name
-  const generateBatchName = () => {
+  const generateBatchName = useCallback(() => {
     if (!selectedProgram) return ""
     
     const specializationPart = selectedSpecialization ? ` ${selectedSpecialization.shortName}` : ""
-    const endYear = watchedValues.startYear + selectedProgram.duration - 1
+    const endYear = watchedStartYear + selectedProgram.duration - 1
     
-    return `${selectedProgram.shortName}${specializationPart} Semester ${watchedValues.semester} Batch ${watchedValues.startYear}-${endYear}`
-  }
+    return `${selectedProgram.shortName}${specializationPart} Semester ${watchedSemester} Batch ${watchedStartYear}-${endYear}`
+  }, [selectedProgram, selectedSpecialization, watchedSemester, watchedStartYear])
 
-  const fetchPrograms = async () => {
+  const fetchPrograms = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/programs", {
@@ -139,18 +149,18 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     if (open) {
       fetchPrograms()
     }
-  }, [open])
+  }, [open, fetchPrograms])
 
   // Reset specialization when program changes
   useEffect(() => {
     form.setValue("specializationId", "")
-  }, [watchedValues.programId, form])
+  }, [watchedProgramId, form])
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -194,9 +204,12 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     onOpenChange(false)
   }
 
-  const availableSemesters = selectedProgram 
-    ? Array.from({ length: selectedProgram.totalSems }, (_, i) => i + 1)
-    : []
+  const availableSemesters = useMemo(() => 
+    selectedProgram 
+      ? Array.from({ length: selectedProgram.totalSems }, (_, i) => i + 1)
+      : [],
+    [selectedProgram]
+  )
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -318,9 +331,9 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
                     />
                   </FormControl>
                   <FormDescription>
-                    {selectedProgram && watchedValues.startYear && (
+                    {selectedProgram && watchedStartYear && (
                       <span>
-                        End Year: {watchedValues.startYear + selectedProgram.duration - 1}
+                        End Year: {watchedStartYear + selectedProgram.duration - 1}
                       </span>
                     )}
                   </FormDescription>

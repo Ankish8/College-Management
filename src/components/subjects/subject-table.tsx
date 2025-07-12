@@ -58,9 +58,10 @@ interface SubjectTableProps {
   subjects: Subject[]
   onUpdate: (subject: Subject) => void
   onDelete: (subjectId: string) => void
+  onEdit: (subject: Subject) => void
 }
 
-export function SubjectTable({ subjects, onUpdate, onDelete }: SubjectTableProps) {
+export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTableProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
   const getExamTypeColor = (examType: string) => {
@@ -181,10 +182,13 @@ export function SubjectTable({ subjects, onUpdate, onDelete }: SubjectTableProps
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(subject)}>
                         Edit Subject
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => onDelete(subject.id)}
+                      >
                         Delete Subject
                       </DropdownMenuItem>
                     </DropdownMenuContent>

@@ -13,7 +13,7 @@ const createProgramSchema = z.object({
   totalSems: z.number().min(2).max(12),
 })
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || (!isAdmin(session.user) && !isFaculty(session.user))) {

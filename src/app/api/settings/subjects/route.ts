@@ -13,7 +13,7 @@ const updateSettingsSchema = z.object({
   customSubjectTypes: z.array(z.string()).optional(),
 })
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user)) {
@@ -134,7 +134,7 @@ export async function PUT(request: NextRequest) {
       })
     } else {
       // Update existing settings
-      const updateData: any = {}
+      const updateData: Record<string, unknown> = {}
       
       if (validatedData.creditHoursRatio !== undefined) {
         updateData.creditHoursRatio = validatedData.creditHoursRatio

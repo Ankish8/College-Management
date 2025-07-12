@@ -1,0 +1,12 @@
+
+> attendance-system@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, using available port 3001 instead.
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.9:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1178ms

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const batchId = searchParams.get("batchId")
     const search = searchParams.get("search")
 
-    const whereClause: any = {}
+    const whereClause: Record<string, unknown> = {}
     
     if (batchId) {
       whereClause.batchId = batchId
