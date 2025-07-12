@@ -1,4 +1,3 @@
-import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { NextAuthOptions } from "next-auth"
 import type { Role, UserStatus } from "@prisma/client"
@@ -49,7 +48,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role
+        token.role = (user as { role: Role }).role
         token.id = user.id
       }
       return token
@@ -103,4 +102,3 @@ export const authOptions: NextAuthOptions = {
   },
 }
 
-export default NextAuth(authOptions)
