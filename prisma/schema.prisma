@@ -1,0 +1,374 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// University and Department Management
+model University {
+  id          String   @id @default(cuid())
+  name        String   // "Jagran Lakecity University"
+  shortName   String   // "JLU"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments Department[]
+
+  @@map("universities")
+}
+
+model Department {
+  id           String   @id @default(cuid())
+  name         String   // "Design Department"
+  shortName    String   // "DESIGN"
+  universityId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  programs   Program[]
+  users      User[]
+  settings   DepartmentSettings?
+
+  @@map("departments")
+}
+
+// Program Management (B.Des, M.Des)
+model Program {
+  id           String      @id @default(cuid())
+  name         String      // "Bachelor of Design", "Master of Design"
+  shortName    String      // "B.Des", "M.Des"
+  duration     Int         // 4 for B.Des, 2 for M.Des
+  totalSems    Int         // 8 for B.Des, 4 for M.Des
+  programType  ProgramType @default(UNDERGRADUATE)
+  departmentId String
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  specializations Specialization[]
+  batches    Batch[]
+
+  @@map("programs")
+}
+
+// Specialization Management (UX, Graphic Design, etc.)
+model Specialization {
+  id          String   @id @default(cuid())
+  name        String   // "User Experience Design", "Graphic Design"
+  shortName   String   // "UX", "GD"
+  programId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  batches Batch[]
+
+  @@unique([programId, shortName])
+  @@map("specializations")
+}
+
+// Batch Management (B.Des UX Sem 5, B.Des GD Sem 6, etc.)
+model Batch {
+  id              String     @id @default(cuid())
+  name            String     // "B.Des UX Semester 5 Batch 2023-25"
+  programId       String
+  specializationId String?
+  semester        Int        // 1, 2, 3, 4, 5, 6, 7, 8
+  startYear       Int        // 2023
+  endYear         Int        // 2025
+  isActive        Boolean    @default(true)
+  semType         SemType    @default(ODD) // ODD or EVEN
+  maxCapacity     Int?       // Optional capacity limit
+  currentStrength Int        @default(0) // Current number of students
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  program           Program            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  specialization    Specialization?    @relation(fields: [specializationId], references: [id])
+  students          Student[]
+  subjects          Subject[]
+  timetableEntries  TimetableEntry[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([programId, specializationId, semester, startYear])
+  @@map("batches")
+}
+
+// User Management
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  phone        String?
+  employeeId   String?   @unique // For faculty
+  role         Role      @default(STUDENT)
+  departmentId String?
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  department       Department? @relation(fields: [departmentId], references: [id])
+  student          Student?
+  primarySubjects  Subject[]   @relation("PrimaryFaculty")
+  coFacultySubjects Subject[]  @relation("CoFaculty")
+  timetableEntries TimetableEntry[]
+
+  @@map("users")
+}
+
+// Student Management
+model Student {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  studentId   String   @unique // University student ID
+  rollNumber  String   @unique // Roll number
+  batchId     String
+  guardianName String?
+  guardianPhone String?
+  address     String?
+  dateOfBirth DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batch             Batch               @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  attendanceRecords AttendanceRecord[]
+  attendanceDisputes AttendanceDispute[]
+
+  @@map("students")
+}
+
+// Time Slot Configuration
+model TimeSlot {
+  id        String   @id @default(cuid())
+  name      String   // "9:15-10:05"
+  startTime String   // "09:15"
+  endTime   String   // "10:05"
+  duration  Int      // Duration in minutes
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  timetableEntries TimetableEntry[]
+
+  @@map("time_slots")
+}
+
+// Subject Management
+model Subject {
+  id              String     @id @default(cuid())
+  name            String     // "Gamification & UX"
+  code            String     @unique // "JSD012"
+  credits         Int        // 2, 4, 6
+  totalHours      Int        // credits * 15
+  batchId         String
+  primaryFacultyId String?
+  coFacultyId     String?
+  examType        ExamType   @default(THEORY)
+  subjectType     SubjectType @default(CORE)
+  description     String?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  batch             Batch             @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  primaryFaculty    User?             @relation("PrimaryFaculty", fields: [primaryFacultyId], references: [id])
+  coFaculty         User?             @relation("CoFaculty", fields: [coFacultyId], references: [id])
+  timetableEntries  TimetableEntry[]
+  attendanceSessions AttendanceSession[]
+
+  @@map("subjects")
+}
+
+// Timetable Management
+model TimetableEntry {
+  id         String     @id @default(cuid())
+  batchId    String
+  subjectId  String
+  facultyId  String
+  timeSlotId String
+  dayOfWeek  DayOfWeek  // MONDAY, TUESDAY, etc.
+  date       DateTime?  // Specific date if needed
+  entryType  EntryType  @default(REGULAR)
+  isActive   Boolean    @default(true)
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  batch    Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  subject  Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  faculty  User     @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, timeSlotId, dayOfWeek, date])
+  @@map("timetable_entries")
+}
+
+// Attendance Management
+model AttendanceSession {
+  id        String   @id @default(cuid())
+  batchId   String
+  subjectId String
+  date      DateTime
+  isCompleted Boolean @default(false)
+  markedBy  String?  // Faculty who marked attendance
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  batch             Batch             @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  subject           Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  attendanceRecords AttendanceRecord[]
+
+  @@unique([batchId, subjectId, date])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id                  String            @id @default(cuid())
+  sessionId           String
+  studentId           String
+  status              AttendanceStatus  @default(ABSENT)
+  reason              String?           // Medical, Personal, etc.
+  notes               String?
+  markedAt            DateTime?
+  lastModifiedBy      String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  session            AttendanceSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student            Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  disputes           AttendanceDispute[]
+
+  @@unique([sessionId, studentId])
+  @@map("attendance_records")
+}
+
+// Attendance Dispute Management
+model AttendanceDispute {
+  id          String         @id @default(cuid())
+  recordId    String
+  studentId   String
+  reason      String
+  requestedStatus AttendanceStatus
+  status      DisputeStatus  @default(PENDING)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  record  AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  student Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_disputes")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  FACULTY
+  STUDENT
+}
+
+// Department Settings for configurable options
+model DepartmentSettings {
+  id                String   @id @default(cuid())
+  departmentId      String   @unique
+  creditHoursRatio  Int      @default(15) // 15 hours = 1 credit
+  defaultExamTypes  Json?    // Default exam types (replaces hardcoded enum)
+  defaultSubjectTypes Json?  // Default subject types (replaces hardcoded enum)
+  customExamTypes   Json?    // Additional exam types beyond the defaults
+  customSubjectTypes Json?   // Additional subject types beyond the defaults
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@map("department_settings")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ProgramType {
+  UNDERGRADUATE
+  POSTGRADUATE
+  DIPLOMA
+}
+
+enum SemType {
+  ODD
+  EVEN
+}
+
+enum ExamType {
+  THEORY
+  PRACTICAL
+  JURY
+  PROJECT
+  VIVA
+}
+
+enum SubjectType {
+  CORE
+  ELECTIVE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum EntryType {
+  REGULAR
+  MAKEUP
+  EXTRA
+  SPECIAL
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum DisputeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
