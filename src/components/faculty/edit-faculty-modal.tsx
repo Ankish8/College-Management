@@ -33,10 +33,10 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  employeeId: z.string().min(1, "Employee ID is required"),
-  phone: z.string().optional(),
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
+  employeeId: z.string().trim().min(1, "Employee ID is required"),
+  phone: z.string().trim().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]),
 })
 

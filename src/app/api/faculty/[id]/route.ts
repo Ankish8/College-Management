@@ -16,7 +16,14 @@ export async function PUT(
 
     const { id } = params
     const body = await request.json()
-    const { name, email, employeeId, phone, status } = body
+    let { name, email, employeeId, phone } = body
+    const { status } = body
+
+    // Trim whitespace and validate required fields
+    name = name?.trim()
+    email = email?.trim().toLowerCase()
+    employeeId = employeeId?.trim()
+    phone = phone?.trim()
 
     // Validate required fields
     if (!name || !email || !employeeId) {
@@ -38,15 +45,15 @@ export async function PUT(
       )
     }
 
-    // Check if email or employeeId already exists (excluding current faculty)
+    // Check if email or employeeId already exists (excluding current faculty, case-insensitive)
     const conflictingUser = await db.user.findFirst({
       where: {
         AND: [
           { id: { not: id } },
           {
             OR: [
-              { email },
-              { employeeId }
+              { email: { equals: email, mode: 'insensitive' } },
+              { employeeId: { equals: employeeId, mode: 'insensitive' } }
             ]
           }
         ]
@@ -78,6 +85,9 @@ export async function PUT(
         phone: true,
         status: true,
         primarySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,
@@ -86,6 +96,9 @@ export async function PUT(
           }
         },
         coFacultySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,
@@ -134,14 +147,27 @@ export async function DELETE(
       )
     }
 
-    // Check if faculty is assigned to any subjects
-    const hasSubjects = existingFaculty.primarySubjects.length > 0 || 
-                       existingFaculty.coFacultySubjects.length > 0
+    // Check if faculty is assigned to any active subjects
+    const activeSubjects = await db.subject.findMany({
+      where: {
+        AND: [
+          { isActive: true },
+          {
+            OR: [
+              { primaryFacultyId: id },
+              { coFacultyId: id }
+            ]
+          }
+        ]
+      }
+    })
 
-    if (hasSubjects) {
+    const hasActiveSubjects = activeSubjects.length > 0
+
+    if (hasActiveSubjects) {
       return NextResponse.json(
         { 
-          error: "Cannot delete faculty member who is assigned to subjects. Please reassign subjects first." 
+          error: "Cannot delete faculty member who is assigned to active subjects. Please reassign subjects first." 
         },
         { status: 400 }
       )

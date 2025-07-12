@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Plus, Search, Grid, List, Filter, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,18 +42,25 @@ interface Faculty {
 type ViewMode = "cards" | "table"
 type FilterType = "all" | "active" | "inactive"
 
+const ITEMS_PER_PAGE = 12
+
 export function FacultyList() {
   const [faculty, setFaculty] = useState<Faculty[]>([])
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([])
+  const [paginatedFaculty, setPaginatedFaculty] = useState<Faculty[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
+  const [currentPage, setCurrentPage] = useState(1)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null)
   const { toast } = useToast()
 
-  const fetchFaculty = async () => {
+  const totalPages = Math.ceil(filteredFaculty.length / ITEMS_PER_PAGE)
+
+  const fetchFaculty = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/faculty", {
@@ -74,11 +81,41 @@ export function FacultyList() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     fetchFaculty()
-  }, [])
+  }, [fetchFaculty])
+
+  // Refresh data when window regains focus (user returns from subject page)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchFaculty()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchFaculty()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [fetchFaculty])
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   useEffect(() => {
     let filtered = faculty
@@ -91,18 +128,26 @@ export function FacultyList() {
     }
 
     // Apply search filter
-    if (searchQuery) {
+    if (debouncedSearchQuery) {
       filtered = filtered.filter(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.primarySubjects.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        f.coFacultySubjects.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        f.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        f.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        f.employeeId.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        f.primarySubjects.some(s => s.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) ||
+        f.coFacultySubjects.some(s => s.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
       )
     }
 
     setFilteredFaculty(filtered)
-  }, [faculty, filter, searchQuery])
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [faculty, filter, debouncedSearchQuery])
+
+  // Pagination effect
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    setPaginatedFaculty(filteredFaculty.slice(startIndex, endIndex))
+  }, [filteredFaculty, currentPage])
 
   const handleFacultyCreated = (newFaculty: Faculty) => {
     setFaculty(prev => [newFaculty, ...prev])
@@ -211,6 +256,12 @@ export function FacultyList() {
           <span className="font-medium text-foreground">{totalSubjects}</span>
           <span>Subject Assignments</span>
         </div>
+        {filteredFaculty.length !== faculty.length && (
+          <div className="flex items-center gap-2 text-blue-600">
+            <span className="font-medium">{filteredFaculty.length}</span>
+            <span>Filtered</span>
+          </div>
+        )}
       </div>
 
       {/* Filters and Controls */}
@@ -297,25 +348,110 @@ export function FacultyList() {
             ) : null}
           </CardContent>
         </Card>
-      ) : viewMode === "cards" ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredFaculty.map((facultyMember) => (
-            <FacultyCard
-              key={facultyMember.id}
-              faculty={facultyMember}
+      ) : (
+        <div className="space-y-4">
+          {viewMode === "cards" ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedFaculty.map((facultyMember) => (
+                <FacultyCard
+                  key={facultyMember.id}
+                  faculty={facultyMember}
+                  onUpdate={handleFacultyUpdated}
+                  onDelete={handleFacultyDeleted}
+                  onEdit={handleEdit}
+                />
+              ))}
+            </div>
+          ) : (
+            <FacultyTable
+              faculty={paginatedFaculty}
               onUpdate={handleFacultyUpdated}
               onDelete={handleFacultyDeleted}
               onEdit={handleEdit}
             />
-          ))}
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="hidden sm:inline">
+                  Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredFaculty.length)} of {filteredFaculty.length} faculty
+                </span>
+                <span className="sm:hidden">
+                  {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredFaculty.length)} of {filteredFaculty.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="hidden sm:flex"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="sm:hidden"
+                >
+                  Prev
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                    const pageNum = i + 1
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                  {totalPages > 3 && (
+                    <>
+                      <span className="px-1 text-sm">...</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(totalPages)}
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="hidden sm:flex"
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="sm:hidden"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <FacultyTable
-          faculty={filteredFaculty}
-          onUpdate={handleFacultyUpdated}
-          onDelete={handleFacultyDeleted}
-          onEdit={handleEdit}
-        />
       )}
 
       {/* Add Faculty Modal */}

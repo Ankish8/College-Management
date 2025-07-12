@@ -37,6 +37,9 @@ export async function GET() {
         phone: true,
         status: true,
         primarySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,
@@ -45,6 +48,9 @@ export async function GET() {
           }
         },
         coFacultySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,
@@ -74,9 +80,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, employeeId, phone, status } = body
+    let { name, email, employeeId, phone } = body
+    const { status } = body
 
-    // Validate required fields
+    // Trim whitespace and validate required fields
+    name = name?.trim()
+    email = email?.trim().toLowerCase()
+    employeeId = employeeId?.trim()
+    phone = phone?.trim()
+
     if (!name || !email || !employeeId) {
       return NextResponse.json(
         { error: "Name, email, and employee ID are required" },
@@ -97,12 +109,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if email or employeeId already exists
+    // Check if email or employeeId already exists (case-insensitive)
     const existingUser = await db.user.findFirst({
       where: {
         OR: [
-          { email },
-          { employeeId }
+          { email: { equals: email, mode: 'insensitive' } },
+          { employeeId: { equals: employeeId, mode: 'insensitive' } }
         ]
       }
     })
@@ -133,6 +145,9 @@ export async function POST(request: NextRequest) {
         phone: true,
         status: true,
         primarySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,
@@ -141,6 +156,9 @@ export async function POST(request: NextRequest) {
           }
         },
         coFacultySubjects: {
+          where: {
+            isActive: true
+          },
           select: {
             id: true,
             name: true,

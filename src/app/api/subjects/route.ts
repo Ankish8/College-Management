@@ -162,12 +162,33 @@ export async function POST(request: NextRequest) {
 
     // Validate that primary faculty exists and is faculty role
     const primaryFaculty = await db.user.findUnique({
-      where: { id: validatedData.primaryFacultyId }
+      where: { id: validatedData.primaryFacultyId },
+      include: {
+        primarySubjects: {
+          where: { isActive: true },
+          select: { credits: true }
+        },
+        coFacultySubjects: {
+          where: { isActive: true },
+          select: { credits: true }
+        }
+      }
     })
 
     if (!primaryFaculty || primaryFaculty.role !== "FACULTY") {
       return NextResponse.json(
         { error: "Primary faculty not found or is not a faculty member" },
+        { status: 400 }
+      )
+    }
+
+    // Check faculty workload limit (max 30 credits per faculty)
+    const currentCredits = primaryFaculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0) +
+                          primaryFaculty.coFacultySubjects.reduce((sum, s) => sum + s.credits, 0)
+    
+    if (currentCredits + validatedData.credits > 30) {
+      return NextResponse.json(
+        { error: `Primary faculty workload would exceed 30 credits (current: ${currentCredits}, adding: ${validatedData.credits})` },
         { status: 400 }
       )
     }
@@ -182,12 +203,33 @@ export async function POST(request: NextRequest) {
       }
 
       const coFaculty = await db.user.findUnique({
-        where: { id: validatedData.coFacultyId }
+        where: { id: validatedData.coFacultyId },
+        include: {
+          primarySubjects: {
+            where: { isActive: true },
+            select: { credits: true }
+          },
+          coFacultySubjects: {
+            where: { isActive: true },
+            select: { credits: true }
+          }
+        }
       })
 
       if (!coFaculty || coFaculty.role !== "FACULTY") {
         return NextResponse.json(
           { error: "Co-faculty not found or is not a faculty member" },
+          { status: 400 }
+        )
+      }
+
+      // Check co-faculty workload limit (max 30 credits per faculty)
+      const coFacultyCurrentCredits = coFaculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0) +
+                                     coFaculty.coFacultySubjects.reduce((sum, s) => sum + s.credits, 0)
+      
+      if (coFacultyCurrentCredits + validatedData.credits > 30) {
+        return NextResponse.json(
+          { error: `Co-faculty workload would exceed 30 credits (current: ${coFacultyCurrentCredits}, adding: ${validatedData.credits})` },
           { status: 400 }
         )
       }

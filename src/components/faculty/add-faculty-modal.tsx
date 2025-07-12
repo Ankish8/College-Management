@@ -33,10 +33,10 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  employeeId: z.string().min(1, "Employee ID is required"),
-  phone: z.string().optional(),
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
+  employeeId: z.string().trim().min(1, "Employee ID is required"),
+  phone: z.string().trim().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 })
 
@@ -70,6 +70,7 @@ interface AddFacultyModalProps {
 
 export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFacultyModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [networkError, setNetworkError] = useState<string | null>(null)
   const { toast } = useToast()
 
   const form = useForm<FormData>({
@@ -84,8 +85,14 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
   })
 
   const onSubmit = async (data: FormData) => {
+    if (isSubmitting) return // Prevent double submission
+    
     try {
       setIsSubmitting(true)
+      setNetworkError(null)
+      
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
       
       const response = await fetch("/api/faculty", {
         method: "POST",
@@ -93,11 +100,14 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
           "Content-Type": "application/json",
         },
         credentials: 'include',
+        signal: controller.signal,
         body: JSON.stringify({
           ...data,
           phone: data.phone || undefined,
         }),
       })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         const error = await response.json()
@@ -107,12 +117,22 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
       const newFaculty = await response.json()
       onFacultyCreated(newFaculty)
       form.reset()
+      setNetworkError(null)
       toast({
         title: "Success",
         description: "Faculty member created successfully",
       })
     } catch (error) {
       console.error("Error creating faculty:", error)
+      
+      if (error.name === 'AbortError') {
+        setNetworkError("Request timed out. Please check your connection and try again.")
+      } else if (error.message.includes('fetch')) {
+        setNetworkError("Network error. Please check your connection and try again.")
+      } else {
+        setNetworkError((error as Error).message || "Failed to create faculty")
+      }
+      
       toast({
         title: "Error",
         description: (error as Error).message || "Failed to create faculty",
@@ -124,8 +144,11 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
   }
 
   const handleClose = () => {
-    form.reset()
-    onOpenChange(false)
+    if (!isSubmitting) {
+      form.reset()
+      setNetworkError(null)
+      onOpenChange(false)
+    }
   }
 
   return (
@@ -140,6 +163,11 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {networkError && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3">
+                <p className="text-sm text-red-800">{networkError}</p>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="name"
@@ -233,7 +261,7 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

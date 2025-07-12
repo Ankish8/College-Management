@@ -163,39 +163,52 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
   return (
     <>
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Employee ID</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Credits</TableHead>
-              <TableHead>Subjects</TableHead>
-              <TableHead>Teaching</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[150px]">Name</TableHead>
+                <TableHead className="hidden sm:table-cell">Employee ID</TableHead>
+                <TableHead className="hidden md:table-cell">Email</TableHead>
+                <TableHead className="min-w-[80px]">Credits</TableHead>
+                <TableHead className="min-w-[80px]">Subjects</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[200px]">Teaching</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[70px]"></TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {faculty.map((facultyMember) => (
               <TableRow key={facultyMember.id}>
-                <TableCell className="font-medium">{facultyMember.name}</TableCell>
-                <TableCell>{facultyMember.employeeId}</TableCell>
-                <TableCell>{facultyMember.email}</TableCell>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-medium">{facultyMember.name}</div>
+                    <div className="sm:hidden text-xs text-muted-foreground">
+                      {facultyMember.employeeId}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">{facultyMember.employeeId}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="max-w-[200px] truncate">
+                    {facultyMember.email}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <span className="font-medium">{getTotalCredits(facultyMember)}</span>
                 </TableCell>
                 <TableCell>
                   <span className="font-medium">{getTotalSubjects(facultyMember)}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden lg:table-cell">
                   <span className="text-sm text-muted-foreground">
                     {getSubjectNames(facultyMember)}
                   </span>
                 </TableCell>
                 <TableCell>
                   <Badge className={getStatusColor(facultyMember.status)}>
-                    {facultyMember.status}
+                    <span className="hidden sm:inline">{facultyMember.status}</span>
+                    <span className="sm:hidden">{facultyMember.status === 'ACTIVE' ? 'A' : 'I'}</span>
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -230,6 +243,7 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <AlertDialog 

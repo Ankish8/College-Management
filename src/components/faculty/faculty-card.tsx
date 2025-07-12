@@ -195,8 +195,16 @@ export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCard
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{totalCredits}</span>
+                <span className={`font-medium ${totalCredits > 25 ? 'text-orange-600' : totalCredits > 30 ? 'text-red-600' : ''}`}>
+                  {totalCredits}
+                </span>
                 <span className="text-muted-foreground">Credits</span>
+                {totalCredits > 25 && (
+                  <span className="text-xs text-orange-600">High</span>
+                )}
+                {totalCredits > 30 && (
+                  <span className="text-xs text-red-600">Overload</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
