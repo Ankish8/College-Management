@@ -1,0 +1,259 @@
+"use client"
+
+import { useState } from "react"
+import { MoreHorizontal, BookOpen, CreditCard, Edit, Trash2, Eye } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
+
+interface Faculty {
+  id: string
+  name: string
+  email: string
+  employeeId: string
+  status: "ACTIVE" | "INACTIVE"
+  primarySubjects: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+  }>
+  coFacultySubjects: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+  }>
+}
+
+interface FacultyCardProps {
+  faculty: Faculty
+  onUpdate: (faculty: Faculty) => void
+  onDelete: (facultyId: string) => void
+  onEdit: (faculty: Faculty) => void
+}
+
+export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCardProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
+
+  const totalCredits = [
+    ...faculty.primarySubjects,
+    ...faculty.coFacultySubjects
+  ].reduce((sum, subject) => sum + subject.credits, 0)
+
+  const totalSubjects = faculty.primarySubjects.length + faculty.coFacultySubjects.length
+
+  const allSubjects = [
+    ...faculty.primarySubjects,
+    ...faculty.coFacultySubjects
+  ]
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "INACTIVE":
+        return "bg-gray-100 text-gray-800 border-gray-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      const response = await fetch(`/api/faculty/${faculty.id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete faculty")
+      }
+
+      onDelete(faculty.id)
+      setIsDeleteDialogOpen(false)
+      toast({
+        title: "Success",
+        description: "Faculty member deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting faculty:", error)
+      toast({
+        title: "Error",
+        description: (error as Error).message || "Failed to delete faculty",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleToggleStatus = async () => {
+    try {
+      const newStatus = faculty.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+      const response = await fetch(`/api/faculty/${faculty.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update faculty status")
+      }
+
+      const updatedFaculty = await response.json()
+      onUpdate(updatedFaculty)
+      toast({
+        title: "Success",
+        description: "Faculty status updated successfully",
+      })
+    } catch (error) {
+      console.error("Error updating faculty:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update faculty status",
+        variant: "destructive",
+      })
+    }
+  }
+
+  return (
+    <>
+      <Card className={`transition-all hover:shadow-md ${faculty.status !== "ACTIVE" ? 'opacity-75' : ''}`}>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+          <div className="space-y-1 flex-1">
+            <CardTitle className="text-base font-medium leading-none">
+              {faculty.name}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge className={getStatusColor(faculty.status)}>
+                {faculty.status}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                ID: {faculty.employeeId}
+              </span>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(faculty)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Faculty
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleStatus}>
+                <Eye className="mr-2 h-4 w-4" />
+                {faculty.status === "ACTIVE" ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              {faculty.email}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{totalCredits}</span>
+                <span className="text-muted-foreground">Credits</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{totalSubjects}</span>
+                <span className="text-muted-foreground">Subjects</span>
+              </div>
+            </div>
+
+            {allSubjects.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground">SUBJECTS</h4>
+                <div className="flex flex-wrap gap-1">
+                  {allSubjects.slice(0, 3).map((subject) => (
+                    <Badge key={subject.id} variant="outline" className="text-xs">
+                      {subject.name}
+                    </Badge>
+                  ))}
+                  {allSubjects.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{allSubjects.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the faculty member &quot;{faculty.name}&quot;. This action cannot be undone.
+              {totalSubjects > 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Warning:</strong> This faculty member is assigned to {totalSubjects} subjects. 
+                    You may need to reassign them first.
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}

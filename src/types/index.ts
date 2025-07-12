@@ -45,6 +45,11 @@ export interface SubjectWithFaculty extends Subject {
   coFaculty?: User
 }
 
+export interface FacultyWithSubjects extends User {
+  primarySubjects: Subject[]
+  coFacultySubjects: Subject[]
+}
+
 export interface TimetableEntryWithRelations extends TimetableEntry {
   batch: Batch
   subject: Subject
@@ -95,6 +100,14 @@ export interface CreateStudentForm {
   guardianPhone?: string
   address?: string
   dateOfBirth?: Date
+}
+
+export interface CreateFacultyForm {
+  name: string
+  email: string
+  employeeId: string
+  phone?: string
+  status: UserStatus
 }
 
 export interface CreateTimeSlotForm {
