@@ -150,7 +150,7 @@ export function CalendarYearView({
                       onClick={(e) => handleEventClick(event, e)}
                     >
                       <div className="font-medium truncate">
-                        {event.extendedProps?.subjectCode}
+                        {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
                       </div>
                       <div className="text-muted-foreground truncate">
                         {format(event.start, 'MMM d')} - {event.extendedProps?.facultyName}

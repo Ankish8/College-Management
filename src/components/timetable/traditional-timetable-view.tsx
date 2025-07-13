@@ -286,7 +286,7 @@ export function TraditionalTimetableView({
               isSampleEvent ? "text-orange-500" : "text-muted-foreground"
             )} />
             <div className="font-semibold text-sm line-clamp-1">
-              {event.extendedProps?.subjectCode || event.extendedProps?.subjectName}
+              {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
             </div>
           </div>
           <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -298,9 +298,9 @@ export function TraditionalTimetableView({
             <span>{format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}</span>
           </div>
           {event.extendedProps?.credits && (
-            <Badge variant="secondary" className="text-xs">
+            <div className="text-xs text-muted-foreground">
               {event.extendedProps.credits} credits
-            </Badge>
+            </div>
           )}
         </div>
       </div>
@@ -543,7 +543,7 @@ export function TraditionalTimetableView({
               <div className="flex items-center gap-1">
                 <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                 <div className="font-semibold text-sm line-clamp-1">
-                  {activeEvent.extendedProps?.subjectCode || activeEvent.extendedProps?.subjectName}
+                  {activeEvent.extendedProps?.subjectName || activeEvent.extendedProps?.subjectCode}
                 </div>
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -555,9 +555,9 @@ export function TraditionalTimetableView({
                 <span>{format(activeEvent.start, 'h:mm a')} - {format(activeEvent.end, 'h:mm a')}</span>
               </div>
               {activeEvent.extendedProps?.credits && (
-                <Badge variant="secondary" className="text-xs">
+                <div className="text-xs text-muted-foreground">
                   {activeEvent.extendedProps.credits} credits
-                </Badge>
+                </div>
               )}
             </div>
           </div>

@@ -73,7 +73,7 @@ export function CalendarWeekView({
       onClick={() => handleEventClick(event)}
     >
       <div className="font-medium truncate">
-        {event.extendedProps?.subjectCode || event.extendedProps?.subjectName}
+        {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
       </div>
       <div className="opacity-90 truncate">
         {event.extendedProps?.facultyName}
