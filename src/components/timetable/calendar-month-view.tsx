@@ -97,7 +97,7 @@ export function CalendarMonthView({
         {event.extendedProps?.subjectName}
       </div>
       <div className="opacity-90 truncate">
-        {event.extendedProps?.credits ? `${event.extendedProps.credits} credits` : format(event.start, 'HH:mm')}
+        {event.extendedProps?.subjectCode}
       </div>
     </div>
   )

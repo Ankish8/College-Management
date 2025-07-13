@@ -297,9 +297,9 @@ export function TraditionalTimetableView({
             <Clock className="h-3 w-3" />
             <span>{format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}</span>
           </div>
-          {event.extendedProps?.credits && (
+          {event.extendedProps?.subjectCode && (
             <div className="text-xs text-muted-foreground">
-              {event.extendedProps.credits} credits
+              {event.extendedProps.subjectCode}
             </div>
           )}
         </div>
@@ -554,9 +554,9 @@ export function TraditionalTimetableView({
                 <Clock className="h-3 w-3" />
                 <span>{format(activeEvent.start, 'h:mm a')} - {format(activeEvent.end, 'h:mm a')}</span>
               </div>
-              {activeEvent.extendedProps?.credits && (
+              {activeEvent.extendedProps?.subjectCode && (
                 <div className="text-xs text-muted-foreground">
-                  {activeEvent.extendedProps.credits} credits
+                  {activeEvent.extendedProps.subjectCode}
                 </div>
               )}
             </div>
