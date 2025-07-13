@@ -2,22 +2,9 @@
 
 import React from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
-import { 
-  generateDayTimeSlots, 
-  getEventsForTimeSlot, 
-  formatDuration,
-  mergeConsecutiveTimeSlots
-} from '@/lib/utils/calendar-utils'
-import { 
-  getBreakSlotsForDate,
-  generateTimeSlotsWithBreaks,
-  getBreakStyling
-} from '@/lib/utils/break-utils'
-import { BreakTimeRow, BreakSummary } from '@/components/timetable/break-indicator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import { format, isSameDay } from 'date-fns'
@@ -59,24 +46,16 @@ export function CalendarDayView({
   // Filter events for this specific day
   const dayEvents = events.filter(event => isSameDay(event.start, date))
   
-  // Generate time slots with breaks for the day (8 AM to 6 PM)
-  const timeSlotsWithBreaks = generateTimeSlotsWithBreaks(8, 18, 60)
+  // Sort events by start time
+  const sortedEvents = dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
   
-  // Get break slots for this date
-  const breakSlots = getBreakSlotsForDate(date, dayEvents)
-  
-  // Merge consecutive time slots for better display
-  const mergedGroups = mergeConsecutiveTimeSlots(dayEvents)
-  
-  // Separate full-day and regular events
-  const fullDayEvents = dayEvents.filter(event => {
-    const duration = event.end.getTime() - event.start.getTime()
-    return duration >= 6 * 60 * 60 * 1000 // 6+ hours considered full day
-  })
-  const regularEvents = dayEvents.filter(event => {
-    const duration = event.end.getTime() - event.start.getTime()
-    return duration < 6 * 60 * 60 * 1000
-  })
+  // Our actual time slots from the database
+  const timeSlots = [
+    { name: "10:15-11:05", startTime: "10:15", endTime: "11:05" },
+    { name: "11:15-12:05", startTime: "11:15", endTime: "12:05" },
+    { name: "12:15-13:05", startTime: "12:15", endTime: "13:05" },
+    { name: "14:15-15:05", startTime: "14:15", endTime: "15:05" },
+  ]
 
   const handleTimeSlotClick = (timeSlot: string) => {
     if (onEventCreate) {
@@ -91,16 +70,11 @@ export function CalendarDayView({
   }
 
   const EventCard = ({ event }: { event: CalendarEvent }) => {
-    const duration = event.end.getTime() - event.start.getTime()
-    const isFullDay = duration >= 6 * 60 * 60 * 1000 // 6+ hours
-    const durationHours = duration / (1000 * 60 * 60)
-    
     return (
       <Card 
         className={cn(
-          "cursor-pointer transition-all hover:shadow-md hover:scale-105",
-          event.className,
-          isFullDay && "border-l-8 border-l-amber-500 bg-gradient-to-r from-amber-50 to-transparent"
+          "cursor-pointer transition-all hover:shadow-md",
+          event.className
         )}
         onClick={() => handleEventClick(event)}
       >
@@ -108,52 +82,40 @@ export function CalendarDayView({
           <div className="space-y-2">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm leading-tight">
-                    {event.extendedProps?.subjectName}
-                  </h4>
-                  {isFullDay && (
-                    <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 border-amber-300">
-                      Full Day Module
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs opacity-90">
+                <h4 className="font-medium text-sm leading-tight">
+                  {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
+                </h4>
+                <p className="text-xs text-muted-foreground">
                   {event.extendedProps?.facultyName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {event.extendedProps?.subjectCode}
                 </p>
               </div>
               <Badge variant="secondary" className="text-xs ml-2">
-                {event.extendedProps?.entryType}
+                {event.extendedProps?.entryType || 'REGULAR'}
               </Badge>
             </div>
             
-            <div className="flex items-center gap-4 text-xs opacity-75">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-                <span className="text-muted-foreground ml-1">
-                  ({durationHours.toFixed(1)}h)
-                </span>
+                {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
                 {event.extendedProps?.batchName}
               </div>
-              <div className="flex items-center gap-1">
-                <BookOpen className="h-3 w-3" />
-                {event.extendedProps?.credits} credits
-              </div>
+              {event.extendedProps?.credits && (
+                <div className="flex items-center gap-1">
+                  <BookOpen className="h-3 w-3" />
+                  {event.extendedProps.credits} credits
+                </div>
+              )}
             </div>
 
-            {isFullDay && (
-              <div className="text-xs text-amber-700 bg-amber-100 p-2 rounded border border-amber-200">
-                <strong>Module Schedule:</strong> This is a full-day intensive module. 
-                Breaks are integrated within the session.
-              </div>
-            )}
-
             {event.extendedProps?.notes && (
-              <p className="text-xs opacity-75 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {event.extendedProps.notes}
               </p>
             )}
@@ -167,42 +129,35 @@ export function CalendarDayView({
     timeSlot 
   }: { 
     timeSlot: { 
-      time: string; 
-      label: string; 
-      isBreak?: boolean; 
-      breakInfo?: any;
-      slotType?: 'CLASS' | 'BREAK'
+      name: string; 
+      startTime: string; 
+      endTime: string;
     } 
   }) => {
-    // Handle break slots
-    if (timeSlot.isBreak && timeSlot.breakInfo) {
-      const breakSlot = breakSlots.find(b => b.startTime === timeSlot.time)
-      if (breakSlot) {
-        return <BreakTimeRow breakSlot={breakSlot} />
-      }
-    }
-
-    // Handle regular class slots
-    const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot.time)
+    // Find events for this specific time slot
+    const slotEvents = dayEvents.filter(event => 
+      event.extendedProps?.timeSlotName === timeSlot.name
+    )
     const isEmpty = slotEvents.length === 0
 
     return (
-      <div className="flex min-h-[80px] border-b border-border/50">
+      <div className="flex min-h-[100px] border-b border-border/50">
         {/* Time Column */}
-        <div className="w-20 flex-shrink-0 p-3 bg-muted/30 border-r">
-          <div className="text-sm font-medium">{timeSlot.time}</div>
-          <div className="text-xs text-muted-foreground">
-            {formatDuration(60)}
+        <div className="w-32 flex-shrink-0 p-4 bg-muted/30 border-r">
+          <div className="text-sm font-medium">{timeSlot.startTime}</div>
+          <div className="text-xs text-muted-foreground">to {timeSlot.endTime}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            50 min
           </div>
         </div>
         
         {/* Events Column */}
-        <div className="flex-1 p-3">
+        <div className="flex-1 p-4">
           {isEmpty ? (
             <Button
               variant="ghost"
               className="w-full h-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
-              onClick={() => handleTimeSlotClick(timeSlot.time)}
+              onClick={() => handleTimeSlotClick(timeSlot.name)}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add class
@@ -312,54 +267,19 @@ export function CalendarDayView({
             </div>
             <div className="text-center">
               <div className="font-medium">
-                {formatDuration(
-                  dayEvents.reduce((acc, event) => {
-                    const duration = event.end.getTime() - event.start.getTime()
-                    return acc + (duration / (1000 * 60)) // Convert to minutes
-                  }, 0)
-                )}
+                {sortedEvents.length}
               </div>
-              <div className="text-muted-foreground">Duration</div>
+              <div className="text-muted-foreground">Classes</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Merged Time Slots Display */}
-      {mergedGroups.length > 0 && (
-        <div className="flex-shrink-0 p-4 bg-background">
-          <h3 className="text-sm font-medium mb-3">Schedule Overview</h3>
-          <div className="flex flex-wrap gap-2">
-            {mergedGroups.map((group, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {group.startTime} - {group.endTime}
-                {group.isConsecutive && (
-                  <span className="ml-1 text-muted-foreground">
-                    ({formatDuration(group.duration)})
-                  </span>
-                )}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <Separator />
-
-      {/* Break Summary */}
-      {breakSlots.length > 0 && (
-        <div className="flex-shrink-0 p-4">
-          <BreakSummary breakSlots={breakSlots} />
-        </div>
-      )}
-
-      <Separator />
-
       {/* Time Slots Grid */}
       <ScrollArea className="flex-1">
         <div className="divide-y">
-          {timeSlotsWithBreaks.map((timeSlot) => (
-            <TimeSlotRow key={`${timeSlot.time}-${timeSlot.slotType}`} timeSlot={timeSlot} />
+          {timeSlots.map((timeSlot) => (
+            <TimeSlotRow key={timeSlot.name} timeSlot={timeSlot} />
           ))}
         </div>
       </ScrollArea>
