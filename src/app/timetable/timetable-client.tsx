@@ -6,12 +6,14 @@ import { useQuery } from '@tanstack/react-query'
 import { FullCalendar } from '@/components/ui/full-calendar'
 import { CalendarEvent, TimetableFilters, CalendarView } from '@/types/timetable'
 import { Button } from '@/components/ui/button'
-import { Plus, Settings } from 'lucide-react'
+import { Plus, Settings, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreateTimetableEntryModal } from '@/components/timetable/create-timetable-entry-modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 // Fetch timetable entries
@@ -73,12 +75,46 @@ function timetableEntryToCalendarEvent(entry: any): CalendarEvent {
   }
 }
 
+// Fetch batches with program and specialization info
+async function fetchBatches() {
+  const response = await fetch('/api/batches?include=program,specialization')
+  if (!response.ok) {
+    throw new Error('Failed to fetch batches')
+  }
+  return response.json()
+}
+
 export default function TimetableClient() {
   const { data: session } = useSession()
   const [filters, setFilters] = useState<TimetableFilters>({})
   const [currentView, setCurrentView] = useState<CalendarView>('week')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('')
+
+  // Fetch batches
+  const { 
+    data: batchesData, 
+    isLoading: isLoadingBatches 
+  } = useQuery({
+    queryKey: ['batches-for-timetable'],
+    queryFn: fetchBatches,
+    enabled: !!session?.user
+  })
+
+  // Auto-select first batch if none selected
+  useEffect(() => {
+    if (batchesData?.batches && batchesData.batches.length > 0 && !selectedBatchId) {
+      setSelectedBatchId(batchesData.batches[0].id)
+    }
+  }, [batchesData, selectedBatchId])
+
+  // Update filters when batch is selected
+  useEffect(() => {
+    if (selectedBatchId) {
+      setFilters(prev => ({ ...prev, batchId: selectedBatchId }))
+    }
+  }, [selectedBatchId])
 
   // Fetch timetable entries
   const { 
@@ -89,7 +125,7 @@ export default function TimetableClient() {
   } = useQuery({
     queryKey: ['timetable-entries', filters],
     queryFn: () => fetchTimetableEntries(filters),
-    enabled: !!session?.user
+    enabled: !!session?.user && !!selectedBatchId
   })
 
   // Sample events for testing (will be replaced with real data)
@@ -192,6 +228,13 @@ export default function TimetableClient() {
     setCurrentView(viewState.view)
   }
 
+  const handleBatchChange = (batchId: string) => {
+    setSelectedBatchId(batchId)
+  }
+
+  // Get selected batch info for display
+  const selectedBatch = batchesData?.batches?.find((batch: any) => batch.id === selectedBatchId)
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -209,15 +252,56 @@ export default function TimetableClient() {
     <div className="flex flex-col h-full gap-4">
       {/* Page Header */}
       <div className="flex items-center justify-between flex-shrink-0">
-        <div>
-          <h1 className="text-3xl font-bold">Timetable</h1>
-          <p className="text-muted-foreground">
-            View and manage class schedules
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Timetable</h1>
+            <p className="text-muted-foreground">
+              View and manage class schedules
+            </p>
+          </div>
+          
+          {/* Batch Selector */}
+          {isLoadingBatches ? (
+            <Skeleton className="h-10 w-64" />
+          ) : (
+            <div className="flex items-center gap-3">
+              <Select value={selectedBatchId} onValueChange={handleBatchChange}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select batch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {batchesData?.batches?.map((batch: any) => (
+                    <SelectItem key={batch.id} value={batch.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{batch.name}</span>
+                        {batch.specialization && (
+                          <Badge variant="secondary" className="text-xs">
+                            {batch.specialization.shortName}
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {selectedBatch && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">{selectedBatch.program?.name}</span>
+                  {selectedBatch.specialization && (
+                    <span> • {selectedBatch.specialization.name}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button 
+            onClick={() => setIsCreateModalOpen(true)}
+            disabled={!selectedBatchId}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Class
           </Button>
@@ -269,6 +353,7 @@ export default function TimetableClient() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         defaultDate={selectedDate}
+        defaultBatchId={selectedBatchId}
         onSuccess={(newEntry) => {
           toast.success("Timetable entry created successfully!")
           setIsCreateModalOpen(false)

@@ -18,7 +18,6 @@ import { DayOfWeek, EntryType } from '@prisma/client'
 import { ConflictInfo } from '@/types/timetable'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { BatchSpecializationSelector } from './batch-specialization-selector'
 import { SubjectFacultySelector } from './subject-faculty-selector'
 import { TimeSlotPicker } from './time-slot-picker'
 
@@ -46,9 +45,9 @@ type CreateTimetableEntryFormData = z.infer<typeof createTimetableEntrySchema>
 interface CreateTimetableEntryModalProps {
   isOpen: boolean
   onClose: () => void
-  selectedDate?: Date
-  selectedTimeSlot?: string
-  batchId?: string
+  defaultDate?: Date
+  defaultTimeSlot?: string
+  defaultBatchId?: string
   onSuccess?: (entry: any) => void
 }
 
@@ -148,9 +147,9 @@ const createRecurringEntries = async (data: CreateTimetableEntryFormData) => {
 export function CreateTimetableEntryModal({
   isOpen,
   onClose,
-  selectedDate,
-  selectedTimeSlot,
-  batchId: initialBatchId,
+  defaultDate,
+  defaultTimeSlot,
+  defaultBatchId,
   onSuccess,
 }: CreateTimetableEntryModalProps) {
   const queryClient = useQueryClient()
@@ -170,7 +169,7 @@ export function CreateTimetableEntryModal({
   } = useForm<CreateTimetableEntryFormData>({
     resolver: zodResolver(createTimetableEntrySchema),
     defaultValues: {
-      batchId: initialBatchId || '',
+      batchId: defaultBatchId || '',
       entryType: 'REGULAR',
       isRecurring: false,
       endConditionType: 'semester_end',
@@ -243,17 +242,20 @@ export function CreateTimetableEntryModal({
 
   // Set initial values from props
   useEffect(() => {
-    if (selectedDate) {
-      setValue('date', selectedDate.toISOString().split('T')[0])
-      setValue('dayOfWeek', getDayOfWeekFromDate(selectedDate))
+    if (defaultDate) {
+      setValue('date', defaultDate.toISOString().split('T')[0])
+      setValue('dayOfWeek', getDayOfWeekFromDate(defaultDate))
     }
-    if (selectedTimeSlot && timeSlots.length > 0) {
-      const timeSlot = timeSlots.find(ts => ts.name === selectedTimeSlot)
+    if (defaultTimeSlot && timeSlots.length > 0) {
+      const timeSlot = timeSlots.find(ts => ts.name === defaultTimeSlot)
       if (timeSlot) {
         setValue('timeSlotId', timeSlot.id)
       }
     }
-  }, [selectedDate, selectedTimeSlot, timeSlots, setValue])
+    if (defaultBatchId) {
+      setValue('batchId', defaultBatchId)
+    }
+  }, [defaultDate, defaultTimeSlot, defaultBatchId, timeSlots, setValue])
 
   const getDayOfWeekFromDate = (date: Date): DayOfWeek => {
     const days: DayOfWeek[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
@@ -386,23 +388,35 @@ export function CreateTimetableEntryModal({
             </TabsList>
 
             <TabsContent value="basic" className="space-y-6">
-              {/* Batch and Specialization Selection */}
-              <div className="space-y-4">
-                <BatchSpecializationSelector
-                  selectedBatchId={watchedBatchId}
-                  selectedSpecializationId=""
-                  onBatchChange={(batchId, batch) => {
-                    setValue('batchId', batchId)
-                  }}
-                  onSpecializationChange={(specializationId, specialization) => {
-                    // Optional: can be used for filtering
-                  }}
-                  showStats={true}
-                />
-                {errors.batchId && (
-                  <p className="text-sm text-destructive">{errors.batchId.message}</p>
-                )}
-              </div>
+              {/* Hidden batch field - pre-selected from parent */}
+              <input type="hidden" {...register('batchId')} />
+              
+              {/* Display selected batch info */}
+              {defaultBatchId && batches.find((b: any) => b.id === defaultBatchId) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Adding Class For</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const batch = batches.find((b: any) => b.id === defaultBatchId)
+                        return batch ? (
+                          <>
+                            <Badge variant="outline">{batch.name}</Badge>
+                            {batch.specialization && (
+                              <Badge variant="secondary">{batch.specialization.shortName}</Badge>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              {batch.program?.name}
+                            </span>
+                          </>
+                        ) : null
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Subject and Faculty Selection */}
               <div className="space-y-4">
@@ -431,7 +445,7 @@ export function CreateTimetableEntryModal({
               <div className="space-y-4">
                 <TimeSlotPicker
                   selectedTimeSlotId={watch('timeSlotId')}
-                  selectedDate={selectedDate}
+                  selectedDate={defaultDate}
                   selectedBatchId={watchedBatchId}
                   selectedFacultyId={watch('facultyId')}
                   selectedDayOfWeek={watch('dayOfWeek')}
