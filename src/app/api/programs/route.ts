@@ -16,7 +16,7 @@ const createProgramSchema = z.object({
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || (!isAdmin(session.user) && !isFaculty(session.user))) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Get the user's department (assuming admin belongs to specific department)
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       include: { department: true }
     })
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

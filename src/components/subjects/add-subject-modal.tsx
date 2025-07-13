@@ -149,7 +149,7 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
     return defaultFormSchema
   }
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(getFormSchema()),
     defaultValues: {
       name: "",
@@ -236,7 +236,7 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
     }
   }, [open])
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true)
       

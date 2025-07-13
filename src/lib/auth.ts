@@ -13,34 +13,39 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await db.user.findUnique({
-          where: {
-            email: credentials.email as string
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null
           }
-        })
 
-        if (!user) {
+          const user = await db.user.findUnique({
+            where: {
+              email: credentials.email as string
+            }
+          })
+
+          if (!user) {
+            return null
+          }
+
+          // For development, we'll create a simple password check
+          // In production, you should hash passwords properly
+          const isPasswordValid = credentials.password === "password123" || 
+            (user.email === "admin@jlu.edu.in" && credentials.password === "admin123")
+
+          if (!isPasswordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error("Auth authorize error:", error)
           return null
-        }
-
-        // For development, we'll create a simple password check
-        // In production, you should hash passwords properly
-        const isPasswordValid = credentials.password === "password123" || 
-          (user.email === "admin@jlu.edu.in" && credentials.password === "admin123")
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
         }
       }
     })
@@ -55,39 +60,49 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user && token.id) {
-        // Fetch full user details including relationships
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          include: {
-            department: true,
-            student: {
-              include: {
-                batch: true
+        try {
+          // Fetch full user details including relationships
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            include: {
+              department: true,
+              student: {
+                include: {
+                  batch: true
+                }
               }
             }
-          }
-        })
+          })
 
-        if (dbUser) {
+          if (dbUser) {
+            session.user = {
+              ...session.user,
+              id: dbUser.id,
+              role: dbUser.role as Role,
+              phone: dbUser.phone,
+              employeeId: dbUser.employeeId,
+              departmentId: dbUser.departmentId,
+              status: dbUser.status as UserStatus,
+              department: dbUser.department ? {
+                id: dbUser.department.id,
+                name: dbUser.department.name,
+                shortName: dbUser.department.shortName,
+              } : undefined,
+              student: dbUser.student ? {
+                id: dbUser.student.id,
+                studentId: dbUser.student.studentId,
+                rollNumber: dbUser.student.rollNumber,
+                batchId: dbUser.student.batchId,
+              } : undefined,
+            }
+          }
+        } catch (error) {
+          console.error("Session callback error:", error)
+          // Return basic session without database data if query fails
           session.user = {
             ...session.user,
-            id: dbUser.id,
-            role: dbUser.role as Role,
-            phone: dbUser.phone,
-            employeeId: dbUser.employeeId,
-            departmentId: dbUser.departmentId,
-            status: dbUser.status as UserStatus,
-            department: dbUser.department ? {
-              id: dbUser.department.id,
-              name: dbUser.department.name,
-              shortName: dbUser.department.shortName,
-            } : undefined,
-            student: dbUser.student ? {
-              id: dbUser.student.id,
-              studentId: dbUser.student.studentId,
-              rollNumber: dbUser.student.rollNumber,
-              batchId: dbUser.student.batchId,
-            } : undefined,
+            id: token.id as string,
+            role: token.role as Role,
           }
         }
       }

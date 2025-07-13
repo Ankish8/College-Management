@@ -116,10 +116,7 @@ export async function PUT(
     if (validatedData.code && validatedData.code !== existingSubject.code) {
       const duplicateCode = await db.subject.findFirst({
         where: {
-          code: {
-            equals: validatedData.code,
-            mode: 'insensitive'
-          },
+          code: validatedData.code,
           id: { not: id }
         }
       })

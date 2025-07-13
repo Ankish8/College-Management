@@ -36,6 +36,13 @@ export async function GET() {
         employeeId: true,
         phone: true,
         status: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            shortName: true,
+          }
+        },
         primarySubjects: {
           where: {
             isActive: true
@@ -144,6 +151,13 @@ export async function POST(request: NextRequest) {
         employeeId: true,
         phone: true,
         status: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            shortName: true,
+          }
+        },
         primarySubjects: {
           where: {
             isActive: true

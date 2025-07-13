@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -95,17 +96,17 @@ export function SubjectList() {
     if (status === "authenticated") {
       fetchSubjects()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
-  // Refresh data when window regains focus (user returns from config page)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchSubjects()
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  // Remove focus listener to reduce unnecessary API calls
+  // useEffect(() => {
+  //   const handleFocus = () => {
+  //     fetchSubjects()
+  //   }
+  //   window.addEventListener('focus', handleFocus)
+  //   return () => window.removeEventListener('focus', handleFocus)
+  // }, [])
 
   useEffect(() => {
     let filtered = subjects
@@ -239,10 +240,12 @@ export function SubjectList() {
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => window.location.href = '/settings/subjects'}
+            asChild
             title="Subject Configuration"
           >
-            <Settings className="h-4 w-4" />
+            <Link href="/settings/subjects">
+              <Settings className="h-4 w-4" />
+            </Link>
           </Button>
           <Button onClick={() => setIsAddModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />

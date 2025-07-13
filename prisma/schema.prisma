@@ -300,6 +300,8 @@ model DepartmentSettings {
   id                String   @id @default(cuid())
   departmentId      String   @unique
   creditHoursRatio  Int      @default(15) // 15 hours = 1 credit
+  maxFacultyCredits Int      @default(30) // Maximum credits per faculty per semester
+  coFacultyWeight   Float    @default(0.5) // Weight for co-faculty workload (0.5 = 50%)
   defaultExamTypes  Json?    // Default exam types (replaces hardcoded enum)
   defaultSubjectTypes Json?  // Default subject types (replaces hardcoded enum)
   customExamTypes   Json?    // Additional exam types beyond the defaults

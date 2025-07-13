@@ -16,16 +16,16 @@ const updateSettingsSchema = z.object({
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
-      console.log("Unauthorized access attempt:", session?.user?.role)
+    if (!session?.user || !isAdmin(session.user as any)) {
+      console.log("Unauthorized access attempt:", (session?.user as any)?.role)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("Fetching settings for user:", session.user.id)
+    console.log("Fetching settings for user:", (session.user as any).id)
 
     // Get user's department
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       include: { 
         department: {
           include: {
@@ -83,7 +83,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching subject settings:", error)
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Internal server error", details: (error as Error).message },
       { status: 500 }
     )
   }
@@ -92,7 +92,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -101,7 +101,7 @@ export async function PUT(request: NextRequest) {
 
     // Get user's department
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       include: { 
         department: {
           include: {
@@ -174,7 +174,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

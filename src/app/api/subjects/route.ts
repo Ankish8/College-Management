@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
+import { calculateSubjectHours, getMaxFacultyCredits } from "@/lib/utils/credit-hours"
 import { z } from "zod"
 
 const createSubjectSchema = z.object({
@@ -20,7 +21,7 @@ const createSubjectSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || (!isAdmin(session.user) && !isFaculty(session.user))) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -69,6 +70,11 @@ export async function GET(request: NextRequest) {
                 name: true,
                 shortName: true,
               }
+            },
+            _count: {
+              select: {
+                students: true
+              }
             }
           }
         },
@@ -106,7 +112,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -115,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's department to fetch credit hours ratio
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       include: { 
         department: {
           include: {
@@ -132,9 +138,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get credit hours ratio (default 15 if no settings)
-    const creditHoursRatio = user.department.settings?.creditHoursRatio || 15
-    const totalHours = validatedData.credits * creditHoursRatio
+    // Calculate total hours using centralized function
+    const totalHours = await calculateSubjectHours(validatedData.credits, user.department.id)
 
     // Check if subject code already exists
     const existingSubject = await db.subject.findUnique({
@@ -182,13 +187,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check faculty workload limit (max 30 credits per faculty)
+    // Check faculty workload limit using centralized function
+    const maxCredits = await getMaxFacultyCredits(user.department.id)
     const currentCredits = primaryFaculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0) +
                           primaryFaculty.coFacultySubjects.reduce((sum, s) => sum + s.credits, 0)
     
-    if (currentCredits + validatedData.credits > 30) {
+    if (currentCredits + validatedData.credits > maxCredits) {
       return NextResponse.json(
-        { error: `Primary faculty workload would exceed 30 credits (current: ${currentCredits}, adding: ${validatedData.credits})` },
+        { error: `Primary faculty workload would exceed ${maxCredits} credits (current: ${currentCredits}, adding: ${validatedData.credits})` },
         { status: 400 }
       )
     }
@@ -223,13 +229,13 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Check co-faculty workload limit (max 30 credits per faculty)
+      // Check co-faculty workload limit using centralized function
       const coFacultyCurrentCredits = coFaculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0) +
                                      coFaculty.coFacultySubjects.reduce((sum, s) => sum + s.credits, 0)
       
-      if (coFacultyCurrentCredits + validatedData.credits > 30) {
+      if (coFacultyCurrentCredits + validatedData.credits > maxCredits) {
         return NextResponse.json(
-          { error: `Co-faculty workload would exceed 30 credits (current: ${coFacultyCurrentCredits}, adding: ${validatedData.credits})` },
+          { error: `Co-faculty workload would exceed ${maxCredits} credits (current: ${coFacultyCurrentCredits}, adding: ${validatedData.credits})` },
           { status: 400 }
         )
       }
@@ -265,6 +271,11 @@ export async function POST(request: NextRequest) {
                 name: true,
                 shortName: true,
               }
+            },
+            _count: {
+              select: {
+                students: true
+              }
             }
           }
         },
@@ -292,7 +303,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

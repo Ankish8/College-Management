@@ -73,7 +73,7 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
   const [networkError, setNetworkError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -125,9 +125,9 @@ export function AddFacultyModal({ open, onOpenChange, onFacultyCreated }: AddFac
     } catch (error) {
       console.error("Error creating faculty:", error)
       
-      if (error.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         setNetworkError("Request timed out. Please check your connection and try again.")
-      } else if (error.message.includes('fetch')) {
+      } else if ((error as Error).message.includes('fetch')) {
         setNetworkError("Network error. Please check your connection and try again.")
       } else {
         setNetworkError((error as Error).message || "Failed to create faculty")

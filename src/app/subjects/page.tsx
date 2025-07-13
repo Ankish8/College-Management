@@ -14,7 +14,7 @@ export default async function SubjectsPage() {
     redirect("/auth/signin")
   }
 
-  if (!isAdmin(session.user) && !isFaculty(session.user)) {
+  if (!isAdmin(session.user as any) && !isFaculty(session.user as any)) {
     redirect("/dashboard")
   }
 

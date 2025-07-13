@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface DepartmentSettings {
   creditHoursRatio: number
@@ -17,81 +18,83 @@ interface DepartmentSettings {
   customSubjectTypes: string[]
 }
 
+const fetchSettings = async (): Promise<DepartmentSettings> => {
+  const response = await fetch("/api/settings/subjects", {
+    credentials: 'include'
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error("Settings API error:", response.status, errorText)
+    throw new Error(`Failed to fetch settings: ${response.status}`)
+  }
+
+  return response.json()
+}
+
 export function SubjectConfiguration() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [settings, setSettings] = useState<DepartmentSettings | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const queryClient = useQueryClient()
   const [creditHoursRatio, setCreditHoursRatio] = useState(15)
   const [newExamType, setNewExamType] = useState("")
   const [newSubjectType, setNewSubjectType] = useState("")
   const { toast } = useToast()
 
+  // Use React Query for settings
+  const { data: settings, isLoading: loading, error } = useQuery({
+    queryKey: ['subjectSettings'],
+    queryFn: fetchSettings,
+    enabled: status === "authenticated",
+    staleTime: 10 * 60 * 1000, // 10 minutes - settings rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnMount: false,
+    retry: 0
+  })
+
   // Get all types (merge default and custom)
   const allExamTypes = settings ? [...settings.defaultExamTypes, ...settings.customExamTypes] : []
   const allSubjectTypes = settings ? [...settings.defaultSubjectTypes, ...settings.customSubjectTypes] : []
 
-  const fetchSettings = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/settings/subjects", {
-        credentials: 'include'
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("Settings API error:", response.status, errorText)
-        throw new Error(`Failed to fetch settings: ${response.status}`)
-      }
+  // Update local state when settings load
+  useEffect(() => {
+    if (settings && settings.creditHoursRatio !== creditHoursRatio) {
+      setCreditHoursRatio(settings.creditHoursRatio)
+    }
+  }, [settings, creditHoursRatio])
 
-      const data = await response.json()
-      setSettings(data)
-      setCreditHoursRatio(data.creditHoursRatio)
-    } catch (error) {
-      console.error("Error fetching settings:", error)
+  // Handle query error
+  useEffect(() => {
+    if (error) {
       toast({
         title: "Error",
-        description: `Failed to load settings: ${error.message}`,
+        description: `Failed to load settings: ${(error as Error).message}`,
         variant: "destructive",
       })
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [error, toast])
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchSettings()
-    }
-  }, [status])
-
-  const saveSettings = async () => {
-    if (!settings) return
-
-    try {
-      setSaving(true)
+  // Mutation for saving settings
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: Partial<DepartmentSettings>) => {
       const response = await fetch("/api/settings/subjects", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: 'include',
-        body: JSON.stringify({
-          creditHoursRatio,
-          defaultExamTypes: allExamTypes,
-          defaultSubjectTypes: allSubjectTypes,
-          customExamTypes: [],
-          customSubjectTypes: [],
-        }),
+        body: JSON.stringify(data),
       })
 
       if (!response.ok) {
         throw new Error("Failed to save settings")
       }
 
-      const updatedSettings = await response.json()
-      setSettings(updatedSettings)
+      return response.json()
+    },
+    onSuccess: (updatedSettings) => {
+      // Update the cache
+      queryClient.setQueryData(['subjectSettings'], updatedSettings)
       
       toast({
         title: "Success",
@@ -102,16 +105,27 @@ export function SubjectConfiguration() {
       setTimeout(() => {
         router.back()
       }, 1000)
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error saving settings:", error)
       toast({
         title: "Error",
         description: "Failed to save settings",
         variant: "destructive",
       })
-    } finally {
-      setSaving(false)
     }
+  })
+
+  const saveSettings = () => {
+    if (!settings) return
+
+    saveSettingsMutation.mutate({
+      creditHoursRatio,
+      defaultExamTypes: allExamTypes,
+      defaultSubjectTypes: allSubjectTypes,
+      customExamTypes: [],
+      customSubjectTypes: [],
+    })
   }
 
   const addExamType = () => {
@@ -128,7 +142,8 @@ export function SubjectConfiguration() {
       return
     }
 
-    setSettings({
+    // Update through mutation instead
+    saveSettingsMutation.mutate({
       ...settings,
       defaultExamTypes: [...settings.defaultExamTypes, upperCaseType]
     })
@@ -138,7 +153,8 @@ export function SubjectConfiguration() {
   const removeExamType = (typeToRemove: string) => {
     if (!settings) return
 
-    setSettings({
+    // Update through mutation instead
+    saveSettingsMutation.mutate({
       ...settings,
       defaultExamTypes: settings.defaultExamTypes.filter(type => type !== typeToRemove),
       customExamTypes: settings.customExamTypes.filter(type => type !== typeToRemove)
@@ -159,7 +175,8 @@ export function SubjectConfiguration() {
       return
     }
 
-    setSettings({
+    // Update through mutation instead
+    saveSettingsMutation.mutate({
       ...settings,
       defaultSubjectTypes: [...settings.defaultSubjectTypes, upperCaseType]
     })
@@ -169,7 +186,8 @@ export function SubjectConfiguration() {
   const removeSubjectType = (typeToRemove: string) => {
     if (!settings) return
 
-    setSettings({
+    // Update through mutation instead
+    saveSettingsMutation.mutate({
       ...settings,
       defaultSubjectTypes: settings.defaultSubjectTypes.filter(type => type !== typeToRemove),
       customSubjectTypes: settings.customSubjectTypes.filter(type => type !== typeToRemove)
@@ -227,9 +245,9 @@ export function SubjectConfiguration() {
             <p className="text-sm text-muted-foreground">Configure department-specific subject settings</p>
           </div>
         </div>
-        <Button onClick={saveSettings} disabled={saving}>
+        <Button onClick={saveSettings} disabled={saveSettingsMutation.isPending}>
           <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : "Save Changes"}
+          {saveSettingsMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 

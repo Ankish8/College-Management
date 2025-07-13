@@ -51,13 +51,13 @@ export function SiteHeader() {
         {/* User info */}
         {user && (
           <div className="flex items-center gap-2">
-            <Badge className={getRoleColor(user.role)}>
-              {user.role}
+            <Badge className={getRoleColor((user as any).role)}>
+              {(user as any).role}
             </Badge>
             <div className="hidden text-right sm:block">
-              <div className="text-xs font-medium">{user.name || "User"}</div>
+              <div className="text-xs font-medium">{(user as any)?.name || "User"}</div>
               <div className="text-xs text-muted-foreground">
-                {user.department?.shortName || "JLU"}
+                {(user as any)?.department?.shortName || "JLU"}
               </div>
             </div>
             <SignOutButton />

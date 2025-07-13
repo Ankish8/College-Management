@@ -32,6 +32,9 @@ interface Subject {
       name: string
       shortName: string
     }
+    _count: {
+      students: number
+    }
   }
   primaryFaculty: {
     name: string
@@ -154,12 +157,20 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
           {subject.batch.name}
         </div>
 
-        {/* Footer - single row */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <span className="text-xs text-muted-foreground">Classes Conducted</span>
-          <Badge variant="secondary" className="text-xs h-5">
-            {subject._count.attendanceSessions}
-          </Badge>
+        {/* Footer - two rows for stats */}
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Students Enrolled</span>
+            <Badge variant="outline" className="text-xs h-5 text-blue-600 border-blue-200">
+              {subject.batch._count.students}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Classes Conducted</span>
+            <Badge variant="secondary" className="text-xs h-5">
+              {subject._count.attendanceSessions}
+            </Badge>
+          </div>
         </div>
       </CardContent>
     </Card>

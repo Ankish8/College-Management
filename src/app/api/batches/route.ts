@@ -67,7 +67,12 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json(batches)
+    const response = NextResponse.json(batches)
+    
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    
+    return response
   } catch (error) {
     console.error("Error fetching batches:", error)
     return NextResponse.json(
@@ -100,8 +105,18 @@ export async function POST(request: NextRequest) {
     let specialization = null
     if (validatedData.specializationId) {
       specialization = await db.specialization.findUnique({
-        where: { id: validatedData.specializationId }
+        where: { 
+          id: validatedData.specializationId,
+          programId: validatedData.programId // Ensure specialization belongs to program
+        }
       })
+      
+      if (!specialization) {
+        return NextResponse.json(
+          { error: "Specialization does not belong to the selected program" },
+          { status: 400 }
+        )
+      }
     }
 
     // Calculate end year based on program duration

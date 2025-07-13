@@ -36,7 +36,7 @@ export default async function DashboardLayout({
                 <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
                   Dashboard
                 </Link>
-                {(isAdmin(user) || isFaculty(user)) && (
+                {(isAdmin(user as any) || isFaculty(user as any)) && (
                   <>
                     <Link href="/batches" className="text-gray-600 hover:text-gray-900">
                       Batches
@@ -49,17 +49,17 @@ export default async function DashboardLayout({
                     </Link>
                   </>
                 )}
-                {(isAdmin(user) || isFaculty(user)) && (
+                {(isAdmin(user as any) || isFaculty(user as any)) && (
                   <Link href="/attendance" className="text-gray-600 hover:text-gray-900">
                     Attendance
                   </Link>
                 )}
-                {isStudent(user) && (
+                {isStudent(user as any) && (
                   <Link href="/my-attendance" className="text-gray-600 hover:text-gray-900">
                     My Attendance
                   </Link>
                 )}
-                {isAdmin(user) && (
+                {isAdmin(user as any) && (
                   <>
                     <Link href="/students" className="text-gray-600 hover:text-gray-900">
                       Students
@@ -78,15 +78,15 @@ export default async function DashboardLayout({
             {session?.user && (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Badge className={getRoleColor(user.role)}>
-                    {user.role}
+                  <Badge className={getRoleColor((user as any)?.role)}>
+                    {(user as any)?.role}
                   </Badge>
                   <div className="text-right">
                     <div className="text-sm font-medium text-gray-900">
-                      {user.name || "User"}
+                      {(user as any)?.name || "User"}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {user.department?.shortName || "JLU"}
+                      {(user as any)?.department?.shortName || "JLU"}
                     </div>
                   </div>
                 </div>

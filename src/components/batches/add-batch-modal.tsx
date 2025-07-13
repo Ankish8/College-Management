@@ -92,7 +92,7 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       programId: "",
@@ -106,8 +106,8 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
   // Watch specific fields only to prevent excessive re-renders
   const watchedProgramId = form.watch("programId")
   const watchedSpecializationId = form.watch("specializationId")
-  const watchedSemester = form.watch("semester")
-  const watchedStartYear = form.watch("startYear")
+  const watchedSemester = form.watch("semester") as number
+  const watchedStartYear = form.watch("startYear") as number
 
   const selectedProgram = useMemo(() => 
     programs.find(p => p.id === watchedProgramId), 
@@ -256,7 +256,7 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
               )}
             />
 
-            {selectedProgram?.specializations.length > 0 && (
+            {selectedProgram?.specializations?.length && selectedProgram.specializations.length > 0 && (
               <FormField
                 control={form.control}
                 name="specializationId"
@@ -328,6 +328,7 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
                       min="2020" 
                       max="2030" 
                       {...field}
+                      value={field.value as number}
                     />
                   </FormControl>
                   <FormDescription>
@@ -354,6 +355,7 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
                       min="1" 
                       placeholder="e.g., 30"
                       {...field}
+                      value={field.value as number || ""}
                     />
                   </FormControl>
                   <FormDescription>

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MoreHorizontal, BookOpen, CreditCard, Edit, Trash2, Eye } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,11 @@ interface Faculty {
   email: string
   employeeId: string
   status: "ACTIVE" | "INACTIVE"
+  department?: {
+    id: string
+    name: string
+    shortName: string
+  }
   primarySubjects: Array<{
     id: string
     name: string
@@ -54,12 +60,46 @@ interface FacultyCardProps {
 export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [workloadPercentage, setWorkloadPercentage] = useState(0)
+  const [maxCredits, setMaxCredits] = useState(30)
+  const [totalCredits, setTotalCredits] = useState(0)
   const { toast } = useToast()
 
-  const totalCredits = [
-    ...faculty.primarySubjects,
-    ...faculty.coFacultySubjects
-  ].reduce((sum, subject) => sum + subject.credits, 0)
+  // Calculate proper workload using configurable settings
+  useEffect(() => {
+    if (faculty.department) {
+      const fetchWorkload = async () => {
+        try {
+          const response = await fetch(`/api/faculty/${faculty.id}/workload`)
+          if (response.ok) {
+            const workload = await response.json()
+            setTotalCredits(workload.totalCredits)
+            setMaxCredits(workload.maxCredits)
+            setWorkloadPercentage(workload.creditPercentage)
+          } else {
+            // Fallback to simple calculation if API fails
+            const simpleTotal = [
+              ...faculty.primarySubjects,
+              ...faculty.coFacultySubjects
+            ].reduce((sum, subject) => sum + subject.credits, 0)
+            setTotalCredits(simpleTotal)
+            setWorkloadPercentage(Math.round((simpleTotal / 30) * 100))
+          }
+        } catch (error) {
+          console.error("Error fetching workload:", error)
+          // Fallback to simple calculation
+          const simpleTotal = [
+            ...faculty.primarySubjects,
+            ...faculty.coFacultySubjects
+          ].reduce((sum, subject) => sum + subject.credits, 0)
+          setTotalCredits(simpleTotal)
+          setWorkloadPercentage(Math.round((simpleTotal / 30) * 100))
+        }
+      }
+      
+      fetchWorkload()
+    }
+  }, [faculty.id, faculty.department, faculty.primarySubjects, faculty.coFacultySubjects])
 
   const totalSubjects = faculty.primarySubjects.length + faculty.coFacultySubjects.length
 
@@ -192,20 +232,52 @@ export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCard
               {faculty.email}
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className={`font-medium ${totalCredits > 25 ? 'text-orange-600' : totalCredits > 30 ? 'text-red-600' : ''}`}>
-                  {totalCredits}
-                </span>
-                <span className="text-muted-foreground">Credits</span>
-                {totalCredits > 25 && (
-                  <span className="text-xs text-orange-600">High</span>
-                )}
-                {totalCredits > 30 && (
-                  <span className="text-xs text-red-600">Overload</span>
-                )}
+            {faculty.department && (
+              <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-md inline-block">
+                {faculty.department.name} ({faculty.department.shortName})
               </div>
+            )}
+            
+            {/* Workload Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Workload</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${
+                    workloadPercentage > 100 ? 'text-red-600' : 
+                    workloadPercentage > 83 ? 'text-orange-600' : 
+                    'text-green-600'
+                  }`}>
+                    {totalCredits}/{maxCredits}
+                  </span>
+                  <span className={`text-xs font-medium ${
+                    workloadPercentage > 100 ? 'text-red-600' : 
+                    workloadPercentage > 83 ? 'text-orange-600' : 
+                    'text-green-600'
+                  }`}>
+                    {workloadPercentage}%
+                  </span>
+                </div>
+              </div>
+              <Progress 
+                value={Math.min(workloadPercentage, 100)} 
+                className={`h-2 ${
+                  workloadPercentage > 100 ? '[&>div]:bg-red-500' :
+                  workloadPercentage > 83 ? '[&>div]:bg-orange-500' :
+                  '[&>div]:bg-green-500'
+                }`}
+              />
+              {workloadPercentage > 100 && (
+                <div className="text-xs text-red-600 font-medium">
+                  Overloaded by {workloadPercentage - 100}%
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{totalSubjects}</span>

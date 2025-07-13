@@ -14,7 +14,7 @@ export default async function BatchConfigPage() {
     redirect("/auth/signin")
   }
 
-  if (!isAdmin(session.user)) {
+  if (!isAdmin(session.user as any)) {
     redirect("/dashboard")
   }
 

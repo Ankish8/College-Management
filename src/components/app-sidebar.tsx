@@ -160,7 +160,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, status } = useSession()
   const user = session?.user
-  const userRole = user?.role || ""
+  const userRole = (user as any)?.role || ""
 
   // Show loading state if session is still loading
   if (status === "loading") {
@@ -227,7 +227,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         {item.items.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton asChild>
-                              <Link href={subItem.url}>
+                              <Link href={subItem.url || "#"}>
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>
@@ -237,7 +237,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </>
                   ) : (
                     <SidebarMenuButton tooltip={item.title} asChild>
-                      <Link href={item.url}>
+                      <Link href={item.url || "#"}>
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
                       </Link>
@@ -267,7 +267,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.name || "User"}</span>
-                    <span className="truncate text-xs">{user?.role}</span>
+                    <span className="truncate text-xs">{(user as any)?.role}</span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -299,7 +299,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                {isAdmin(user) && (
+                {isAdmin(user as any) && (
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />

@@ -74,7 +74,7 @@ export function AddProgramModal({ open, onOpenChange, onProgramCreated }: AddPro
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -85,7 +85,7 @@ export function AddProgramModal({ open, onOpenChange, onProgramCreated }: AddPro
   })
 
   const watchedValues = form.watch()
-  const totalSems = watchedValues.duration * 2 // Each year has 2 semesters
+  const totalSems = (watchedValues.duration as number) * 2 // Each year has 2 semesters
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -212,6 +212,7 @@ export function AddProgramModal({ open, onOpenChange, onProgramCreated }: AddPro
                       min="1" 
                       max="6" 
                       {...field}
+                      value={field.value as number}
                     />
                   </FormControl>
                   <FormDescription>

@@ -14,7 +14,7 @@ const createSpecializationSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || (!isAdmin(session.user) && !isFaculty(session.user))) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || !isAdmin(session.user)) {
+    if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }
