@@ -91,13 +91,13 @@ export function CalendarMonthView({
         event.className
       )}
       onClick={(e) => handleEventClick(event, e)}
-      title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`}
+      title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
     >
       <div className="font-medium truncate">
-        {event.extendedProps?.subjectCode}
+        {event.extendedProps?.subjectName}
       </div>
       <div className="opacity-90 truncate">
-        {format(event.start, 'HH:mm')}
+        {event.extendedProps?.credits ? `${event.extendedProps.credits} credits` : format(event.start, 'HH:mm')}
       </div>
     </div>
   )
