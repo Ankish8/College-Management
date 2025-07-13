@@ -2,10 +2,10 @@
 
 import React from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
-import { format } from 'date-fns'
+import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical } from 'lucide-react'
+import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DndContext,
@@ -24,6 +24,7 @@ interface TraditionalTimetableViewProps {
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
   onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
+  onEventDelete?: (eventId: string) => void
   className?: string
   viewTitle?: string
   onPrevious?: () => void
@@ -58,6 +59,7 @@ export function TraditionalTimetableView({
   onEventClick,
   onEventCreate,
   onEventDrop,
+  onEventDelete,
   className,
   viewTitle,
   onPrevious,
@@ -72,6 +74,15 @@ export function TraditionalTimetableView({
   const [activeEvent, setActiveEvent] = React.useState<CalendarEvent | null>(null)
   const [conflictCache, setConflictCache] = React.useState<Record<string, boolean>>({})
   const [isLoadingConflicts, setIsLoadingConflicts] = React.useState(false)
+  
+  // Calculate week dates
+  const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Monday = 1
+  const weekDays = WEEKDAYS.map((day, index) => ({
+    ...day,
+    date: addDays(weekStart, index),
+    dayNumber: format(addDays(weekStart, index), 'd'),
+    fullDate: addDays(weekStart, index)
+  }))
   
   // Preload conflicts when activeEvent changes
   React.useEffect(() => {
@@ -271,7 +282,7 @@ export function TraditionalTimetableView({
         {...listeners}
         {...attributes}
         className={cn(
-          "p-3 h-full cursor-grab active:cursor-grabbing transition-all hover:shadow-md rounded-lg",
+          "p-3 h-full cursor-grab active:cursor-grabbing transition-all hover:shadow-md rounded-lg group relative",
           "bg-muted/50 border border-border hover:bg-muted/70",
           isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
           isDragging && "opacity-50 z-50"
@@ -279,6 +290,22 @@ export function TraditionalTimetableView({
         onClick={() => handleEventClick(event)}
         title={isSampleEvent ? "Sample data - you can drag but changes won't save" : "Drag to move this class"}
       >
+        {/* Delete button - only show for real events, not sample data */}
+        {!isSampleEvent && onEventDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEventDelete(event.id)
+            }}
+            title="Delete this class"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+        
         <div className="space-y-1">
           <div className="flex items-center gap-1">
             <GripVertical className={cn(
@@ -488,10 +515,10 @@ export function TraditionalTimetableView({
           <div className="bg-muted/50 p-3 text-center font-medium border rounded-lg">
             Time / Day
           </div>
-          {WEEKDAYS.map((day) => (
+          {weekDays.map((day) => (
             <div key={day.key} className="bg-muted/50 p-3 text-center font-medium border rounded-lg">
-              <div className="text-sm font-semibold">{day.short}</div>
-              <div className="text-xs text-muted-foreground">{day.label}</div>
+              <div className="text-sm font-semibold">{day.short} {day.dayNumber}</div>
+              <div className="text-xs text-muted-foreground">{format(day.fullDate, 'MMM')}</div>
             </div>
           ))}
 
@@ -511,7 +538,7 @@ export function TraditionalTimetableView({
               </div>
               
               {/* Day Cells */}
-              {WEEKDAYS.map((day) => (
+              {weekDays.map((day) => (
                 <div key={`${day.key}-${timeSlot.time}`} className="border rounded-lg min-h-[100px]">
                   <DroppableTimeSlot dayKey={day.key} timeSlot={timeSlot.time} />
                 </div>

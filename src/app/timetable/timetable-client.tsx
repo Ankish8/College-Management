@@ -469,6 +469,38 @@ export default function TimetableClient() {
     }
   }
 
+  // Delete a timetable entry
+  const handleEventDelete = async (eventId: string) => {
+    try {
+      // Check if this is a sample event
+      if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
+        toast.info('📋 This is sample data and cannot be deleted. Create real classes to enable deletion.')
+        return
+      }
+
+      // Confirm deletion
+      if (!confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
+        return
+      }
+
+      const response = await fetch(`/api/timetable/entries/${eventId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }))
+        throw new Error(errorData.error || `Failed to delete class (${response.status})`)
+      }
+
+      // Refresh the timetable data
+      refetch()
+      toast.success('Class deleted successfully!')
+    } catch (error) {
+      console.error('Error deleting class:', error)
+      toast.error(`Failed to delete class: ${error.message}`)
+    }
+  }
+
   const handleFiltersChange = (newFilters: TimetableFilters) => {
     // For now, we only support batch filtering from the main selector
     // Additional filters can be implemented here if needed
@@ -633,6 +665,7 @@ export default function TimetableClient() {
             onEventEdit={handleEventEdit}
             onEventCreate={handleEventCreate}
             onEventDrop={handleEventDrop}
+            onEventDelete={handleEventDelete}
             onViewStateChange={handleViewStateChange}
             onCheckConflicts={checkConflicts}
             isLoading={isLoading}
