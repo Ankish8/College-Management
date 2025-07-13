@@ -42,43 +42,109 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
   return data
 }
 
-// Convert timetable entry to calendar event
-function timetableEntryToCalendarEvent(entry: any): CalendarEvent {
+// Helper function to get day index from DayOfWeek enum
+function getDayIndex(dayOfWeek: string): number {
+  const dayMap: Record<string, number> = {
+    'MONDAY': 1,
+    'TUESDAY': 2,
+    'WEDNESDAY': 3,
+    'THURSDAY': 4,
+    'FRIDAY': 5,
+    'SATURDAY': 6,
+    'SUNDAY': 0
+  }
+  return dayMap[dayOfWeek] || 1
+}
+
+// Convert timetable entry to calendar events (supporting recurring entries)
+function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date()): CalendarEvent[] {
   // Parse time slot to get start and end times
   const [startTime, endTime] = entry.timeSlot.name.split('-')
   const [startHour, startMin] = startTime.split(':').map(Number)
   const [endHour, endMin] = endTime.split(':').map(Number)
 
-  // Create date objects (using today's date for now - in real app this would be based on schedule dates)
-  const start = new Date()
-  start.setHours(startHour, startMin, 0, 0)
+  const events: CalendarEvent[] = []
   
-  const end = new Date() 
-  end.setHours(endHour, endMin, 0, 0)
+  // If this is a specific date entry, create single event
+  if (entry.date) {
+    const eventDate = new Date(entry.date)
+    const start = new Date(eventDate)
+    start.setHours(startHour, startMin, 0, 0)
+    
+    const end = new Date(eventDate)
+    end.setHours(endHour, endMin, 0, 0)
 
-  return {
-    id: entry.id,
-    title: `${entry.subject.name} - ${entry.faculty.name}`,
-    start,
-    end,
-    className: `bg-blue-500 text-white`, // Color will be determined by calendar component
-    extendedProps: {
-      timetableEntryId: entry.id,
-      batchId: entry.batchId,
-      batchName: entry.batch.name,
-      subjectId: entry.subjectId,
-      subjectName: entry.subject.name,
-      subjectCode: entry.subject.code,
-      facultyId: entry.facultyId,
-      facultyName: entry.faculty.name,
-      timeSlotId: entry.timeSlotId,
-      timeSlotName: entry.timeSlot.name,
-      dayOfWeek: entry.dayOfWeek,
-      entryType: entry.entryType,
-      credits: entry.subject.credits,
-      notes: entry.notes
+    events.push({
+      id: `${entry.id}-${eventDate.toISOString().split('T')[0]}`,
+      title: `${entry.subject.name} - ${entry.faculty.name}`,
+      start,
+      end,
+      className: `bg-blue-500 text-white`,
+      extendedProps: {
+        timetableEntryId: entry.id,
+        batchId: entry.batchId,
+        batchName: entry.batch.name,
+        subjectId: entry.subjectId,
+        subjectName: entry.subject.name,
+        subjectCode: entry.subject.code,
+        facultyId: entry.facultyId,
+        facultyName: entry.faculty.name,
+        timeSlotId: entry.timeSlotId,
+        timeSlotName: entry.timeSlot.name,
+        dayOfWeek: entry.dayOfWeek,
+        entryType: entry.entryType,
+        credits: entry.subject.credits,
+        notes: entry.notes
+      }
+    })
+  } else {
+    // For recurring entries, generate events for the next 8 weeks (to cover month view)
+    const targetDayIndex = getDayIndex(entry.dayOfWeek)
+    const startOfCurrentWeek = new Date(currentDate)
+    startOfCurrentWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1) // Monday
+    
+    // Generate events for 8 weeks (past 4 weeks + current + future 3 weeks)
+    for (let weekOffset = -4; weekOffset <= 3; weekOffset++) {
+      const weekStart = new Date(startOfCurrentWeek)
+      weekStart.setDate(startOfCurrentWeek.getDate() + (weekOffset * 7))
+      
+      // Calculate the specific day in this week
+      const eventDate = new Date(weekStart)
+      eventDate.setDate(weekStart.getDate() + targetDayIndex - 1) // Adjust for Monday = 1
+      
+      const start = new Date(eventDate)
+      start.setHours(startHour, startMin, 0, 0)
+      
+      const end = new Date(eventDate)
+      end.setHours(endHour, endMin, 0, 0)
+
+      events.push({
+        id: `${entry.id}-${eventDate.toISOString().split('T')[0]}`,
+        title: `${entry.subject.name} - ${entry.faculty.name}`,
+        start,
+        end,
+        className: `bg-blue-500 text-white`,
+        extendedProps: {
+          timetableEntryId: entry.id,
+          batchId: entry.batchId,
+          batchName: entry.batch.name,
+          subjectId: entry.subjectId,
+          subjectName: entry.subject.name,
+          subjectCode: entry.subject.code,
+          facultyId: entry.facultyId,
+          facultyName: entry.faculty.name,
+          timeSlotId: entry.timeSlotId,
+          timeSlotName: entry.timeSlot.name,
+          dayOfWeek: entry.dayOfWeek,
+          entryType: entry.entryType,
+          credits: entry.subject.credits,
+          notes: entry.notes
+        }
+      })
     }
   }
+
+  return events
 }
 
 // Fetch batches with program and specialization info
@@ -234,33 +300,68 @@ export default function TimetableClient() {
   const events: CalendarEvent[] = React.useMemo(() => {
     // Use real data if available
     if (timetableData?.entries && timetableData.entries.length > 0) {
-      const realEvents = timetableData.entries.map(timetableEntryToCalendarEvent)
-      console.log('Using real timetable data:', realEvents.length, 'events')
-      return realEvents
+      const allEvents: CalendarEvent[] = []
+      timetableData.entries.forEach(entry => {
+        const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
+        allEvents.push(...entryEvents)
+      })
+      console.log('Using real timetable data:', allEvents.length, 'events from', timetableData.entries.length, 'entries')
+      return allEvents
     }
     
-    // If no real data, filter sample events by selected batch for demonstration
+    // If no real data, generate sample recurring events for demonstration
     if (selectedBatchId) {
-      // Create batch-specific sample data
       const batchInfo = batchesData?.find(b => b.id === selectedBatchId)
       if (batchInfo) {
         const batchName = formatBatchDisplay(batchInfo)
         console.log('Using sample data for batch:', batchName)
-        // Only show sample data if it matches the selected batch context
-        return sampleEvents.map(event => ({
-          ...event,
-          title: `${event.extendedProps?.subjectName} - ${batchName}`,
-          extendedProps: {
-            ...event.extendedProps,
+        
+        // Create sample recurring events
+        const sampleTimetableEntries = [
+          {
+            id: "sample-1",
+            dayOfWeek: "MONDAY",
+            timeSlot: { name: "10:15-11:05" },
+            subject: { name: "Design Fundamentals", code: "DF101", credits: 4 },
+            faculty: { name: "Prof. Smith" },
+            batch: { name: batchName },
             batchId: selectedBatchId,
-            batchName: batchName
+            entryType: "REGULAR"
+          },
+          {
+            id: "sample-2", 
+            dayOfWeek: "TUESDAY",
+            timeSlot: { name: "11:15-12:05" },
+            subject: { name: "Typography", code: "TYP201", credits: 3 },
+            faculty: { name: "Prof. Johnson" },
+            batch: { name: batchName },
+            batchId: selectedBatchId,
+            entryType: "REGULAR"
+          },
+          {
+            id: "sample-3",
+            dayOfWeek: "WEDNESDAY", 
+            timeSlot: { name: "14:15-15:05" },
+            subject: { name: "Color Theory", code: "CT301", credits: 3 },
+            faculty: { name: "Prof. Davis" },
+            batch: { name: batchName },
+            batchId: selectedBatchId,
+            entryType: "REGULAR"
           }
-        }))
+        ]
+        
+        const allSampleEvents: CalendarEvent[] = []
+        sampleTimetableEntries.forEach(entry => {
+          const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
+          allSampleEvents.push(...entryEvents)
+        })
+        
+        return allSampleEvents
       }
     }
     
     return []
-  }, [timetableData, sampleEvents, selectedBatchId, batchesData, formatBatchDisplay])
+  }, [timetableData, selectedBatchId, batchesData, formatBatchDisplay, selectedDate])
 
   const handleEventClick = (event: CalendarEvent) => {
     toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
@@ -376,6 +477,10 @@ export default function TimetableClient() {
 
   const handleViewStateChange = (viewState: any) => {
     setCurrentView(viewState.view)
+    // Update selected date when view date changes (for month navigation)
+    if (viewState.currentDate && viewState.currentDate !== selectedDate) {
+      setSelectedDate(viewState.currentDate)
+    }
   }
 
   const handleBatchChange = (batchId: string) => {
