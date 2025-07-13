@@ -90,6 +90,7 @@ export default function TimetableClient() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
+  const hasInitializedBatch = React.useRef(false)
 
   // Fetch batches
   const { 
@@ -101,12 +102,13 @@ export default function TimetableClient() {
     enabled: !!session?.user
   })
 
-  // Auto-select first batch if none selected
+  // Auto-select first batch if none selected (only once)
   useEffect(() => {
-    if (batchesData?.batches && batchesData.batches.length > 0 && !selectedBatchId) {
+    if (batchesData?.batches && batchesData.batches.length > 0 && !hasInitializedBatch.current) {
       setSelectedBatchId(batchesData.batches[0].id)
+      hasInitializedBatch.current = true
     }
-  }, [batchesData, selectedBatchId])
+  }, [batchesData?.batches])
 
   // Create stable filters object
   const filters = React.useMemo(() => {

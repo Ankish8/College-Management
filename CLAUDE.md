@@ -103,3 +103,6 @@ Required environment variables:
 - Schema supports complex academic structures but starts with JLU Design Department
 - Designed for future white-label customization for other departments/institutions
 - Time slots and credit systems are configurable by admin users
+
+## Git Workflow Guidance
+- Do not get pushed unless I ask you to. You can keep on committing but do not push. Only commit when I ask you to, you know, implement a new feature; then you can commit and start implementing.
