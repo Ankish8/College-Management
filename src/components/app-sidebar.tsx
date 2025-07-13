@@ -162,6 +162,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = session?.user
   const userRole = (user as any)?.role || ""
 
+  // Filter navigation items based on user role
+  const filteredNavMain = React.useMemo(() => {
+    return data.navMain
+      .filter(item => userRole && item.roles?.includes(userRole))
+      .map(item => {
+        if (item.items) {
+          const filteredItems = item.items.filter(subItem => 
+            subItem.roles?.includes(userRole)
+          )
+          return {
+            ...item,
+            items: filteredItems.length > 0 ? filteredItems : undefined
+          }
+        }
+        return item
+      })
+      .filter(item => !item.items || item.items.length > 0)
+  }, [userRole])
+
+  // Debug logging (remove in production) - ALL hooks must be at the top
+  React.useEffect(() => {
+    console.log("AppSidebar Debug:", { status, session, user, userRole })
+  }, [status, session, user, userRole])
+
+  React.useEffect(() => {
+    console.log("Navigation Debug:", { 
+      userRole, 
+      totalNavItems: data.navMain.length, 
+      filteredNavItems: filteredNavMain.length,
+      filteredNavMain 
+    })
+  }, [userRole, filteredNavMain])
+
   // Show loading state if session is still loading
   if (status === "loading") {
     return (
@@ -173,22 +206,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     )
   }
 
-  // Filter navigation items based on user role
-  const filteredNavMain = data.navMain
-    .filter(item => userRole && item.roles?.includes(userRole))
-    .map(item => {
-      if (item.items) {
-        const filteredItems = item.items.filter(subItem => 
-          subItem.roles?.includes(userRole)
-        )
-        return {
-          ...item,
-          items: filteredItems.length > 0 ? filteredItems : undefined
-        }
-      }
-      return item
-    })
-    .filter(item => !item.items || item.items.length > 0)
+  // If not authenticated, show minimal sidebar
+  if (status === "unauthenticated" || !session?.user) {
+    return (
+      <Sidebar variant="inset" {...props}>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link href="/auth/signin">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <GraduationCap className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">JLU College</span>
+                    <span className="truncate text-xs">Please Sign In</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+      </Sidebar>
+    )
+  }
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -215,7 +256,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredNavMain.map((item) => (
+              {filteredNavMain.length === 0 ? (
+                <SidebarMenuItem>
+                  <div className="p-2 text-sm text-muted-foreground">
+                    {userRole ? `No navigation items for role: ${userRole}` : "No user role found"}
+                  </div>
+                </SidebarMenuItem>
+              ) : (
+                filteredNavMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   {item.items ? (
                     <>
@@ -244,7 +292,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </SidebarMenuButton>
                   )}
                 </SidebarMenuItem>
-              ))}
+                ))
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

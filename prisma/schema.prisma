@@ -39,6 +39,8 @@ model Department {
   programs   Program[]
   users      User[]
   settings   DepartmentSettings?
+  academicCalendars AcademicCalendar[]
+  holidays   Holiday[]
 
   @@map("departments")
 }
@@ -104,6 +106,7 @@ model Batch {
   students          Student[]
   subjects          Subject[]
   timetableEntries  TimetableEntry[]
+  timetableTemplates TimetableTemplate[]
   attendanceSessions AttendanceSession[]
 
   @@unique([programId, specializationId, semester, startYear])
@@ -129,6 +132,8 @@ model User {
   primarySubjects  Subject[]   @relation("PrimaryFaculty")
   coFacultySubjects Subject[]  @relation("CoFaculty")
   timetableEntries TimetableEntry[]
+  timetableTemplates TimetableTemplate[] @relation("TemplateAuthors")
+  facultyPreferences FacultyPreferences?
 
   @@map("users")
 }
@@ -170,6 +175,7 @@ model TimeSlot {
 
   // Relations
   timetableEntries TimetableEntry[]
+  timetableTemplates TimetableTemplate[]
 
   @@map("time_slots")
 }
@@ -196,6 +202,7 @@ model Subject {
   primaryFaculty    User?             @relation("PrimaryFaculty", fields: [primaryFacultyId], references: [id])
   coFaculty         User?             @relation("CoFaculty", fields: [coFacultyId], references: [id])
   timetableEntries  TimetableEntry[]
+  timetableTemplates TimetableTemplate[]
   attendanceSessions AttendanceSession[]
 
   @@map("subjects")
@@ -223,6 +230,14 @@ model TimetableEntry {
   timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
 
   @@unique([batchId, timeSlotId, dayOfWeek, date])
+  @@index([batchId])
+  @@index([facultyId])
+  @@index([subjectId])
+  @@index([timeSlotId])
+  @@index([date])
+  @@index([dayOfWeek])
+  @@index([batchId, date])
+  @@index([facultyId, date])
   @@map("timetable_entries")
 }
 
@@ -295,6 +310,144 @@ enum Role {
   STUDENT
 }
 
+// Academic Calendar Management
+model AcademicCalendar {
+  id               String   @id @default(cuid())
+  departmentId     String
+  semesterName     String   // "Spring 2024", "Fall 2024"
+  academicYear     String   // "2024-25"
+  semesterStart    DateTime
+  semesterEnd      DateTime
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  department  Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  holidays    Holiday[]
+  examPeriods ExamPeriod[]
+
+  @@unique([departmentId, semesterName, academicYear])
+  @@index([departmentId])
+  @@index([semesterStart])
+  @@index([semesterEnd])
+  @@index([isActive])
+  @@map("academic_calendars")
+}
+
+// Holiday Management
+model Holiday {
+  id                String           @id @default(cuid())
+  name              String           // "Diwali", "Christmas", "University Day"
+  date              DateTime
+  type              HolidayType
+  departmentId      String?          // null for university-wide holidays
+  academicCalendarId String?
+  isRecurring       Boolean          @default(false)
+  description       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  department       Department?       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  academicCalendar AcademicCalendar? @relation(fields: [academicCalendarId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@index([type])
+  @@index([departmentId])
+  @@index([departmentId, date])
+  @@map("holidays")
+}
+
+// Exam Period Management
+model ExamPeriod {
+  id                String           @id @default(cuid())
+  name              String           // "Mid Semester Exam", "End Semester Exam"
+  academicCalendarId String
+  startDate         DateTime
+  endDate           DateTime
+  examType          ExamPeriodType   @default(INTERNAL)
+  blockRegularClasses Boolean        @default(true)
+  allowReviewClasses Boolean         @default(true)
+  description       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  academicCalendar AcademicCalendar @relation(fields: [academicCalendarId], references: [id], onDelete: Cascade)
+
+  @@index([academicCalendarId])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([examType])
+  @@index([startDate, endDate])
+  @@map("exam_periods")
+}
+
+// Timetable Template for recurring patterns
+model TimetableTemplate {
+  id               String              @id @default(cuid())
+  name             String              // "Standard B.Des Sem 5 Template"
+  batchId          String
+  subjectId        String
+  facultyId        String
+  timeSlotId       String
+  dayOfWeek        DayOfWeek
+  recurrencePattern RecurrencePattern  @default(WEEKLY)
+  startDate        DateTime
+  endDate          DateTime?
+  endCondition     EndCondition        @default(SEMESTER_END)
+  totalHours       Int?                // For HOURS_COMPLETE end condition
+  isActive         Boolean             @default(true)
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  // Relations
+  batch    Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  subject  Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  faculty  User     @relation("TemplateAuthors", fields: [facultyId], references: [id], onDelete: Cascade)
+  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+
+  @@map("timetable_templates")
+}
+
+// Faculty Preferences
+model FacultyPreferences {
+  id                String                @id @default(cuid())
+  facultyId         String                @unique
+  preferredTimeSlots Json?               // Array of preferred time slot IDs
+  blackoutPeriods   FacultyBlackoutPeriod[]
+  maxDailyHours     Int                   @default(8)
+  maxWeeklyHours    Int                   @default(40)
+  notificationSettings Json?             // Notification preferences
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  // Relations
+  faculty User @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@map("faculty_preferences")
+}
+
+// Faculty Blackout Periods
+model FacultyBlackoutPeriod {
+  id                   String             @id @default(cuid())
+  facultyPreferencesId String
+  startDate            DateTime
+  endDate              DateTime
+  reason               String?
+  isRecurring          Boolean            @default(false)
+  recurrencePattern    Json?              // For recurring blackouts
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  facultyPreferences FacultyPreferences @relation(fields: [facultyPreferencesId], references: [id], onDelete: Cascade)
+
+  @@map("faculty_blackout_periods")
+}
+
 // Department Settings for configurable options
 model DepartmentSettings {
   id                String   @id @default(cuid())
@@ -306,6 +459,17 @@ model DepartmentSettings {
   defaultSubjectTypes Json?  // Default subject types (replaces hardcoded enum)
   customExamTypes   Json?    // Additional exam types beyond the defaults
   customSubjectTypes Json?   // Additional subject types beyond the defaults
+  
+  // Timetable-specific settings
+  schedulingMode    SchedulingMode @default(MODULE_BASED) // Module-based vs Weekly recurring
+  displaySettings   Json?          // Display settings (time format, working days, etc.)
+  defaultTimeSlots  Json?          // Default time slot configurations
+  breakConfiguration Json?         // Break management settings
+  moduledurations   Json?          // Available module duration options
+  classTypes        Json?          // Available class types (Regular, Makeup, etc.)
+  conflictRules     Json?          // Conflict detection rules
+  autoCreateAttendance Boolean     @default(true) // Auto-create attendance sessions
+  
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -373,4 +537,39 @@ enum DisputeStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// New enums for timetable system
+enum HolidayType {
+  NATIONAL      // National holidays like Independence Day
+  UNIVERSITY    // University-wide holidays
+  DEPARTMENT    // Department-specific holidays
+  LOCAL         // Custom local holidays
+}
+
+enum ExamPeriodType {
+  INTERNAL      // Internal/Mid semester exams
+  EXTERNAL      // External/End semester exams
+  PRACTICAL     // Practical exams
+  VIVA          // Viva/oral exams
+  PROJECT       // Project presentations
+}
+
+enum RecurrencePattern {
+  DAILY         // Daily recurring
+  WEEKLY        // Weekly recurring  
+  MONTHLY       // Monthly recurring
+  CUSTOM        // Custom pattern
+}
+
+enum EndCondition {
+  SPECIFIC_DATE    // End on specific date
+  SEMESTER_END     // End with semester
+  HOURS_COMPLETE   // End when total hours completed
+  MANUAL_END       // Manual termination
+}
+
+enum SchedulingMode {
+  MODULE_BASED     // Module-based scheduling (Design dept default)
+  WEEKLY_RECURRING // Traditional weekly recurring schedule
 }

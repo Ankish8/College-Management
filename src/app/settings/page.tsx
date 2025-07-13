@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { isAdmin } from "@/lib/utils/permissions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, GraduationCap, Clock, Users, BookOpen, Building2 } from "lucide-react"
+import { Settings, GraduationCap, Clock, Users, BookOpen, Building2, Calendar, CalendarDays, UserCheck } from "lucide-react"
 import Link from "next/link"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -50,7 +50,28 @@ export default async function SettingsPage() {
       description: "Set up class timings and schedule periods",
       icon: Clock,
       href: "/settings/timeslots",
-      available: false,
+      available: true,
+    },
+    {
+      title: "Timetable Settings",
+      description: "Configure scheduling modes, breaks, and conflict resolution",
+      icon: Calendar,
+      href: "/settings/timetable",
+      available: true,
+    },
+    {
+      title: "Academic Calendar",
+      description: "Manage academic calendars, semesters, holidays, and exam periods",
+      icon: CalendarDays,
+      href: "/settings/academic-calendar",
+      available: true,
+    },
+    {
+      title: "Faculty Preferences",
+      description: "Configure teaching preferences, availability, and notification settings",
+      icon: UserCheck,
+      href: "/settings/faculty-preferences",
+      available: true,
     },
     {
       title: "User Management",
