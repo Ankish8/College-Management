@@ -13,9 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -29,6 +27,9 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
     }
   })
 
+  console.log('Fetching timetable entries with filters:', filters)
+  console.log('API URL:', `/api/timetable/entries?${searchParams.toString()}`)
+
   const response = await fetch(`/api/timetable/entries?${searchParams.toString()}`)
   
   if (!response.ok) {
@@ -36,7 +37,9 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
     throw new Error(error.message || 'Failed to fetch timetable entries')
   }
 
-  return response.json()
+  const data = await response.json()
+  console.log('Timetable API response:', data)
+  return data
 }
 
 // Convert timetable entry to calendar event
@@ -80,7 +83,7 @@ function timetableEntryToCalendarEvent(entry: any): CalendarEvent {
 
 // Fetch batches with program and specialization info
 async function fetchBatches() {
-  const response = await fetch('/api/batches?include=program,specialization')
+  const response = await fetch('/api/batches?active=true')
   if (!response.ok) {
     throw new Error('Failed to fetch batches')
   }
@@ -93,29 +96,31 @@ export default function TimetableClient() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
-  const [batchSelectorOpen, setBatchSelectorOpen] = useState(false)
   const hasInitializedBatch = React.useRef(false)
 
   // Fetch batches
   const { 
     data: batchesData, 
-    isLoading: isLoadingBatches 
+    isLoading: isLoadingBatches,
+    error: batchesError
   } = useQuery({
     queryKey: ['batches-for-timetable'],
     queryFn: fetchBatches,
     enabled: !!session?.user
   })
 
+
   // Auto-select first batch if none selected (only once)
   useEffect(() => {
-    if (batchesData?.batches && batchesData.batches.length > 0 && !hasInitializedBatch.current) {
-      setSelectedBatchId(batchesData.batches[0].id)
+    if (batchesData && batchesData.length > 0 && !hasInitializedBatch.current) {
+      setSelectedBatchId(batchesData[0].id)
       hasInitializedBatch.current = true
     }
-  }, [batchesData?.batches])
+  }, [batchesData])
 
   // Create stable filters object
   const filters = React.useMemo(() => {
+    console.log('Creating filters with selectedBatchId:', selectedBatchId)
     return selectedBatchId ? { batchId: selectedBatchId } : {}
   }, [selectedBatchId])
 
@@ -201,48 +206,8 @@ export default function TimetableClient() {
     }
   ]
 
-  // Convert entries to calendar events
-  const events: CalendarEvent[] = React.useMemo(() => {
-    // For now, use sample data if no real data is available
-    if (!timetableData?.entries || timetableData.entries.length === 0) {
-      return sampleEvents
-    }
-    return timetableData.entries.map(timetableEntryToCalendarEvent)
-  }, [timetableData, sampleEvents])
-
-  const handleEventClick = (event: CalendarEvent) => {
-    toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
-  }
-
-  const handleEventEdit = (event: CalendarEvent) => {
-    toast.info(`Edit: ${event.extendedProps?.subjectName}`)
-  }
-
-  const handleEventCreate = (date: Date, timeSlot?: string) => {
-    setSelectedDate(date)
-    setIsCreateModalOpen(true)
-  }
-
-  const handleFiltersChange = (newFilters: TimetableFilters) => {
-    // For now, we only support batch filtering from the main selector
-    // Additional filters can be implemented here if needed
-    console.log('Filters changed:', newFilters)
-  }
-
-  const handleViewStateChange = (viewState: any) => {
-    setCurrentView(viewState.view)
-  }
-
-  const handleBatchChange = (batchId: string) => {
-    setSelectedBatchId(batchId)
-    setBatchSelectorOpen(false)
-  }
-
-  // Get selected batch info for display
-  const selectedBatch = batchesData?.batches?.find((batch: any) => batch.id === selectedBatchId)
-
   // Format batch display text
-  const formatBatchDisplay = (batch: any) => {
+  const formatBatchDisplay = React.useCallback((batch: any) => {
     if (!batch) return ''
     
     const parts = []
@@ -263,7 +228,164 @@ export default function TimetableClient() {
     }
     
     return parts.join(' • ')
+  }, [])
+
+  // Convert entries to calendar events
+  const events: CalendarEvent[] = React.useMemo(() => {
+    // Use real data if available
+    if (timetableData?.entries && timetableData.entries.length > 0) {
+      const realEvents = timetableData.entries.map(timetableEntryToCalendarEvent)
+      console.log('Using real timetable data:', realEvents.length, 'events')
+      return realEvents
+    }
+    
+    // If no real data, filter sample events by selected batch for demonstration
+    if (selectedBatchId) {
+      // Create batch-specific sample data
+      const batchInfo = batchesData?.find(b => b.id === selectedBatchId)
+      if (batchInfo) {
+        const batchName = formatBatchDisplay(batchInfo)
+        console.log('Using sample data for batch:', batchName)
+        // Only show sample data if it matches the selected batch context
+        return sampleEvents.map(event => ({
+          ...event,
+          title: `${event.extendedProps?.subjectName} - ${batchName}`,
+          extendedProps: {
+            ...event.extendedProps,
+            batchId: selectedBatchId,
+            batchName: batchName
+          }
+        }))
+      }
+    }
+    
+    return []
+  }, [timetableData, sampleEvents, selectedBatchId, batchesData, formatBatchDisplay])
+
+  const handleEventClick = (event: CalendarEvent) => {
+    toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
   }
+
+  const handleEventEdit = (event: CalendarEvent) => {
+    toast.info(`Edit: ${event.extendedProps?.subjectName}`)
+  }
+
+  const handleEventCreate = (date: Date, timeSlot?: string) => {
+    setSelectedDate(date)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEventDrop = async (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => {
+    try {
+      console.log('Dropping event:', { eventId, newDate, newTimeSlot, newDayOfWeek })
+      
+      // Check if this is a sample event (sample events have simple numeric IDs)
+      if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
+        toast.info('📋 Nice! Drag and drop is working. This is sample data, so changes won\'t save. Create real classes to persist changes.')
+        return
+      }
+      
+      const requestBody = {
+        dayOfWeek: newDayOfWeek,
+        timeSlotName: newTimeSlot,
+      }
+      console.log('Request body:', requestBody)
+      
+      // Update the timetable entry via API
+      const response = await fetch(`/api/timetable/entries/${eventId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      console.log('Response status:', response.status)
+      const responseText = await response.text()
+      console.log('Response body:', responseText)
+      
+      if (!response.ok) {
+        let errorData = {}
+        try {
+          errorData = JSON.parse(responseText)
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${responseText}` }
+        }
+        console.error('API Error:', errorData)
+        
+        // Show user-friendly conflict messages
+        if (response.status === 409 && errorData.conflicts) {
+          const conflict = errorData.conflicts[0]
+          if (conflict.type === 'FACULTY_CONFLICT') {
+            const facultyName = conflict.details[0]?.subject?.name || 'another subject'
+            throw new Error(`Faculty is already teaching ${facultyName} at this time. Please choose a different time slot.`)
+          } else if (conflict.type === 'BATCH_CONFLICT') {
+            const subjectName = conflict.details[0]?.subject?.name || 'another class'
+            throw new Error(`This batch already has ${subjectName} scheduled at this time. Please choose a different time slot.`)
+          }
+        }
+        
+        throw new Error(errorData.error || `Failed to update timetable entry (${response.status})`)
+      }
+
+      const result = JSON.parse(responseText)
+      console.log('Update successful:', result)
+
+      // Refresh the timetable data
+      refetch()
+      toast.success('Class moved successfully!')
+    } catch (error) {
+      console.error('Error moving class:', error)
+      toast.error(`Failed to move class: ${error.message}`)
+    }
+  }
+
+  // Check conflicts across all batches for a faculty
+  const checkConflicts = async (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => {
+    try {
+      const params = new URLSearchParams({
+        facultyId,
+        dayOfWeek,
+        timeSlotName: timeSlot,
+      })
+      
+      if (excludeEventId) {
+        params.append('excludeEventId', excludeEventId)
+      }
+      
+      const response = await fetch(`/api/timetable/conflicts?${params.toString()}`)
+      
+      if (!response.ok) {
+        console.error('Conflict check failed:', response.status)
+        return false // Assume no conflict if check fails
+      }
+      
+      const result = await response.json()
+      return result.hasConflict
+    } catch (error) {
+      console.error('Error checking conflicts:', error)
+      return false // Assume no conflict if check fails
+    }
+  }
+
+  const handleFiltersChange = (newFilters: TimetableFilters) => {
+    // For now, we only support batch filtering from the main selector
+    // Additional filters can be implemented here if needed
+    console.log('Filters changed:', newFilters)
+  }
+
+  const handleViewStateChange = (viewState: any) => {
+    setCurrentView(viewState.view)
+  }
+
+  const handleBatchChange = (batchId: string) => {
+    setSelectedBatchId(batchId)
+    // Force refetch of timetable data when batch changes
+    refetch()
+  }
+
+  // Get selected batch info for display
+  const selectedBatch = batchesData?.find((batch: any) => batch.id === selectedBatchId)
 
   if (error) {
     return (
@@ -295,66 +417,47 @@ export default function TimetableClient() {
             <Skeleton className="h-10 w-80" />
           ) : (
             <div className="flex items-center gap-3">
-              <Popover open={batchSelectorOpen} onOpenChange={setBatchSelectorOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={batchSelectorOpen}
-                    className="w-80 justify-between"
-                  >
+              <Select value={selectedBatchId} onValueChange={handleBatchChange}>
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select batch...">
                     {selectedBatch ? (
                       <div className="flex items-center gap-2 truncate">
                         <span className="font-medium truncate">
                           {formatBatchDisplay(selectedBatch)}
                         </span>
+                        {selectedBatch.specialization && (
+                          <Badge variant="secondary" className="text-xs">
+                            {selectedBatch.specialization.name}
+                          </Badge>
+                        )}
                       </div>
                     ) : (
                       "Select batch..."
                     )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
-                  <Command>
-                    <CommandInput placeholder="Search batches..." />
-                    <CommandList>
-                      <CommandEmpty>No batch found.</CommandEmpty>
-                      <CommandGroup>
-                        {batchesData?.batches?.map((batch: any) => (
-                          <CommandItem
-                            key={batch.id}
-                            value={formatBatchDisplay(batch)}
-                            onSelect={() => handleBatchChange(batch.id)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedBatchId === batch.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {formatBatchDisplay(batch)}
-                                </span>
-                                {batch.specialization && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {batch.specialization.name}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {batch.program?.name} • {batch.name}
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {batchesData?.map((batch: any) => (
+                    <SelectItem key={batch.id} value={batch.id}>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {formatBatchDisplay(batch)}
+                          </span>
+                          {batch.specialization && (
+                            <Badge variant="secondary" className="text-xs">
+                              {batch.specialization.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {batch.program?.name} • {batch.name}
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               
               {selectedBatch && (
                 <div className="text-sm text-muted-foreground">
@@ -365,20 +468,37 @@ export default function TimetableClient() {
           )}
         </div>
         
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => setIsCreateModalOpen(true)}
-            disabled={!selectedBatchId}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Class
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/settings/timetable">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Link>
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsCreateModalOpen(true)}
+              disabled={!selectedBatchId}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Class
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                console.log('Manual refetch triggered')
+                refetch()
+              }}
+            >
+              🔄 Refresh Data
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/timetable">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
+            </Button>
+          </div>
+          
+          {events.length > 0 && events.every(e => e.id.length < 10) && (
+            <div className="text-sm text-muted-foreground bg-orange-50/50 px-3 py-2 rounded-lg border border-orange-200">
+              🎯 <strong>Try it out!</strong> Drag the classes around to see how it works. Create real classes to save changes permanently.
+            </div>
+          )}
         </div>
       </div>
 
@@ -407,7 +527,9 @@ export default function TimetableClient() {
             onEventClick={handleEventClick}
             onEventEdit={handleEventEdit}
             onEventCreate={handleEventCreate}
+            onEventDrop={handleEventDrop}
             onViewStateChange={handleViewStateChange}
+            onCheckConflicts={checkConflicts}
             isLoading={isLoading}
             conflicts={[]}
             showWeekends={false}

@@ -60,10 +60,27 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user && token.id) {
+        // Use cached token data instead of DB query on every session check
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          role: token.role as Role,
+          phone: token.phone as string | null,
+          employeeId: token.employeeId as string | null,
+          departmentId: token.departmentId as string | null,
+          status: token.status as UserStatus,
+          department: token.department as any,
+          student: token.student as any,
+        }
+      }
+      return session
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        // Only fetch user details during initial login
         try {
-          // Fetch full user details including relationships
           const dbUser = await db.user.findUnique({
-            where: { id: token.id as string },
+            where: { id: user.id },
             include: {
               department: true,
               student: {
@@ -75,38 +92,29 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (dbUser) {
-            session.user = {
-              ...session.user,
-              id: dbUser.id,
-              role: dbUser.role as Role,
-              phone: dbUser.phone,
-              employeeId: dbUser.employeeId,
-              departmentId: dbUser.departmentId,
-              status: dbUser.status as UserStatus,
-              department: dbUser.department ? {
-                id: dbUser.department.id,
-                name: dbUser.department.name,
-                shortName: dbUser.department.shortName,
-              } : undefined,
-              student: dbUser.student ? {
-                id: dbUser.student.id,
-                studentId: dbUser.student.studentId,
-                rollNumber: dbUser.student.rollNumber,
-                batchId: dbUser.student.batchId,
-              } : undefined,
-            }
+            token.id = dbUser.id
+            token.role = dbUser.role
+            token.phone = dbUser.phone
+            token.employeeId = dbUser.employeeId
+            token.departmentId = dbUser.departmentId
+            token.status = dbUser.status
+            token.department = dbUser.department ? {
+              id: dbUser.department.id,
+              name: dbUser.department.name,
+              shortName: dbUser.department.shortName,
+            } : undefined
+            token.student = dbUser.student ? {
+              id: dbUser.student.id,
+              studentId: dbUser.student.studentId,
+              rollNumber: dbUser.student.rollNumber,
+              batchId: dbUser.student.batchId,
+            } : undefined
           }
         } catch (error) {
-          console.error("Session callback error:", error)
-          // Return basic session without database data if query fails
-          session.user = {
-            ...session.user,
-            id: token.id as string,
-            role: token.role as Role,
-          }
+          console.error("JWT callback error:", error)
         }
       }
-      return session
+      return token
     },
   },
   pages: {
@@ -114,6 +122,19 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 2 * 60 * 60, // 2 hours
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 }
 

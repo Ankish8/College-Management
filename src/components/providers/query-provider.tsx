@@ -9,15 +9,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Aggressive caching for maximum performance
-            staleTime: 30 * 1000, // 30 seconds - much faster
-            gcTime: 2 * 60 * 1000, // 2 minutes
+            // Balanced caching for development
+            staleTime: 10 * 1000, // 10 seconds - fresh enough for development
+            gcTime: 5 * 60 * 1000, // 5 minutes
             refetchOnWindowFocus: false,
-            refetchOnMount: false, // Don't refetch if data exists
-            refetchOnReconnect: false,
+            refetchOnMount: 'always', // Always refetch on mount for fresh data
+            refetchOnReconnect: true,
             refetchInterval: false,
             refetchIntervalInBackground: false,
-            retry: 0, // No retries for faster responses
+            retry: 1, // One retry for reliability
             networkMode: 'online',
           },
           mutations: {

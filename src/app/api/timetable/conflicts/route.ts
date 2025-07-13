@@ -16,6 +16,14 @@ const conflictCheckSchema = z.object({
   excludeId: z.string().optional(), // For updates
 })
 
+// Simple conflict check schema for drag and drop
+const simpleConflictCheckSchema = z.object({
+  facultyId: z.string(),
+  dayOfWeek: z.nativeEnum(DayOfWeek),
+  timeSlotName: z.string(),
+  excludeEventId: z.string().optional(),
+})
+
 // Enhanced conflict detection with alternative suggestions
 async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheckSchema>) {
   const conflicts = []
@@ -236,6 +244,106 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
   }
 
   return { conflicts, alternatives }
+}
+
+// Simple conflict check for drag and drop
+async function checkSimpleConflict(data: z.infer<typeof simpleConflictCheckSchema>) {
+  // Find the time slot by name
+  const timeSlot = await db.timeSlot.findFirst({
+    where: { name: data.timeSlotName }
+  })
+  
+  if (!timeSlot) {
+    return { hasConflict: false, reason: "Time slot not found" }
+  }
+
+  // Check for faculty conflicts across all batches
+  const whereClause: any = {
+    isActive: true,
+    facultyId: data.facultyId,
+    dayOfWeek: data.dayOfWeek,
+    timeSlotId: timeSlot.id,
+  }
+
+  // Exclude the current event if provided
+  if (data.excludeEventId) {
+    whereClause.NOT = { id: data.excludeEventId }
+  }
+
+  const conflictingEntry = await db.timetableEntry.findFirst({
+    where: whereClause,
+    include: {
+      subject: { select: { name: true, code: true } },
+      batch: { 
+        select: { 
+          name: true,
+          program: { select: { name: true, shortName: true } },
+          specialization: { select: { name: true, shortName: true } }
+        } 
+      },
+      timeSlot: { select: { name: true } },
+    }
+  })
+
+  if (conflictingEntry) {
+    return {
+      hasConflict: true,
+      conflictType: "FACULTY_CONFLICT",
+      conflictDetails: {
+        subjectName: conflictingEntry.subject.name,
+        subjectCode: conflictingEntry.subject.code,
+        batchName: conflictingEntry.batch.name,
+        timeSlot: conflictingEntry.timeSlot.name,
+      }
+    }
+  }
+
+  return { hasConflict: false }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const facultyId = searchParams.get('facultyId')
+    const dayOfWeek = searchParams.get('dayOfWeek')
+    const timeSlotName = searchParams.get('timeSlotName')
+    const excludeEventId = searchParams.get('excludeEventId')
+
+    if (!facultyId || !dayOfWeek || !timeSlotName) {
+      return NextResponse.json(
+        { error: "Missing required parameters: facultyId, dayOfWeek, timeSlotName" },
+        { status: 400 }
+      )
+    }
+
+    const validatedData = simpleConflictCheckSchema.parse({
+      facultyId,
+      dayOfWeek,
+      timeSlotName,
+      excludeEventId: excludeEventId || undefined,
+    })
+
+    const result = await checkSimpleConflict(validatedData)
+    return NextResponse.json(result)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid parameters", details: error.issues },
+        { status: 400 }
+      )
+    }
+
+    console.error("Error checking simple conflicts:", error)
+    return NextResponse.json(
+      { error: "Failed to check conflicts" },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {

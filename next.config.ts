@@ -16,7 +16,20 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
     // Better tree shaking
     optimizePackageImports: ['@tanstack/react-query']
-  }
+  },
+  // Development specific settings
+  ...(process.env.NODE_ENV === 'development' && {
+    // Disable caching in development
+    onDemandEntries: {
+      maxInactiveAge: 25 * 1000,
+      pagesBufferLength: 2,
+    },
+    // Enable fast refresh
+    webpack: (config: any) => {
+      config.cache = false
+      return config
+    }
+  })
 };
 
 export default nextConfig;

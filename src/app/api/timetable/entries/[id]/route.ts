@@ -336,6 +336,134 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    
+    // For drag and drop, we expect timeSlotName instead of timeSlotId
+    if (body.timeSlotName) {
+      // Find the time slot by name
+      const timeSlot = await db.timeSlot.findFirst({
+        where: { name: body.timeSlotName }
+      })
+      
+      if (!timeSlot) {
+        // List all available time slots for debugging
+        const allTimeSlots = await db.timeSlot.findMany()
+        return NextResponse.json({ 
+          error: "Time slot not found", 
+          requested: body.timeSlotName,
+          available: allTimeSlots.map(ts => ts.name)
+        }, { status: 400 })
+      }
+      
+      body.timeSlotId = timeSlot.id
+      delete body.timeSlotName
+    }
+
+    const validatedData = updateTimetableEntrySchema.parse(body)
+
+    // Get existing entry
+    const existingEntry = await db.timetableEntry.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingEntry) {
+      return NextResponse.json(
+        { error: "Timetable entry not found" },
+        { status: 404 }
+      )
+    }
+
+    // Check for conflicts with the updated data
+    const mergedData = {
+      batchId: validatedData.batchId || existingEntry.batchId,
+      facultyId: validatedData.facultyId || existingEntry.facultyId,
+      timeSlotId: validatedData.timeSlotId || existingEntry.timeSlotId,
+      dayOfWeek: validatedData.dayOfWeek || existingEntry.dayOfWeek,
+      date: validatedData.date || existingEntry.date,
+      entryType: validatedData.entryType || existingEntry.entryType,
+    }
+
+    const conflicts = await checkConflicts(mergedData, params.id)
+    
+    if (conflicts.length > 0) {
+      return NextResponse.json(
+        { 
+          error: "Scheduling conflicts detected", 
+          conflicts 
+        },
+        { status: 409 }
+      )
+    }
+
+    // Prepare update data
+    const updateData: any = {}
+    if (validatedData.dayOfWeek !== undefined) updateData.dayOfWeek = validatedData.dayOfWeek
+    if (validatedData.timeSlotId !== undefined) updateData.timeSlotId = validatedData.timeSlotId
+
+    // Update the entry
+    const updatedEntry = await db.timetableEntry.update({
+      where: { id: params.id },
+      data: updateData,
+      include: {
+        batch: {
+          select: {
+            name: true,
+            semester: true,
+            program: { select: { name: true, shortName: true } },
+            specialization: { select: { name: true, shortName: true } },
+          }
+        },
+        subject: {
+          select: {
+            name: true,
+            code: true,
+            credits: true,
+          }
+        },
+        faculty: {
+          select: {
+            name: true,
+            email: true,
+          }
+        },
+        timeSlot: {
+          select: {
+            name: true,
+            startTime: true,
+            endTime: true,
+            duration: true,
+          }
+        },
+      }
+    })
+
+    return NextResponse.json(updatedEntry)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", details: error.issues },
+        { status: 400 }
+      )
+    }
+
+    console.error("Error updating timetable entry:", error)
+    return NextResponse.json(
+      { error: "Failed to update timetable entry" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

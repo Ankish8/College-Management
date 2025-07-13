@@ -136,6 +136,7 @@ export interface TimetableViewProps {
   onEventClick?: (event: CalendarEvent) => void
   onEventEdit?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
+  onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
   filters: TimetableFilters
   onFiltersChange: (filters: TimetableFilters) => void
   isLoading?: boolean

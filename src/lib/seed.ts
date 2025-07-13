@@ -218,6 +218,59 @@ async function seedDatabase() {
       },
     })
 
+    // Create real timetable entries for testing drag and drop
+    console.log('Creating timetable entries...')
+    
+    // Get time slots
+    const allTimeSlots = await db.timeSlot.findMany()
+    const morningSlot = allTimeSlots.find(ts => ts.startTime.includes('10:00')) || allTimeSlots[0]
+    const afternoonSlot = allTimeSlots.find(ts => ts.startTime.includes('11:30')) || allTimeSlots[1]
+    
+    // Get subjects and faculty
+    const designFundamentals = await db.subject.findFirst({ where: { code: 'DF101' } })
+    const typography = await db.subject.findFirst({ where: { code: 'TYP201' } })
+    const faculty = await db.user.findFirst({ where: { role: 'FACULTY' } })
+    
+    if (designFundamentals && faculty && batch5 && morningSlot) {
+      // Create Design Fundamentals class
+      await db.timetableEntry.upsert({
+        where: { 
+          id: 'real-df-monday-10am' 
+        },
+        update: {},
+        create: {
+          id: 'real-df-monday-10am',
+          batchId: batch5.id,
+          subjectId: designFundamentals.id,
+          facultyId: faculty.id,
+          timeSlotId: morningSlot.id,
+          dayOfWeek: 'MONDAY',
+          entryType: 'REGULAR',
+          isActive: true,
+        }
+      })
+    }
+    
+    if (typography && faculty && batch5 && afternoonSlot) {
+      // Create Typography class
+      await db.timetableEntry.upsert({
+        where: { 
+          id: 'real-typ-tuesday-1130am' 
+        },
+        update: {},
+        create: {
+          id: 'real-typ-tuesday-1130am',
+          batchId: batch5.id,
+          subjectId: typography.id,
+          facultyId: faculty.id,
+          timeSlotId: afternoonSlot.id,
+          dayOfWeek: 'TUESDAY',
+          entryType: 'REGULAR',
+          isActive: true,
+        }
+      })
+    }
+
     console.log("Database seeded successfully!")
     console.log("Admin login: admin@jlu.edu.in / admin123")
     console.log("Faculty login: ankish.khatri@jlu.edu.in / password123")

@@ -246,16 +246,22 @@ export function CreateTimetableEntryModal({
       setValue('date', defaultDate.toISOString().split('T')[0])
       setValue('dayOfWeek', getDayOfWeekFromDate(defaultDate))
     }
-    if (defaultTimeSlot && timeSlots.length > 0) {
+  }, [defaultDate, setValue])
+
+  useEffect(() => {
+    if (defaultTimeSlot && timeSlots && timeSlots.length > 0) {
       const timeSlot = timeSlots.find(ts => ts.name === defaultTimeSlot)
       if (timeSlot) {
         setValue('timeSlotId', timeSlot.id)
       }
     }
+  }, [defaultTimeSlot, timeSlots, setValue])
+
+  useEffect(() => {
     if (defaultBatchId) {
       setValue('batchId', defaultBatchId)
     }
-  }, [defaultDate, defaultTimeSlot, defaultBatchId, timeSlots, setValue])
+  }, [defaultBatchId, setValue])
 
   const getDayOfWeekFromDate = (date: Date): DayOfWeek => {
     const days: DayOfWeek[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
