@@ -12,8 +12,11 @@ import { CreateTimetableEntryModal } from '@/components/timetable/create-timetab
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 // Fetch timetable entries
@@ -90,6 +93,7 @@ export default function TimetableClient() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
+  const [batchSelectorOpen, setBatchSelectorOpen] = useState(false)
   const hasInitializedBatch = React.useRef(false)
 
   // Fetch batches
@@ -231,10 +235,35 @@ export default function TimetableClient() {
 
   const handleBatchChange = (batchId: string) => {
     setSelectedBatchId(batchId)
+    setBatchSelectorOpen(false)
   }
 
   // Get selected batch info for display
   const selectedBatch = batchesData?.batches?.find((batch: any) => batch.id === selectedBatchId)
+
+  // Format batch display text
+  const formatBatchDisplay = (batch: any) => {
+    if (!batch) return ''
+    
+    const parts = []
+    
+    // Add program (e.g., "B.Des")
+    if (batch.program?.shortName) {
+      parts.push(batch.program.shortName)
+    }
+    
+    // Add semester (e.g., "Semester 6")
+    if (batch.semester) {
+      parts.push(`Semester ${batch.semester}`)
+    }
+    
+    // Add specialization (e.g., "UX")
+    if (batch.specialization?.shortName) {
+      parts.push(batch.specialization.shortName)
+    }
+    
+    return parts.join(' • ')
+  }
 
   if (error) {
     return (
@@ -263,35 +292,73 @@ export default function TimetableClient() {
           
           {/* Batch Selector */}
           {isLoadingBatches ? (
-            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-80" />
           ) : (
             <div className="flex items-center gap-3">
-              <Select value={selectedBatchId} onValueChange={handleBatchChange}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {batchesData?.batches?.map((batch: any) => (
-                    <SelectItem key={batch.id} value={batch.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{batch.name}</span>
-                        {batch.specialization && (
-                          <Badge variant="secondary" className="text-xs">
-                            {batch.specialization.shortName}
-                          </Badge>
-                        )}
+              <Popover open={batchSelectorOpen} onOpenChange={setBatchSelectorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={batchSelectorOpen}
+                    className="w-80 justify-between"
+                  >
+                    {selectedBatch ? (
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="font-medium truncate">
+                          {formatBatchDisplay(selectedBatch)}
+                        </span>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    ) : (
+                      "Select batch..."
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <Command>
+                    <CommandInput placeholder="Search batches..." />
+                    <CommandList>
+                      <CommandEmpty>No batch found.</CommandEmpty>
+                      <CommandGroup>
+                        {batchesData?.batches?.map((batch: any) => (
+                          <CommandItem
+                            key={batch.id}
+                            value={formatBatchDisplay(batch)}
+                            onSelect={() => handleBatchChange(batch.id)}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedBatchId === batch.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {formatBatchDisplay(batch)}
+                                </span>
+                                {batch.specialization && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {batch.specialization.name}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {batch.program?.name} • {batch.name}
+                              </div>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               
               {selectedBatch && (
                 <div className="text-sm text-muted-foreground">
                   <span className="font-medium">{selectedBatch.program?.name}</span>
-                  {selectedBatch.specialization && (
-                    <span> • {selectedBatch.specialization.name}</span>
-                  )}
                 </div>
               )}
             </div>
