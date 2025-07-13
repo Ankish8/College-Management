@@ -10,13 +10,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { AlertTriangle, Trash2 } from 'lucide-react'
 import { CalendarEvent } from '@/types/timetable'
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (dontAskAgain: boolean) => void
   event: CalendarEvent | null
   isDeleting?: boolean
 }
@@ -28,12 +29,21 @@ export function DeleteConfirmationModal({
   event,
   isDeleting = false
 }: DeleteConfirmationModalProps) {
+  const [dontAskAgain, setDontAskAgain] = React.useState(false)
+  
   if (!event) return null
 
   const handleConfirm = () => {
-    onConfirm()
+    onConfirm(dontAskAgain)
     onClose()
   }
+
+  // Reset the checkbox when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setDontAskAgain(false)
+    }
+  }, [isOpen])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -71,6 +81,22 @@ export function DeleteConfirmationModal({
               <strong>Credits:</strong> {event.extendedProps.credits}
             </div>
           )}
+        </div>
+
+        {/* Don't ask again checkbox */}
+        <div className="flex items-center space-x-2 pt-2">
+          <Checkbox
+            id="dont-ask-again"
+            checked={dontAskAgain}
+            onCheckedChange={(checked) => setDontAskAgain(checked === true)}
+            disabled={isDeleting}
+          />
+          <label
+            htmlFor="dont-ask-again"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Don't ask again this session
+          </label>
         </div>
 
         <DialogFooter className="gap-2">

@@ -164,9 +164,18 @@ export default function TimetableClient() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
   const hasInitializedBatch = React.useRef(false)
+
+  // Initialize "don't ask again" state from session storage
+  React.useEffect(() => {
+    const skipConfirmation = sessionStorage.getItem('skipDeleteConfirmation')
+    if (skipConfirmation === 'true') {
+      setSkipDeleteConfirmation(true)
+    }
+  }, [])
 
   // Fetch batches
   const { 
@@ -484,7 +493,7 @@ export default function TimetableClient() {
     }
   }
 
-  // Show delete confirmation modal
+  // Show delete confirmation modal or directly delete if skipping confirmation
   const handleEventDelete = (eventId: string) => {
     console.log('🗑️ handleEventDelete called with eventId:', eventId)
     
@@ -494,17 +503,30 @@ export default function TimetableClient() {
       return
     }
 
-    // Find the event to show details in the modal
+    // Find the event
     const event = events.find(e => e.id === eventId)
-    if (event) {
+    if (!event) return
+
+    // If user has chosen to skip confirmation, delete directly
+    if (skipDeleteConfirmation) {
+      setEventToDelete(event)
+      confirmEventDelete()
+    } else {
+      // Show confirmation modal
       setEventToDelete(event)
       setIsDeleteModalOpen(true)
     }
   }
 
   // Actually delete the timetable entry
-  const confirmEventDelete = async () => {
+  const confirmEventDelete = async (dontAskAgain: boolean = false) => {
     if (!eventToDelete) return
+
+    // Save "don't ask again" preference to session storage
+    if (dontAskAgain) {
+      sessionStorage.setItem('skipDeleteConfirmation', 'true')
+      setSkipDeleteConfirmation(true)
+    }
     
     try {
       setIsDeleting(true)
@@ -657,6 +679,20 @@ export default function TimetableClient() {
             >
               🔄 Refresh Data
             </Button>
+            {skipDeleteConfirmation && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  sessionStorage.removeItem('skipDeleteConfirmation')
+                  setSkipDeleteConfirmation(false)
+                  toast.info('Delete confirmations re-enabled')
+                }}
+                className="text-xs"
+              >
+                Re-enable delete confirmations
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link href="/settings/timetable">
                 <Settings className="h-4 w-4 mr-2" />
@@ -731,7 +767,7 @@ export default function TimetableClient() {
           setIsDeleteModalOpen(false)
           setEventToDelete(null)
         }}
-        onConfirm={confirmEventDelete}
+        onConfirm={(dontAskAgain) => confirmEventDelete(dontAskAgain)}
         event={eventToDelete}
         isDeleting={isDeleting}
       />
