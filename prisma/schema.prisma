@@ -134,6 +134,8 @@ model User {
   timetableEntries TimetableEntry[]
   timetableTemplates TimetableTemplate[] @relation("TemplateAuthors")
   facultyPreferences FacultyPreferences?
+  pushSubscriptions PushSubscription[]
+  notificationsSent NotificationLog[] @relation("NotificationsSent")
 
   @@map("users")
 }
@@ -572,4 +574,38 @@ enum EndCondition {
 enum SchedulingMode {
   MODULE_BASED     // Module-based scheduling (Design dept default)
   WEEKLY_RECURRING // Traditional weekly recurring schedule
+}
+
+// Push Notifications and Mobile Features
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String
+  p256dhKey  String
+  authKey    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@map("push_subscriptions")
+}
+
+model NotificationLog {
+  id           String   @id @default(cuid())
+  senderId     String
+  title        String
+  body         String
+  targetCount  Int      @default(0)
+  successCount Int      @default(0)
+  failureCount Int      @default(0)
+  metadata     Json?    // Additional data like roles, batch IDs, etc.
+  createdAt    DateTime @default(now())
+
+  // Relations
+  sender User @relation("NotificationsSent", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("notification_logs")
 }

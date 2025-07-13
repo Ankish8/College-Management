@@ -1,0 +1,375 @@
+# Alerting Rules for College Management System
+# Comprehensive alerting for infrastructure, application, and business metrics
+
+groups:
+  # ==============================================
+  # Infrastructure Alerts
+  # ==============================================
+  - name: infrastructure
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for instance {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Critical CPU usage detected"
+          description: "CPU usage is above 95% for instance {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for instance {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Critical memory usage detected"
+          description: "Memory usage is above 95% for instance {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Disk space is running low"
+          description: "Disk space is below 15% for {{ $labels.device }} on {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Critical disk space shortage"
+          description: "Disk space is below 5% for {{ $labels.device }} on {{ $labels.instance }} (current value: {{ $value }}%)"
+
+  # ==============================================
+  # Application Alerts
+  # ==============================================
+  - name: application
+    interval: 15s
+    rules:
+      - alert: ApplicationDown
+        expr: up{job="college-management-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "Application is down"
+          description: "College Management System application is not responding on instance {{ $labels.instance }}"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="college-management-app"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: application
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 2 seconds (current value: {{ $value }}s)"
+
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="college-management-app"}[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "Critical response time detected"
+          description: "95th percentile response time is above 5 seconds (current value: {{ $value }}s)"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="college-management-app",status=~"5.."}[5m]) / rate(http_requests_total{job="college-management-app"}[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: application
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% (current value: {{ $value }}%)"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_requests_total{job="college-management-app",status=~"5.."}[5m]) / rate(http_requests_total{job="college-management-app"}[5m]) * 100 > 15
+        for: 2m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is above 15% (current value: {{ $value }}%)"
+
+      - alert: HighMemoryUsageApp
+        expr: container_memory_usage_bytes{name=~".*college-management.*"} / container_spec_memory_limit_bytes{name=~".*college-management.*"} * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: application
+        annotations:
+          summary: "High application memory usage"
+          description: "Application memory usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: ApplicationRestartLoop
+        expr: increase(container_restart_count{name=~".*college-management.*"}[10m]) > 2
+        for: 5m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "Application restart loop detected"
+          description: "Application has restarted {{ $value }} times in the last 10 minutes"
+
+  # ==============================================
+  # Database Alerts
+  # ==============================================
+  - name: database
+    interval: 30s
+    rules:
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database is down"
+          description: "PostgreSQL database is not responding"
+
+      - alert: DatabaseHighConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High database connections"
+          description: "Database connection usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: DatabaseSlowQueries
+        expr: pg_stat_activity_max_tx_duration{datname!="template0",datname!="template1",datname!="postgres"} > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Longest running query is {{ $value }} seconds on database {{ $labels.datname }}"
+
+      - alert: DatabaseDeadlocks
+        expr: increase(pg_stat_database_deadlocks[10m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database deadlocks detected"
+          description: "{{ $value }} deadlocks detected in the last 10 minutes on database {{ $labels.datname }}"
+
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag_seconds > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database replication lag high"
+          description: "Replication lag is {{ $value }} seconds"
+
+  # ==============================================
+  # Redis Alerts
+  # ==============================================
+  - name: redis
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache server is not responding"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: RedisHighConnections
+        expr: redis_connected_clients / redis_config_maxclients * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high connections"
+          description: "Redis connection usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: RedisSlowQueries
+        expr: redis_slowlog_length > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis slow queries detected"
+          description: "{{ $value }} slow queries detected in Redis slow log"
+
+  # ==============================================
+  # Business Logic Alerts
+  # ==============================================
+  - name: business
+    interval: 60s
+    rules:
+      - alert: HighAuthenticationFailures
+        expr: increase(cms_authentication_failures_total[10m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High authentication failures"
+          description: "{{ $value }} authentication failures in the last 10 minutes"
+
+      - alert: LowUserActivity
+        expr: cms_active_users_count < 10
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low user activity"
+          description: "Only {{ $value }} active users in the last 30 minutes during business hours"
+
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: cms_db_connection_pool_used / cms_db_connection_pool_max * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Database connection pool usage is above 90% (current value: {{ $value }}%)"
+
+      - alert: AttendanceMarkingIssues
+        expr: increase(cms_attendance_marking_errors_total[30m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Issues with attendance marking"
+          description: "{{ $value }} attendance marking errors in the last 30 minutes"
+
+      - alert: TimetableConflicts
+        expr: cms_timetable_conflicts_count > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Timetable conflicts detected"
+          description: "{{ $value }} timetable conflicts currently exist"
+
+  # ==============================================
+  # Security Alerts
+  # ==============================================
+  - name: security
+    interval: 30s
+    rules:
+      - alert: SuspiciousUserActivity
+        expr: increase(cms_suspicious_activity_total[10m]) > 5
+        for: 0m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Suspicious user activity detected"
+          description: "{{ $value }} suspicious activities detected in the last 10 minutes"
+
+      - alert: UnauthorizedAccessAttempts
+        expr: increase(cms_unauthorized_access_attempts_total[10m]) > 20
+        for: 0m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Multiple unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts in the last 10 minutes"
+
+      - alert: DataExportVolumeHigh
+        expr: increase(cms_data_export_size_bytes[1h]) > 1000000000  # 1GB
+        for: 0m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High volume data export detected"
+          description: "{{ $value }} bytes of data exported in the last hour"
+
+      - alert: SessionHijackingAttempts
+        expr: increase(cms_session_hijacking_attempts_total[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Session hijacking attempts detected"
+          description: "{{ $value }} session hijacking attempts in the last 10 minutes"
+
+  # ==============================================
+  # Load Balancer Alerts
+  # ==============================================
+  - name: loadbalancer
+    interval: 30s
+    rules:
+      - alert: LoadBalancerDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: loadbalancer
+        annotations:
+          summary: "Load balancer is down"
+          description: "Nginx load balancer is not responding"
+
+      - alert: HighLoadBalancerErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: loadbalancer
+        annotations:
+          summary: "High load balancer error rate"
+          description: "Load balancer error rate is above 5% (current value: {{ $value }}%)"

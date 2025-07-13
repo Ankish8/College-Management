@@ -1,0 +1,166 @@
+# Production Environment Configuration
+# High availability, security, and performance optimized
+
+# Project Configuration
+project_name = "college-management-system"
+environment  = "production"
+aws_region   = "us-east-1"
+
+# Terraform State
+terraform_state_bucket = "cms-terraform-state-prod"
+
+# VPC Configuration
+vpc_cidr                = "10.2.0.0/16"
+private_subnet_cidrs    = ["10.2.1.0/24", "10.2.2.0/24", "10.2.3.0/24"]
+public_subnet_cidrs     = ["10.2.101.0/24", "10.2.102.0/24", "10.2.103.0/24"]
+database_subnet_cidrs   = ["10.2.201.0/24", "10.2.202.0/24", "10.2.203.0/24"]
+single_nat_gateway      = false  # High availability
+
+# Database Configuration
+db_instance_class       = "db.t3.large"
+db_replica_instance_class = "db.t3.medium"
+db_allocated_storage    = 100
+db_max_allocated_storage = 1000
+backup_retention_period = 30
+enable_rds_scaling      = true
+rds_max_capacity        = 5
+rds_min_capacity        = 2
+
+# Redis Configuration
+redis_node_type         = "cache.r6g.large"
+redis_num_cache_clusters = 3
+enable_redis_scaling    = true
+
+# Application Configuration
+app_cpu                 = 1024
+app_memory              = 2048
+app_desired_count       = 5
+app_min_capacity        = 3
+app_max_capacity        = 20
+
+# Auto Scaling
+cpu_target_value        = 60
+memory_target_value     = 70
+scale_out_cooldown      = 300
+scale_in_cooldown       = 600
+request_count_target_value = 1000
+
+# Custom Metrics Scaling
+enable_custom_metrics_scaling = true
+custom_metric_target_value    = 100
+
+# Monitoring
+log_retention_days      = 30
+enable_container_insights = true
+
+# Security
+enable_waf              = true
+enable_shield           = true
+enable_cloudtrail       = true
+enable_guardduty        = true
+enable_security_hub     = true
+enable_config           = true
+enable_macie            = true
+
+# Backup and DR
+backup_retention_days   = 90
+cross_region_backup     = true
+backup_region          = "us-west-2"
+enable_efs_backup      = true
+enable_dr_testing      = true
+
+# Performance
+enable_cloudfront       = true
+cloudfront_price_class  = "PriceClass_All"
+enable_lambda_workers   = true
+enable_async_processing = true
+
+# Lambda Configuration
+lambda_max_concurrency  = 100
+lambda_min_concurrency  = 5
+
+# SQS Configuration
+sqs_scaling_threshold   = 50
+
+# Cost Optimization
+use_spot_instances      = false
+enable_cost_allocation_tags = true
+
+# Compliance
+compliance_requirements = ["FERPA", "SOC2", "GDPR"]
+data_classification     = "restricted"
+
+# Feature Flags
+enable_https_redirect   = true
+enable_deletion_protection = true
+enable_backup_encryption = true
+enable_secret_rotation  = true
+
+# Multi-tenant Configuration
+tenant_isolation_level  = "database"  # Database-level isolation for production
+tenant_encryption_enabled = true
+tenant_list            = [] # Will be populated dynamically
+
+# Performance Configuration
+enable_performance_insights = true
+performance_insights_retention_period = 31
+
+# Notification
+alert_email_addresses   = [
+  "production-alerts@example.com",
+  "sre-team@example.com",
+  "security-team@example.com"
+]
+slack_webhook_url       = "" # Set via environment variable
+
+# Domain Configuration
+domain_name             = "college-management.example.com"
+create_route53_zone     = true
+ssl_certificate_arn     = "" # Will be created
+
+# EFS Configuration
+enable_efs              = true
+efs_provisioned_throughput = 100
+
+# Recovery Configuration
+rto_target_minutes      = 60   # 1 hour
+rpo_target_minutes      = 15   # 15 minutes
+
+# Snapshot Configuration
+enable_custom_snapshots = true
+snapshot_retention_days = 30
+snapshot_schedule       = "cron(0 3 * * ? *)"  # 3 AM UTC daily
+
+# Initial Snapshot
+create_initial_snapshot = true
+
+# AWS Provider Configuration for Cross-Region
+backup_region           = "us-west-2"
+
+# Advanced Security
+enable_encryption_in_transit = true
+enable_encryption_at_rest    = true
+
+# Database Security
+enable_db_parameter_group = true
+enable_db_monitoring     = true
+
+# Network Security
+enable_vpc_flow_logs     = true
+enable_nacl_rules       = true
+
+# Application Security
+enable_container_scanning = true
+enable_image_scanning    = true
+
+# Additional Tags
+additional_tags = {
+  Owner       = "platform-team"
+  CostCenter  = "operations"
+  Purpose     = "production"
+  Environment = "production"
+  Criticality = "high"
+  DataClassification = "restricted"
+  BackupRequired     = "true"
+  MonitoringLevel    = "enhanced"
+}

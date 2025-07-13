@@ -1,0 +1,509 @@
+# CI/CD Pipeline for College Management System
+# Comprehensive pipeline with testing, security scanning, building, and deployment
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, release/*]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ==============================================
+  # Code Quality & Security Analysis
+  # ==============================================
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type checking
+        run: npm run type-check
+
+      - name: Lint code
+        run: npm run lint:check
+
+      - name: Format check
+        run: npx prettier --check .
+
+      - name: Security audit
+        run: npm audit --audit-level moderate
+
+      - name: Dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'college-management-system'
+          path: '.'
+          format: 'ALL'
+
+      - name: Upload dependency check results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  # ==============================================
+  # Testing Suite
+  # ==============================================
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test database
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          npx prisma migrate deploy
+          npx prisma db seed
+
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          NEXTAUTH_SECRET: test-secret
+          REDIS_URL: redis://localhost:6379
+        run: npm run test:ci
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          NEXTAUTH_SECRET: test-secret
+          REDIS_URL: redis://localhost:6379
+        run: npm run test:integration
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          NEXTAUTH_SECRET: test-secret
+          REDIS_URL: redis://localhost:6379
+        run: npm run e2e
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+            playwright-report/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # ==============================================
+  # Security Scanning
+  # ==============================================
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ==============================================
+  # Build & Push Container Images
+  # ==============================================
+  build:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, security-scan]
+    if: github.event_name != 'pull_request'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runner
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDTIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            REVISION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
+
+      - name: Sign container image
+        if: github.event_name != 'pull_request'
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          cosign sign --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  # ==============================================
+  # Deploy to Development
+  # ==============================================
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: development
+      url: https://dev.college-management.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster college-management-dev-cluster \
+            --service college-management-dev-service \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster college-management-dev-cluster \
+            --services college-management-dev-service
+
+      - name: Run database migrations
+        run: |
+          aws ecs run-task \
+            --cluster college-management-dev-cluster \
+            --task-definition college-management-dev-migration:latest \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
+
+      - name: Run health checks
+        run: |
+          curl -f https://dev.college-management.example.com/api/health
+          curl -f https://dev.college-management.example.com/api/ready
+
+  # ==============================================
+  # Deploy to Staging
+  # ==============================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/heads/release/')
+    environment:
+      name: staging
+      url: https://staging.college-management.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster college-management-staging-cluster \
+            --service college-management-staging-service \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster college-management-staging-cluster \
+            --services college-management-staging-service
+
+      - name: Run database migrations
+        run: |
+          aws ecs run-task \
+            --cluster college-management-staging-cluster \
+            --task-definition college-management-staging-migration:latest \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx]}"
+
+      - name: Run smoke tests
+        run: |
+          npm run test:smoke -- --baseURL=https://staging.college-management.example.com
+
+      - name: Performance testing
+        run: |
+          docker run --rm -v $(pwd):/workspace \
+            loadimpact/k6 run /workspace/tests/performance/load-test.js
+
+  # ==============================================
+  # Deploy to Production
+  # ==============================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment:
+      name: production
+      url: https://college-management.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: us-east-1
+
+      - name: Create database backup
+        run: |
+          aws rds create-db-snapshot \
+            --db-instance-identifier college-management-prod-db \
+            --db-snapshot-identifier pre-deployment-$(date +%Y%m%d-%H%M%S)
+
+      - name: Deploy to ECS (Blue/Green)
+        run: |
+          # Update task definition with new image
+          aws ecs register-task-definition \
+            --family college-management-prod \
+            --task-role-arn arn:aws:iam::account:role/ecsTaskRole \
+            --execution-role-arn arn:aws:iam::account:role/ecsTaskExecutionRole \
+            --network-mode awsvpc \
+            --requires-compatibilities FARGATE \
+            --cpu 512 \
+            --memory 1024 \
+            --container-definitions file://task-definition.json
+
+          # Update service with new task definition
+          aws ecs update-service \
+            --cluster college-management-prod-cluster \
+            --service college-management-prod-service \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster college-management-prod-cluster \
+            --services college-management-prod-service
+
+      - name: Run database migrations
+        run: |
+          aws ecs run-task \
+            --cluster college-management-prod-cluster \
+            --task-definition college-management-prod-migration:latest \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx]}"
+
+      - name: Post-deployment verification
+        run: |
+          # Health checks
+          curl -f https://college-management.example.com/api/health
+          curl -f https://college-management.example.com/api/ready
+          
+          # Basic functional tests
+          npm run test:production-verification
+
+      - name: Update DNS (if blue/green)
+        if: success()
+        run: |
+          # Switch DNS to new deployment
+          aws route53 change-resource-record-sets \
+            --hosted-zone-id Z123456789 \
+            --change-batch file://dns-change.json
+
+      - name: Notify stakeholders
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+
+  # ==============================================
+  # Rollback (Manual Trigger)
+  # ==============================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Rollback ECS service
+        run: |
+          # Get previous task definition
+          PREVIOUS_TASK_DEF=$(aws ecs describe-services \
+            --cluster college-management-${{ github.event.inputs.environment }}-cluster \
+            --services college-management-${{ github.event.inputs.environment }}-service \
+            --query 'services[0].taskDefinition' --output text)
+          
+          # Get revision number and subtract 1
+          REVISION=$(echo $PREVIOUS_TASK_DEF | cut -d: -f6)
+          PREV_REVISION=$((REVISION - 1))
+          
+          # Update service to previous revision
+          aws ecs update-service \
+            --cluster college-management-${{ github.event.inputs.environment }}-cluster \
+            --service college-management-${{ github.event.inputs.environment }}-service \
+            --task-definition college-management-${{ github.event.inputs.environment }}:$PREV_REVISION
+
+      - name: Verify rollback
+        run: |
+          aws ecs wait services-stable \
+            --cluster college-management-${{ github.event.inputs.environment }}-cluster \
+            --services college-management-${{ github.event.inputs.environment }}-service
+
+  # ==============================================
+  # Cleanup
+  # ==============================================
+  cleanup:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Delete old container images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{ github.repository }}
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true

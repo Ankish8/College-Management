@@ -1,0 +1,100 @@
+# Development Environment Configuration
+# Optimized for development workflow with cost efficiency
+
+# Project Configuration
+project_name = "college-management-system"
+environment  = "development"
+aws_region   = "us-east-1"
+
+# Terraform State
+terraform_state_bucket = "cms-terraform-state-dev"
+
+# VPC Configuration
+vpc_cidr                = "10.0.0.0/16"
+private_subnet_cidrs    = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnet_cidrs     = ["10.0.101.0/24", "10.0.102.0/24"]
+database_subnet_cidrs   = ["10.0.201.0/24", "10.0.202.0/24"]
+single_nat_gateway      = true  # Cost optimization for dev
+
+# Database Configuration
+db_instance_class       = "db.t3.micro"
+db_allocated_storage    = 20
+db_max_allocated_storage = 50
+backup_retention_period = 3
+enable_rds_scaling      = false
+
+# Redis Configuration
+redis_node_type         = "cache.t3.micro"
+redis_num_cache_clusters = 1
+
+# Application Configuration
+app_cpu                 = 256
+app_memory              = 512
+app_desired_count       = 1
+app_min_capacity        = 1
+app_max_capacity        = 3
+
+# Auto Scaling
+cpu_target_value        = 70
+memory_target_value     = 80
+scale_out_cooldown      = 300
+scale_in_cooldown       = 300
+
+# Monitoring
+log_retention_days      = 7
+enable_container_insights = false
+
+# Security
+enable_waf              = false
+enable_shield           = false
+enable_cloudtrail       = false
+enable_guardduty        = false
+enable_security_hub     = false
+enable_config           = false
+enable_macie            = false
+
+# Backup and DR
+backup_retention_days   = 7
+cross_region_backup     = false
+enable_efs_backup       = false
+enable_dr_testing       = false
+
+# Performance
+enable_cloudfront       = false
+enable_lambda_workers   = false
+enable_async_processing = false
+enable_redis_scaling    = false
+
+# Cost Optimization
+use_spot_instances      = true
+enable_cost_allocation_tags = true
+
+# Compliance
+compliance_requirements = []
+data_classification     = "internal"
+
+# Feature Flags
+enable_https_redirect   = false
+enable_deletion_protection = false
+enable_backup_encryption = false
+
+# Multi-tenant Configuration
+tenant_isolation_level  = "schema"
+tenant_encryption_enabled = false
+tenant_list            = ["dev_tenant_1", "dev_tenant_2"]
+
+# Notification
+alert_email_addresses   = ["dev-team@example.com"]
+
+# Domain Configuration
+domain_name             = "dev.college-management.example.com"
+create_route53_zone     = false
+ssl_certificate_arn     = ""
+
+# Additional Tags
+additional_tags = {
+  Owner       = "development-team"
+  CostCenter  = "engineering"
+  Purpose     = "development"
+  AutoShutdown = "true"
+}

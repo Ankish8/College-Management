@@ -1,0 +1,326 @@
+// Security-Enhanced Database Schema
+// This file contains additional security-related models to be added to the main schema
+
+// Multi-Factor Authentication
+model MFASettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  secret    String   // Encrypted TOTP secret
+  backupCodes Json   // Array of backup codes (hashed)
+  isEnabled Boolean  @default(false)
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mfa_settings")
+}
+
+// Password History for preventing reuse
+model PasswordHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  passwordHash String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_history")
+}
+
+// Security Event Logging
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  eventType   String   // LOGIN, LOGOUT, DATA_ACCESS, etc.
+  userId      String?
+  userRole    String?
+  ipAddress   String
+  userAgent   String
+  resource    String
+  action      String
+  details     Json?
+  riskLevel   String   // LOW, MEDIUM, HIGH, CRITICAL
+  success     Boolean
+  sessionId   String?
+
+  @@index([timestamp])
+  @@index([userId])
+  @@index([eventType])
+  @@index([riskLevel])
+  @@index([timestamp, userId])
+  @@map("audit_logs")
+}
+
+// Security Incidents
+model SecurityIncident {
+  id             String            @id @default(cuid())
+  type           String            // DATA_BREACH, UNAUTHORIZED_ACCESS, etc.
+  severity       String            // LOW, MEDIUM, HIGH, CRITICAL
+  title          String
+  description    String
+  detectedAt     DateTime          @default(now())
+  reportedBy     String
+  assignedTo     String?
+  status         String            @default("OPEN") // OPEN, INVESTIGATING, CONTAINED, RESOLVED, CLOSED
+  affectedAssets Json?             // Array of affected resources
+  metadata       Json?
+  resolvedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  // Relations
+  timeline IncidentTimelineEvent[]
+
+  @@index([severity])
+  @@index([status])
+  @@index([detectedAt])
+  @@map("security_incidents")
+}
+
+model IncidentTimelineEvent {
+  id         String   @id @default(cuid())
+  incidentId String
+  timestamp  DateTime @default(now())
+  action     String
+  performedBy String
+  details    String
+
+  // Relations
+  incident SecurityIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@index([timestamp])
+  @@map("incident_timeline_events")
+}
+
+// FERPA Compliance
+model FERPAConsent {
+  id           String   @id @default(cuid())
+  studentId    String
+  grantedTo    String   // User ID who is granted access
+  allowedFields Json    // Array of field names
+  purpose      String
+  isActive     Boolean  @default(true)
+  grantedAt    DateTime @default(now())
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([grantedTo])
+  @@index([isActive])
+  @@map("ferpa_consents")
+}
+
+model FERPAAccessLog {
+  id                          String   @id @default(cuid())
+  studentId                   String
+  accessedBy                  String
+  accessType                  String   // VIEW, MODIFY, SHARE
+  recordType                  String   // EDUCATION_RECORD, DIRECTORY_INFORMATION
+  legitimateEducationalInterest Boolean
+  consentObtained            Boolean
+  purpose                    String
+  timestamp                  DateTime @default(now())
+
+  @@index([studentId])
+  @@index([accessedBy])
+  @@index([timestamp])
+  @@map("ferpa_access_logs")
+}
+
+// GDPR Compliance
+model GDPRConsent {
+  id         String   @id @default(cuid())
+  userId     String
+  purpose    String
+  dataTypes  Json     // Array of data types
+  legalBasis String   // CONSENT, CONTRACT, LEGAL_OBLIGATION, etc.
+  isActive   Boolean  @default(true)
+  grantedAt  DateTime @default(now())
+  withdrawnAt DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("gdpr_consents")
+}
+
+model DataSubjectRequest {
+  id            String   @id @default(cuid())
+  type          String   // ACCESS, RECTIFICATION, ERASURE, PORTABILITY, RESTRICTION
+  subjectId     String
+  requestDate   DateTime @default(now())
+  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, REJECTED
+  completionDate DateTime?
+  rejectionReason String?
+  metadata      Json?
+
+  @@index([subjectId])
+  @@index([status])
+  @@index([requestDate])
+  @@map("data_subject_requests")
+}
+
+// Session Security
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  ipAddress String
+  userAgent String
+  isActive  Boolean  @default(true)
+  lastActivity DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@map("user_sessions")
+}
+
+// Rate Limiting
+model RateLimitEntry {
+  id        String   @id @default(cuid())
+  key       String   // IP address or user ID
+  endpoint  String
+  requests  Int      @default(1)
+  windowStart DateTime @default(now())
+  
+  @@unique([key, endpoint])
+  @@index([windowStart])
+  @@map("rate_limit_entries")
+}
+
+// Data Encryption Keys
+model EncryptionKey {
+  id        String   @id @default(cuid())
+  keyId     String   @unique
+  algorithm String
+  purpose   String   // FIELD_ENCRYPTION, SESSION_ENCRYPTION, etc.
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  rotatedAt DateTime?
+  expiresAt DateTime?
+
+  @@index([keyId])
+  @@index([isActive])
+  @@map("encryption_keys")
+}
+
+// Security Settings per Department
+model SecuritySettings {
+  id                    String  @id @default(cuid())
+  departmentId          String  @unique
+  passwordPolicy        Json    // Password requirements
+  mfaRequired           Boolean @default(false)
+  sessionTimeout        Int     @default(1440) // minutes
+  maxFailedLogins       Int     @default(5)
+  lockoutDuration       Int     @default(30) // minutes
+  dataRetentionPeriod   Int     @default(2555) // days
+  encryptionRequired    Boolean @default(true)
+  auditLogging          Boolean @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@map("security_settings")
+}
+
+// Login Attempts Tracking
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String
+  userAgent String
+  success   Boolean
+  failureReason String?
+  timestamp DateTime @default(now())
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([timestamp])
+  @@index([success])
+  @@map("login_attempts")
+}
+
+// API Usage Tracking
+model APIUsage {
+  id        String   @id @default(cuid())
+  userId    String?
+  endpoint  String
+  method    String
+  statusCode Int
+  responseTime Int // milliseconds
+  ipAddress String
+  userAgent String
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([timestamp])
+  @@index([statusCode])
+  @@map("api_usage")
+}
+
+// Data Classification Metadata
+model DataClassification {
+  id               String   @id @default(cuid())
+  tableName        String
+  fieldName        String
+  classification   String   // PUBLIC, INTERNAL, SENSITIVE, HIGHLY_SENSITIVE
+  encryptionRequired Boolean @default(false)
+  auditRequired    Boolean @default(false)
+  retentionPeriod  Int      // days
+  accessRestrictions Json   // Array of roles that can access
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tableName, fieldName])
+  @@index([classification])
+  @@map("data_classifications")
+}
+
+// Update existing User model to include security relations
+// Note: This would be added to the existing User model in the main schema
+// user User {
+//   // ... existing fields ...
+//   
+//   // Security relations
+//   mfaSettings      MFASettings?
+//   passwordHistory  PasswordHistory[]
+//   gdprConsents     GDPRConsent[]
+//   userSessions     UserSession[]
+// }
+
+// Update existing Student model to include FERPA relations
+// student Student {
+//   // ... existing fields ...
+//   
+//   // FERPA relations
+//   ferpaConsents    FERPAConsent[]
+// }
+
+// Update existing Department model to include security settings
+// department Department {
+//   // ... existing fields ...
+//   
+//   // Security relations
+//   securitySettings SecuritySettings?
+// }

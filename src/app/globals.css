@@ -116,7 +116,348 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
   body {
     @apply bg-background text-foreground;
+    /* Mobile optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Mobile-specific styles */
+  @media (max-width: 768px) {
+    body {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+
+  /* Touch target optimization */
+  button, [role="button"], input[type="button"], input[type="submit"] {
+    min-height: 44px; /* Apple HIG recommendation */
+    min-width: 44px;
+  }
+
+  /* Touch-friendly inputs */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Safe area support for notched devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile scroll optimization */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  /* Touch feedback */
+  .touch-feedback {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Prevent text selection on touch interactions */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Hardware acceleration for animations */
+  .hw-accelerated {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Mobile-optimized typography */
+  @media (max-width: 768px) {
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1.125rem; }
+    h5 { font-size: 1rem; }
+    h6 { font-size: 0.875rem; }
+  }
+}
+
+/* Mobile-specific utilities */
+@layer utilities {
+  /* Touch-friendly spacing */
+  .touch-spacing {
+    padding: 1rem;
+  }
+  
+  .touch-spacing-sm {
+    padding: 0.75rem;
+  }
+  
+  .touch-spacing-lg {
+    padding: 1.5rem;
+  }
+
+  /* Mobile-optimized flexbox */
+  .mobile-flex-col {
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  .mobile-hidden {
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  .mobile-only {
+    @media (min-width: 769px) {
+      display: none;
+    }
+  }
+
+  /* Performance optimizations */
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .will-change-scroll {
+    will-change: scroll-position;
+  }
+
+  /* Battery-conscious animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* High contrast support */
+  @media (prefers-contrast: high) {
+    .border {
+      border-width: 2px;
+    }
+    
+    .shadow-sm {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  /* Dark mode optimizations */
+  @media (prefers-color-scheme: dark) {
+    .mobile-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  /* Print optimizations for mobile browsers */
+  @media print {
+    .print-hidden {
+      display: none !important;
+    }
+    
+    .print-full-width {
+      width: 100% !important;
+    }
+  }
+
+  /* Orientation-specific styles */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .landscape-compact {
+      padding: 0.5rem;
+    }
+  }
+
+  /* Network-aware styles */
+  @media (prefers-reduced-data) {
+    .data-saver-hidden {
+      display: none;
+    }
+    
+    .background-image {
+      background-image: none !important;
+    }
+  }
+}
+
+/* Educational app specific styles */
+@layer components {
+  /* Timetable mobile optimizations */
+  .timetable-mobile {
+    @media (max-width: 768px) {
+      .calendar-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .time-slot {
+        min-height: 60px;
+        font-size: 0.875rem;
+      }
+      
+      .event-card {
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+        border-radius: 0.375rem;
+      }
+    }
+  }
+
+  /* Attendance marking mobile optimizations */
+  .attendance-mobile {
+    @media (max-width: 768px) {
+      .student-row {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+      
+      .attendance-button {
+        min-height: 48px;
+        min-width: 48px;
+        border-radius: 50%;
+      }
+      
+      .attendance-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+      }
+    }
+  }
+
+  /* Student list mobile optimizations */
+  .student-list-mobile {
+    @media (max-width: 768px) {
+      .student-card {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      
+      .student-avatar {
+        width: 3rem;
+        height: 3rem;
+      }
+      
+      .student-info {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+    }
+  }
+
+  /* Navigation mobile optimizations */
+  .nav-mobile {
+    @media (max-width: 768px) {
+      .nav-item {
+        min-height: 48px;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+      }
+      
+      .nav-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+      
+      .nav-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+/* PWA-specific styles */
+@layer components {
+  /* Install prompt styles */
+  .pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: 1rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .pwa-install-banner.show {
+    transform: translateY(0);
+  }
+
+  /* Offline indicator */
+  .offline-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: #f59e0b;
+    color: white;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .offline-indicator.show {
+    transform: translateY(0);
+  }
+
+  /* Pull to refresh */
+  .pull-to-refresh {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .pull-to-refresh-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--muted);
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s ease;
+    z-index: 10;
+  }
+
+  /* Loading states optimized for mobile */
+  .mobile-skeleton {
+    background: linear-gradient(90deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,0.4) 50%, 
+      rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+    animation: mobile-shimmer 1.5s infinite;
+  }
+  
+  @keyframes mobile-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }

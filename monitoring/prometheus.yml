@@ -1,0 +1,208 @@
+# Prometheus Configuration for College Management System
+# Comprehensive monitoring setup with alerting rules
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'college-management-system'
+    environment: '${ENVIRONMENT:-development}'
+
+rule_files:
+  - "alert-rules.yml"
+  - "recording-rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # ==============================================
+  # Prometheus Self Monitoring
+  # ==============================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # ==============================================
+  # Application Monitoring
+  # ==============================================
+  - job_name: 'college-management-app'
+    static_configs:
+      - targets: ['app:3000']
+    scrape_interval: 15s
+    metrics_path: /api/metrics
+    scrape_timeout: 10s
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: app:3000
+
+  # ==============================================
+  # Database Monitoring
+  # ==============================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: postgresql
+
+  # ==============================================
+  # Redis Monitoring
+  # ==============================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: redis
+
+  # ==============================================
+  # Infrastructure Monitoring
+  # ==============================================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: node
+
+  # ==============================================
+  # Container Monitoring
+  # ==============================================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: container
+
+  # ==============================================
+  # Load Balancer Monitoring
+  # ==============================================
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: nginx
+
+  # ==============================================
+  # AWS CloudWatch Monitoring (for production)
+  # ==============================================
+  - job_name: 'cloudwatch'
+    ec2_sd_configs:
+      - region: us-east-1
+        port: 9100
+        filters:
+          - name: tag:Monitoring
+            values: [enabled]
+    relabel_configs:
+      - source_labels: [__meta_ec2_instance_id]
+        target_label: instance_id
+      - source_labels: [__meta_ec2_availability_zone]
+        target_label: availability_zone
+      - source_labels: [__meta_ec2_tag_Environment]
+        target_label: environment
+      - source_labels: [__meta_ec2_tag_Service]
+        target_label: service
+
+  # ==============================================
+  # Blackbox Monitoring (Health Checks)
+  # ==============================================
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://app:3000/api/health
+        - http://app:3000/api/ready
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'blackbox-tcp'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - postgres:5432
+        - redis:6379
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ==============================================
+  # Business Metrics
+  # ==============================================
+  - job_name: 'business-metrics'
+    static_configs:
+      - targets: ['app:3000']
+    scrape_interval: 60s
+    metrics_path: /api/metrics/business
+    honor_labels: true
+    relabel_configs:
+      - target_label: service
+        replacement: business-metrics
+
+# ==============================================
+# Remote Write Configuration (for long-term storage)
+# ==============================================
+remote_write:
+  - url: "https://prometheus-remote-write.example.com/api/v1/write"
+    basic_auth:
+      username: "${REMOTE_WRITE_USERNAME}"
+      password: "${REMOTE_WRITE_PASSWORD}"
+    queue_config:
+      max_shards: 200
+      max_samples_per_send: 1000
+      batch_send_deadline: 5s
+      min_shards: 1
+      max_shards_per_queue: 100
+      capacity: 10000
+
+# ==============================================
+# Storage Configuration
+# ==============================================
+storage:
+  tsdb:
+    retention.time: 15d
+    retention.size: 50GB
+    path: /prometheus/data
+    min-block-duration: 2h
+    max-block-duration: 25h

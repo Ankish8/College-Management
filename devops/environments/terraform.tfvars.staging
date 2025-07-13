@@ -1,0 +1,128 @@
+# Staging Environment Configuration
+# Production-like environment for final testing and validation
+
+# Project Configuration
+project_name = "college-management-system"
+environment  = "staging"
+aws_region   = "us-east-1"
+
+# Terraform State
+terraform_state_bucket = "cms-terraform-state-staging"
+
+# VPC Configuration
+vpc_cidr                = "10.1.0.0/16"
+private_subnet_cidrs    = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
+public_subnet_cidrs     = ["10.1.101.0/24", "10.1.102.0/24", "10.1.103.0/24"]
+database_subnet_cidrs   = ["10.1.201.0/24", "10.1.202.0/24", "10.1.203.0/24"]
+single_nat_gateway      = true  # Cost optimization for staging
+
+# Database Configuration
+db_instance_class       = "db.t3.small"
+db_allocated_storage    = 50
+db_max_allocated_storage = 200
+backup_retention_period = 7
+enable_rds_scaling      = false
+
+# Redis Configuration
+redis_node_type         = "cache.t3.small"
+redis_num_cache_clusters = 2
+
+# Application Configuration
+app_cpu                 = 512
+app_memory              = 1024
+app_desired_count       = 2
+app_min_capacity        = 1
+app_max_capacity        = 5
+
+# Auto Scaling
+cpu_target_value        = 70
+memory_target_value     = 80
+scale_out_cooldown      = 300
+scale_in_cooldown       = 300
+
+# Monitoring
+log_retention_days      = 14
+enable_container_insights = true
+
+# Security
+enable_waf              = true
+enable_shield           = false
+enable_cloudtrail       = true
+enable_guardduty        = true
+enable_security_hub     = true
+enable_config           = true
+enable_macie            = false
+
+# Backup and DR
+backup_retention_days   = 14
+cross_region_backup     = false
+enable_efs_backup       = true
+enable_dr_testing       = true
+
+# Performance
+enable_cloudfront       = true
+cloudfront_price_class  = "PriceClass_100"
+enable_lambda_workers   = true
+enable_async_processing = true
+enable_redis_scaling    = false
+
+# Lambda Configuration
+lambda_max_concurrency  = 10
+lambda_min_concurrency  = 1
+
+# SQS Configuration
+sqs_scaling_threshold   = 10
+
+# Cost Optimization
+use_spot_instances      = false
+enable_cost_allocation_tags = true
+
+# Compliance
+compliance_requirements = ["FERPA"]
+data_classification     = "confidential"
+
+# Feature Flags
+enable_https_redirect   = true
+enable_deletion_protection = false
+enable_backup_encryption = true
+enable_secret_rotation  = false
+
+# Multi-tenant Configuration
+tenant_isolation_level  = "schema"
+tenant_encryption_enabled = true
+tenant_list            = ["staging_university_1", "staging_university_2"]
+
+# Performance Configuration
+enable_performance_insights = true
+performance_insights_retention_period = 7
+
+# Notification
+alert_email_addresses   = ["staging-alerts@example.com", "dev-team@example.com"]
+slack_webhook_url       = "" # Set via environment variable
+
+# Domain Configuration
+domain_name             = "staging.college-management.example.com"
+create_route53_zone     = true
+ssl_certificate_arn     = "" # Will be created
+
+# EFS Configuration
+enable_efs              = true
+efs_provisioned_throughput = 10
+
+# Recovery Configuration
+rto_target_minutes      = 120  # 2 hours
+rpo_target_minutes      = 30   # 30 minutes
+
+# Snapshot Configuration
+enable_custom_snapshots = true
+snapshot_retention_days = 14
+snapshot_schedule       = "cron(0 4 * * ? *)"  # 4 AM UTC daily
+
+# Additional Tags
+additional_tags = {
+  Owner       = "qa-team"
+  CostCenter  = "engineering"
+  Purpose     = "staging"
+  Environment = "staging"
+  TestType    = "integration"
+}

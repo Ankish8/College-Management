@@ -1,0 +1,318 @@
+# Docker Compose for College Management System Development Environment
+# Includes all services needed for local development and testing
+
+version: '3.8'
+
+services:
+  # ==============================================
+  # Application Service
+  # ==============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: cms-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://cms_user:cms_password@postgres:5432/college_management_dev
+      - NEXTAUTH_SECRET=dev-secret-key-change-in-production
+      - NEXTAUTH_URL=http://localhost:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==============================================
+  # PostgreSQL Database
+  # ==============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: cms-postgres-dev
+    environment:
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_password
+      POSTGRES_DB: college_management_dev
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms_user -d college_management_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_duration=on
+      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+      -c shared_preload_libraries=pg_stat_statements
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.7
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # ==============================================
+  # Redis Cache & Session Store
+  # ==============================================
+  redis:
+    image: redis:7-alpine
+    container_name: cms-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # ==============================================
+  # Database Migration Service
+  # ==============================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrations
+    container_name: cms-migrate
+    environment:
+      - DATABASE_URL=postgresql://cms_user:cms_password@postgres:5432/college_management_dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cms-network
+    profiles:
+      - migration
+
+  # ==============================================
+  # Testing Service
+  # ==============================================
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: cms-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://cms_user:cms_password@postgres:5432/college_management_test
+      - NEXTAUTH_SECRET=test-secret-key
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cms-network
+    profiles:
+      - testing
+
+  # ==============================================
+  # Database Admin (pgAdmin)
+  # ==============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cms-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin_servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - postgres
+    networks:
+      - cms-network
+    profiles:
+      - admin
+
+  # ==============================================
+  # Redis Commander (Redis GUI)
+  # ==============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: cms-redis-commander
+    hostname: redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - cms-network
+    profiles:
+      - admin
+
+  # ==============================================
+  # Monitoring Stack
+  # ==============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cms-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - cms-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cms-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - cms-network
+    profiles:
+      - monitoring
+
+  # ==============================================
+  # Load Balancer (for production simulation)
+  # ==============================================
+  nginx:
+    image: nginx:alpine
+    container_name: cms-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - cms-network
+    profiles:
+      - production-sim
+
+  # ==============================================
+  # File Storage (MinIO for S3 simulation)
+  # ==============================================
+  minio:
+    image: minio/minio:latest
+    container_name: cms-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - cms-network
+    profiles:
+      - storage
+
+  # ==============================================
+  # Backup Service
+  # ==============================================
+  backup:
+    image: postgres:15-alpine
+    container_name: cms-backup
+    environment:
+      PGPASSWORD: cms_password
+    volumes:
+      - backup_data:/backup
+      - ./scripts/backup.sh:/backup.sh:ro
+    depends_on:
+      - postgres
+    networks:
+      - cms-network
+    profiles:
+      - backup
+    command: >
+      sh -c "
+        echo 'Starting backup service...' &&
+        chmod +x /backup.sh &&
+        crond -f
+      "
+
+# ==============================================
+# Networks
+# ==============================================
+networks:
+  cms-network:
+    driver: bridge
+    name: cms-network
+
+# ==============================================
+# Volumes
+# ==============================================
+volumes:
+  postgres_data:
+    name: cms-postgres-data
+  redis_data:
+    name: cms-redis-data
+  uploads_data:
+    name: cms-uploads-data
+  pgadmin_data:
+    name: cms-pgadmin-data
+  prometheus_data:
+    name: cms-prometheus-data
+  grafana_data:
+    name: cms-grafana-data
+  minio_data:
+    name: cms-minio-data
+  backup_data:
+    name: cms-backup-data
