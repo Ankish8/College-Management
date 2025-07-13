@@ -86,7 +86,6 @@ async function fetchBatches() {
 
 export default function TimetableClient() {
   const { data: session } = useSession()
-  const [filters, setFilters] = useState<TimetableFilters>({})
   const [currentView, setCurrentView] = useState<CalendarView>('week')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -109,11 +108,9 @@ export default function TimetableClient() {
     }
   }, [batchesData, selectedBatchId])
 
-  // Update filters when batch is selected
-  useEffect(() => {
-    if (selectedBatchId) {
-      setFilters(prev => ({ ...prev, batchId: selectedBatchId }))
-    }
+  // Create stable filters object
+  const filters = React.useMemo(() => {
+    return selectedBatchId ? { batchId: selectedBatchId } : {}
   }, [selectedBatchId])
 
   // Fetch timetable entries
@@ -221,7 +218,9 @@ export default function TimetableClient() {
   }
 
   const handleFiltersChange = (newFilters: TimetableFilters) => {
-    setFilters(newFilters)
+    // For now, we only support batch filtering from the main selector
+    // Additional filters can be implemented here if needed
+    console.log('Filters changed:', newFilters)
   }
 
   const handleViewStateChange = (viewState: any) => {
