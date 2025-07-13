@@ -92,7 +92,7 @@ async function checkConflicts(data: any, excludeId: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -100,8 +100,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const entry = await db.timetableEntry.findUnique({
-      where: { id: params.id },
+      where: { id },
+
       include: {
         batch: {
           select: {
@@ -160,7 +162,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -168,12 +170,14 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const validatedData = updateTimetableEntrySchema.parse(body)
 
     // Verify entry exists
     const existingEntry = await db.timetableEntry.findUnique({
-      where: { id: params.id },
+      where: { id },
+
       include: {
         batch: true,
         subject: true,
@@ -258,7 +262,7 @@ export async function PUT(
       entryType: validatedData.entryType || existingEntry.entryType,
     }
 
-    const conflicts = await checkConflicts(mergedData, params.id)
+    const conflicts = await checkConflicts(mergedData, id)
     
     if (conflicts.length > 0) {
       return NextResponse.json(
@@ -284,7 +288,7 @@ export async function PUT(
 
     // Update the entry
     const updatedEntry = await db.timetableEntry.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         batch: {
@@ -338,7 +342,7 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -346,6 +350,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     
     // For drag and drop, we expect timeSlotName instead of timeSlotId
@@ -373,7 +378,7 @@ export async function PATCH(
 
     // Get existing entry
     const existingEntry = await db.timetableEntry.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingEntry) {
@@ -393,7 +398,7 @@ export async function PATCH(
       entryType: validatedData.entryType || existingEntry.entryType,
     }
 
-    const conflicts = await checkConflicts(mergedData, params.id)
+    const conflicts = await checkConflicts(mergedData, id)
     
     if (conflicts.length > 0) {
       return NextResponse.json(
@@ -412,7 +417,7 @@ export async function PATCH(
 
     // Update the entry
     const updatedEntry = await db.timetableEntry.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         batch: {
@@ -466,7 +471,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -474,9 +479,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     // Verify entry exists
     const existingEntry = await db.timetableEntry.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingEntry) {
@@ -498,7 +504,7 @@ export async function DELETE(
     if (relatedAttendance) {
       // Soft delete to preserve attendance history
       await db.timetableEntry.update({
-        where: { id: params.id },
+        where: { id },
         data: { isActive: false }
       })
       
@@ -509,7 +515,7 @@ export async function DELETE(
     } else {
       // Hard delete if no attendance records
       await db.timetableEntry.delete({
-        where: { id: params.id }
+        where: { id }
       })
       
       return NextResponse.json({ 

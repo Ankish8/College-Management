@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Settings, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreateTimetableEntryModal } from '@/components/timetable/create-timetable-entry-modal'
+import { DeleteConfirmationModal } from '@/components/timetable/delete-confirmation-modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
@@ -160,6 +161,9 @@ export default function TimetableClient() {
   const { data: session } = useSession()
   const [currentView, setCurrentView] = useState<CalendarView>('week')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
   const hasInitializedBatch = React.useRef(false)
@@ -306,6 +310,12 @@ export default function TimetableClient() {
         allEvents.push(...entryEvents)
       })
       console.log('Using real timetable data:', allEvents.length, 'events from', timetableData.entries.length, 'entries')
+      console.log('First entry details:', {
+        id: timetableData.entries[0]?.id,
+        dayOfWeek: timetableData.entries[0]?.dayOfWeek,
+        timeSlot: timetableData.entries[0]?.timeSlot?.name,
+        updatedAt: timetableData.entries[0]?.updatedAt
+      })
       return allEvents
     }
     
@@ -386,6 +396,11 @@ export default function TimetableClient() {
         return
       }
       
+      // Extract the base timetable entry ID from the event ID
+      // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
+      const baseEntryId = eventId.includes('-202') ? eventId.split('-202')[0] : eventId
+      console.log('Base entry ID:', baseEntryId)
+      
       const requestBody = {
         dayOfWeek: newDayOfWeek,
         timeSlotName: newTimeSlot,
@@ -393,7 +408,7 @@ export default function TimetableClient() {
       console.log('Request body:', requestBody)
       
       // Update the timetable entry via API
-      const response = await fetch(`/api/timetable/entries/${eventId}`, {
+      const response = await fetch(`/api/timetable/entries/${baseEntryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -469,21 +484,37 @@ export default function TimetableClient() {
     }
   }
 
-  // Delete a timetable entry
-  const handleEventDelete = async (eventId: string) => {
+  // Show delete confirmation modal
+  const handleEventDelete = (eventId: string) => {
+    console.log('🗑️ handleEventDelete called with eventId:', eventId)
+    
+    // Check if this is a sample event
+    if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
+      toast.info('📋 This is sample data and cannot be deleted. Create real classes to enable deletion.')
+      return
+    }
+
+    // Find the event to show details in the modal
+    const event = events.find(e => e.id === eventId)
+    if (event) {
+      setEventToDelete(event)
+      setIsDeleteModalOpen(true)
+    }
+  }
+
+  // Actually delete the timetable entry
+  const confirmEventDelete = async () => {
+    if (!eventToDelete) return
+    
     try {
-      // Check if this is a sample event
-      if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
-        toast.info('📋 This is sample data and cannot be deleted. Create real classes to enable deletion.')
-        return
-      }
+      setIsDeleting(true)
+      
+      // Extract the base timetable entry ID from the event ID
+      // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
+      const baseEntryId = eventToDelete.id.includes('-202') ? eventToDelete.id.split('-202')[0] : eventToDelete.id
+      console.log('Deleting entry with base ID:', baseEntryId)
 
-      // Confirm deletion
-      if (!confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
-        return
-      }
-
-      const response = await fetch(`/api/timetable/entries/${eventId}`, {
+      const response = await fetch(`/api/timetable/entries/${baseEntryId}`, {
         method: 'DELETE',
       })
 
@@ -498,6 +529,9 @@ export default function TimetableClient() {
     } catch (error) {
       console.error('Error deleting class:', error)
       toast.error(`Failed to delete class: ${error.message}`)
+    } finally {
+      setIsDeleting(false)
+      setEventToDelete(null)
     }
   }
 
@@ -657,6 +691,7 @@ export default function TimetableClient() {
           </div>
         ) : (
           <FullCalendar
+            key={`calendar-${events.length}-${timetableData?.entries?.[0]?.updatedAt || 'none'}`}
             events={events}
             initialView={currentView}
             filters={filters}
@@ -687,6 +722,18 @@ export default function TimetableClient() {
           setIsCreateModalOpen(false)
           refetch() // Refresh the timetable data
         }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setEventToDelete(null)
+        }}
+        onConfirm={confirmEventDelete}
+        event={eventToDelete}
+        isDeleting={isDeleting}
       />
     </div>
   )

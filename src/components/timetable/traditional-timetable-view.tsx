@@ -279,10 +279,9 @@ export function TraditionalTimetableView({
       <div
         ref={setNodeRef}
         style={style}
-        {...listeners}
         {...attributes}
         className={cn(
-          "p-3 h-full cursor-grab active:cursor-grabbing transition-all hover:shadow-md rounded-lg group relative",
+          "p-3 h-full transition-all hover:shadow-md rounded-lg group relative",
           "bg-muted/50 border border-border hover:bg-muted/70",
           isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
           isDragging && "opacity-50 z-50"
@@ -295,9 +294,11 @@ export function TraditionalTimetableView({
           <Button
             variant="ghost"
             size="sm"
-            className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            className="absolute top-1 right-1 h-5 w-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
             onClick={(e) => {
+              e.preventDefault()
               e.stopPropagation()
+              console.log('🗑️ Delete button clicked for event:', event.id)
               onEventDelete(event.id)
             }}
             title="Delete this class"
@@ -306,7 +307,7 @@ export function TraditionalTimetableView({
           </Button>
         )}
         
-        <div className="space-y-1">
+        <div className="space-y-1" {...listeners} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
           <div className="flex items-center gap-1">
             <GripVertical className={cn(
               "h-3 w-3 flex-shrink-0",
