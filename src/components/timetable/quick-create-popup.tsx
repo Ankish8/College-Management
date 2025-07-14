@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { X, Clock, BookOpen } from 'lucide-react'
+import { X, Clock, BookOpen, Star, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { autoSaveManager } from '@/lib/utils/auto-save'
 
 interface QuickCreatePopupProps {
   isOpen: boolean
@@ -50,14 +51,14 @@ export function QuickCreatePopup({
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const popupRef = useRef<HTMLDivElement>(null)
 
-  // Sort subjects with recently used at the top
+  // Sort subjects with recently used at the top using auto-save manager
   const sortedSubjects = React.useMemo(() => {
-    const recentSubjects = JSON.parse(localStorage.getItem('recentSubjects') || '[]')
+    const recentSubjectIds = autoSaveManager.getRecentSubjects()
     
-    const recent = subjects.filter(subject => recentSubjects.includes(subject.id))
-      .sort((a, b) => recentSubjects.indexOf(a.id) - recentSubjects.indexOf(b.id))
+    const recent = subjects.filter(subject => recentSubjectIds.includes(subject.id))
+      .sort((a, b) => recentSubjectIds.indexOf(a.id) - recentSubjectIds.indexOf(b.id))
     
-    const remaining = subjects.filter(subject => !recentSubjects.includes(subject.id))
+    const remaining = subjects.filter(subject => !recentSubjectIds.includes(subject.id))
       .sort((a, b) => a.name.localeCompare(b.name))
     
     return [...recent, ...remaining]
@@ -110,10 +111,24 @@ export function QuickCreatePopup({
       timeSlot
     })
     
-    // Store recently used subject
-    const recentSubjects = JSON.parse(localStorage.getItem('recentSubjects') || '[]')
-    const updatedRecent = [subject.id, ...recentSubjects.filter((id: string) => id !== subject.id)].slice(0, 3)
-    localStorage.setItem('recentSubjects', JSON.stringify(updatedRecent))
+    // Auto-save recent subject and session data
+    autoSaveManager.addRecentSubject(subject.id)
+    autoSaveManager.saveQuickCreateSession({
+      subjectId: subject.id,
+      timeSlot,
+      day: date.toISOString().split('T')[0], // Use date string as day identifier
+      timestamp: Date.now()
+    })
+    
+    // Store default preferences if this is a frequent pattern
+    const sessions = autoSaveManager.getQuickCreateSessions()
+    const timeSlotCount = sessions.filter(s => s.timeSlot === timeSlot).length
+    const dayCount = sessions.filter(s => s.day === date.toISOString().split('T')[0]).length
+    
+    // Auto-save preferences if patterns are detected
+    if (timeSlotCount >= 3 && !autoSaveManager.getDefaultTimeSlot()) {
+      autoSaveManager.setDefaultTimeSlot(timeSlot)
+    }
     
     onClose()
   }
@@ -188,7 +203,12 @@ export function QuickCreatePopup({
         <Card className="shadow-xl border-2 animate-in fade-in-0 zoom-in-95 duration-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Quick Add Class</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base font-semibold">Quick Add Class</CardTitle>
+                {autoSaveManager.getRecentSubjects().length > 0 && (
+                  <History className="h-3 w-3 text-blue-500" title="Recent subjects loaded" />
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -221,28 +241,42 @@ export function QuickCreatePopup({
                         <div className="text-xs mt-1">Please add subjects to this batch first</div>
                       </div>
                     ) : (
-                      sortedSubjects.map((subject, index) => (
-                      <div
-                        key={subject.id}
-                        className={cn(
-                          "p-2 cursor-pointer border-b last:border-b-0 transition-colors",
-                          index === highlightedIndex ? "bg-primary/20" : "hover:bg-muted/70"
-                        )}
-                        onClick={() => handleSubjectSelect(subject)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-sm leading-tight">
-                              {subject.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {subject.facultyName}
+                      sortedSubjects.map((subject, index) => {
+                        const isRecent = autoSaveManager.getRecentSubjects().includes(subject.id)
+                        const recentIndex = autoSaveManager.getRecentSubjects().indexOf(subject.id)
+                        
+                        return (
+                          <div
+                            key={subject.id}
+                            className={cn(
+                              "p-2 cursor-pointer border-b last:border-b-0 transition-colors",
+                              index === highlightedIndex ? "bg-primary/20" : "hover:bg-muted/70",
+                              isRecent && "bg-blue-50/50 border-blue-200/50"
+                            )}
+                            onClick={() => handleSubjectSelect(subject)}
+                          >
+                            <div className="flex items-center gap-2">
+                              {isRecent ? (
+                                <Star className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                              ) : (
+                                <BookOpen className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-sm leading-tight flex items-center gap-2">
+                                  {subject.name}
+                                  {isRecent && recentIndex === 0 && (
+                                    <span className="text-xs text-blue-600 font-medium">Recent</span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {subject.facultyName}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    )))}
+                        )
+                      })
+                    )}
                   </div>
                 </div>
                 

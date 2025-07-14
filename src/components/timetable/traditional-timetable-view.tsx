@@ -18,6 +18,8 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { QuickCreatePopup } from './quick-create-popup'
+import { DragExtendHandle } from './drag-extend-handle'
+import { DragPreview, DragPreviewGhost } from './drag-preview'
 
 interface TraditionalTimetableViewProps {
   date: Date
@@ -98,6 +100,13 @@ export function TraditionalTimetableView({
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
   const [selectedDay, setSelectedDay] = useState<string>('')
   
+  // State for drag extend functionality
+  const [isDragExtending, setIsDragExtending] = useState(false)
+  const [dragExtendingEvent, setDragExtendingEvent] = useState<CalendarEvent | null>(null)
+  const [dragExtendDirection, setDragExtendDirection] = useState<'vertical' | 'horizontal'>('vertical')
+  const [dragExtendPreview, setDragExtendPreview] = useState<string[]>([])
+  const [dragExtendConflicts, setDragExtendConflicts] = useState<string[]>([])
+  
   // Calculate week dates
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Monday = 1
   const weekDays = WEEKDAYS.map((day, index) => ({
@@ -106,6 +115,147 @@ export function TraditionalTimetableView({
     dayNumber: format(addDays(weekStart, index), 'd'),
     fullDate: addDays(weekStart, index)
   }))
+  
+  // Drag extend helper functions
+  const handleDragExtendStart = (entryId: string, direction: 'vertical' | 'horizontal') => {
+    const event = events.find(e => e.id === entryId)
+    if (!event) return
+    
+    setIsDragExtending(true)
+    setDragExtendingEvent(event)
+    setDragExtendDirection(direction)
+    setDragExtendPreview([])
+  }
+  
+  const handleDragExtendEnd = (entryId: string, newSlots: string[]) => {
+    if (!dragExtendingEvent || !onEventDrop) return
+    
+    // Create new events for each extended slot
+    newSlots.forEach(slot => {
+      if (dragExtendDirection === 'vertical') {
+        // Extend to adjacent time slots
+        const currentTimeIndex = DEFAULT_TIME_SLOTS.findIndex(t => t.time === dragExtendingEvent.extendedProps?.timeSlotName)
+        const targetTimeIndex = DEFAULT_TIME_SLOTS.findIndex(t => t.time === slot)
+        
+        if (currentTimeIndex !== -1 && targetTimeIndex !== -1 && targetTimeIndex !== currentTimeIndex) {
+          // Calculate new date (same day as original)
+          const dayIndex = WEEKDAYS.findIndex(d => d.key === dragExtendingEvent.extendedProps?.dayOfWeek)
+          const newDate = new Date(date)
+          newDate.setDate(newDate.getDate() - newDate.getDay() + 1 + dayIndex)
+          
+          // Create new event with extended time slot
+          onEventDrop(
+            `${entryId}-extended-${targetTimeIndex}`,
+            newDate,
+            slot,
+            dragExtendingEvent.extendedProps?.dayOfWeek || ''
+          )
+        }
+      } else {
+        // Extend to same time slot on other days
+        const targetDayIndex = WEEKDAYS.findIndex(d => d.key === slot)
+        if (targetDayIndex !== -1) {
+          const newDate = new Date(date)
+          newDate.setDate(newDate.getDate() - newDate.getDay() + 1 + targetDayIndex)
+          
+          onEventDrop(
+            `${entryId}-extended-${targetDayIndex}`,
+            newDate,
+            dragExtendingEvent.extendedProps?.timeSlotName || '',
+            slot
+          )
+        }
+      }
+    })
+    
+    // Reset drag extend state
+    setIsDragExtending(false)
+    setDragExtendingEvent(null)
+    setDragExtendPreview([])
+  }
+  
+  const handleDragExtendPreview = (slots: string[]) => {
+    setDragExtendPreview(slots)
+    
+    // Check for conflicts in real-time during drag extend
+    if (dragExtendingEvent && onCheckConflicts) {
+      checkDragExtendConflicts(dragExtendingEvent, slots, dragExtendDirection)
+    }
+  }
+  
+  const checkDragExtendConflicts = async (
+    event: CalendarEvent,
+    slots: string[],
+    direction: 'vertical' | 'horizontal'
+  ) => {
+    const facultyId = event.extendedProps?.facultyId
+    if (!facultyId) return
+    
+    const conflictPromises = slots.map(async (slot) => {
+      let dayKey: string
+      let timeSlot: string
+      
+      if (direction === 'vertical') {
+        dayKey = event.extendedProps?.dayOfWeek || ''
+        timeSlot = slot
+      } else {
+        dayKey = slot
+        timeSlot = event.extendedProps?.timeSlotName || ''
+      }
+      
+      const cacheKey = `${facultyId}-${dayKey}-${timeSlot}-extend`
+      
+      // Check cache first
+      if (conflictCache[cacheKey] !== undefined) {
+        return { slot, hasConflict: conflictCache[cacheKey] }
+      }
+      
+      // Check for conflicts
+      try {
+        const hasConflict = await onCheckConflicts!(facultyId, dayKey, timeSlot, event.id)
+        setConflictCache(prev => ({ ...prev, [cacheKey]: hasConflict }))
+        return { slot, hasConflict }
+      } catch (error) {
+        console.error('Error checking drag extend conflict:', error)
+        return { slot, hasConflict: false }
+      }
+    })
+    
+    const results = await Promise.all(conflictPromises)
+    const conflictingSlots = results.filter(r => r.hasConflict).map(r => r.slot)
+    
+    // Update conflict state for visual feedback
+    setDragExtendConflicts(conflictingSlots)
+  }
+  
+  const handleDragExtendCancel = () => {
+    setIsDragExtending(false)
+    setDragExtendingEvent(null)
+    setDragExtendPreview([])
+    setDragExtendConflicts([])
+  }
+  
+  const handleDragExtendConfirm = () => {
+    if (dragExtendingEvent && dragExtendPreview.length > 0) {
+      handleDragExtendEnd(dragExtendingEvent.id, dragExtendPreview)
+    }
+  }
+  
+  const getExtendableSlots = (event: CalendarEvent, direction: 'vertical' | 'horizontal'): string[] => {
+    if (direction === 'vertical') {
+      // Return adjacent time slots
+      const currentTimeIndex = DEFAULT_TIME_SLOTS.findIndex(t => t.time === event.extendedProps?.timeSlotName)
+      return DEFAULT_TIME_SLOTS
+        .filter((_, index) => index !== currentTimeIndex)
+        .map(t => t.time)
+    } else {
+      // Return other days at same time
+      const currentDayKey = event.extendedProps?.dayOfWeek
+      return WEEKDAYS
+        .filter(d => d.key !== currentDayKey)
+        .map(d => d.key)
+    }
+  }
   
   // Preload conflicts when activeEvent changes
   React.useEffect(() => {
@@ -380,6 +530,32 @@ export function TraditionalTimetableView({
             </div>
           )}
         </div>
+        
+        {/* Drag Extend Handles - only show for real events */}
+        {!isSampleEvent && !isDragging && (
+          <>
+            <DragExtendHandle
+              entryId={event.id}
+              direction="vertical"
+              currentTimeSlot={event.extendedProps?.timeSlotName}
+              currentDay={event.extendedProps?.dayOfWeek}
+              onDragStart={handleDragExtendStart}
+              onDragEnd={handleDragExtendEnd}
+              onDragPreview={handleDragExtendPreview}
+              className="group-hover:opacity-100 opacity-0 transition-opacity"
+            />
+            <DragExtendHandle
+              entryId={event.id}
+              direction="horizontal"
+              currentTimeSlot={event.extendedProps?.timeSlotName}
+              currentDay={event.extendedProps?.dayOfWeek}
+              onDragStart={handleDragExtendStart}
+              onDragEnd={handleDragExtendEnd}
+              onDragPreview={handleDragExtendPreview}
+              className="group-hover:opacity-100 opacity-0 transition-opacity"
+            />
+          </>
+        )}
       </div>
     )
   }
@@ -396,9 +572,15 @@ export function TraditionalTimetableView({
       disabled: !!conflict || (!!event && !isCurrentSlot) // Disable if conflict or slot occupied (unless it's the current slot)
     })
 
+    // Check if this slot is in drag extend preview
+    const isInDragExtendPreview = isDragExtending && dragExtendPreview.includes(
+      dragExtendDirection === 'vertical' ? timeSlot : dayKey
+    )
+    
     // Determine visual state
     const getSlotState = () => {
       if (isCurrentSlot) return 'current' // Currently dragged item's original slot
+      if (isInDragExtendPreview) return 'extend-preview' // In drag extend preview
       if (conflict) return 'conflict' // Would cause conflict
       if (event) return 'occupied' // Already has an event
       if (activeEvent && isValidDrop) return 'valid' // Valid drop target
@@ -415,6 +597,7 @@ export function TraditionalTimetableView({
           "h-full min-h-[100px] transition-all relative",
           // Base states
           slotState === 'current' && "bg-blue-50 border-2 border-blue-200 border-dashed rounded-lg",
+          slotState === 'extend-preview' && "bg-purple-50 border-2 border-purple-300 border-dashed rounded-lg",
           slotState === 'valid' && isOver && "bg-green-50 border-2 border-green-400 border-dashed rounded-lg",
           slotState === 'valid' && !isOver && activeEvent && "bg-green-50/50 border border-green-200 rounded-lg",
           slotState === 'conflict' && "bg-red-50 border border-red-200 rounded-lg opacity-50 cursor-not-allowed",
@@ -656,6 +839,24 @@ export function TraditionalTimetableView({
         timeSlot={selectedTimeSlot}
         subjects={subjects}
       />
+
+      {/* Drag Extend Preview */}
+      <DragPreviewGhost isVisible={isDragExtending}>
+        <DragPreview
+          isVisible={isDragExtending}
+          direction={dragExtendDirection}
+          previewSlots={dragExtendPreview}
+          conflictingSlots={dragExtendConflicts}
+          originalEvent={dragExtendingEvent ? {
+            subjectName: dragExtendingEvent.extendedProps?.subjectName || '',
+            facultyName: dragExtendingEvent.extendedProps?.facultyName || '',
+            timeSlot: dragExtendingEvent.extendedProps?.timeSlotName || '',
+            dayOfWeek: dragExtendingEvent.extendedProps?.dayOfWeek || ''
+          } : undefined}
+          onConfirm={handleDragExtendConfirm}
+          onCancel={handleDragExtendCancel}
+        />
+      </DragPreviewGhost>
     </DndContext>
   )
 }
