@@ -96,6 +96,28 @@ export function QuickCreatePopup({
     }
   }
 
+  // Handle subject selection - now directly creates the class
+  const handleSubjectSelect = (subject: SubjectOption) => {
+    if (!subject.facultyId) {
+      console.error('Cannot create class: Subject has no faculty assigned')
+      return
+    }
+    
+    onCreateEvent({
+      subjectId: subject.id,
+      facultyId: subject.facultyId,
+      date,
+      timeSlot
+    })
+    
+    // Store recently used subject
+    const recentSubjects = JSON.parse(localStorage.getItem('recentSubjects') || '[]')
+    const updatedRecent = [subject.id, ...recentSubjects.filter((id: string) => id !== subject.id)].slice(0, 3)
+    localStorage.setItem('recentSubjects', JSON.stringify(updatedRecent))
+    
+    onClose()
+  }
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -137,28 +159,6 @@ export function QuickCreatePopup({
       setHighlightedIndex(0)
     }
   }, [isOpen])
-
-  // Handle subject selection - now directly creates the class
-  const handleSubjectSelect = (subject: SubjectOption) => {
-    if (!subject.facultyId) {
-      console.error('Cannot create class: Subject has no faculty assigned')
-      return
-    }
-    
-    onCreateEvent({
-      subjectId: subject.id,
-      facultyId: subject.facultyId,
-      date,
-      timeSlot
-    })
-    
-    // Store recently used subject
-    const recentSubjects = JSON.parse(localStorage.getItem('recentSubjects') || '[]')
-    const updatedRecent = [subject.id, ...recentSubjects.filter((id: string) => id !== subject.id)].slice(0, 3)
-    localStorage.setItem('recentSubjects', JSON.stringify(updatedRecent))
-    
-    onClose()
-  }
 
 
   // Close on outside click
