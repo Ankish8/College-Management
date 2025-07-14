@@ -1,0 +1,17 @@
+
+> attendance-system@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.7:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     ✓ optimizeCss
+
+ ✓ Starting...
+ ✓ Ready in 1196ms
+ ✓ Compiled /middleware in 306ms (207 modules)
+ ○ Compiling /auth/signin ...
+ ✓ Compiled /auth/signin in 1939ms (928 modules)
+ HEAD /auth/signin 200 in 2115ms
