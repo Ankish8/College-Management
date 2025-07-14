@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import { 
   getWeekDays, 
@@ -15,12 +15,27 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Clock, Users } from 'lucide-react'
 import { format, isSameDay, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { QuickCreatePopup } from './quick-create-popup'
 
 interface CalendarWeekViewProps {
   date: Date
   events: CalendarEvent[]
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
+  onQuickCreate?: (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => void
+  subjects?: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+    facultyId: string
+    facultyName: string
+  }>
   showWeekends?: boolean
   className?: string
 }
@@ -30,6 +45,8 @@ export function CalendarWeekView({
   events,
   onEventClick,
   onEventCreate,
+  onQuickCreate,
+  subjects = [],
   showWeekends = true,
   className
 }: CalendarWeekViewProps) {
@@ -42,6 +59,12 @@ export function CalendarWeekView({
   // Detect mobile for responsive layout
   const [isMobile, setIsMobile] = React.useState(false)
   
+  // State for popup management
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  
   React.useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -52,10 +75,37 @@ export function CalendarWeekView({
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const handleTimeSlotClick = (day: Date, timeSlot: string) => {
-    if (onEventCreate) {
+  const handleTimeSlotClick = (day: Date, timeSlot: string, event?: React.MouseEvent) => {
+    if (onQuickCreate && subjects.length > 0 && event) {
+      // Use the new popup system
+      setPopupPosition({ x: event.clientX, y: event.clientY })
+      setSelectedTimeSlot(timeSlot)
+      setSelectedDate(day)
+      setIsPopupOpen(true)
+    } else if (onEventCreate) {
+      // Fallback to the old modal system
       onEventCreate(day, timeSlot)
     }
+  }
+
+  const handlePopupClose = () => {
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
+    setSelectedDate(new Date())
+  }
+
+  const handleQuickCreate = (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => {
+    if (onQuickCreate) {
+      onQuickCreate(data)
+    }
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
+    setSelectedDate(new Date())
   }
 
   const handleEventClick = (event: CalendarEvent) => {
@@ -98,7 +148,7 @@ export function CalendarWeekView({
             variant="ghost"
             size="sm"
             className="w-full h-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors text-xs"
-            onClick={() => handleTimeSlotClick(day, timeSlot.time)}
+            onClick={(e) => handleTimeSlotClick(day, timeSlot.time, e)}
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -224,7 +274,7 @@ export function CalendarWeekView({
                           <Button
                             variant="ghost"
                             className="w-full border-2 border-dashed border-muted-foreground/25"
-                            onClick={() => handleTimeSlotClick(day, '09:00')}
+                            onClick={(e) => handleTimeSlotClick(day, '09:00', e)}
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Add class
@@ -283,6 +333,17 @@ export function CalendarWeekView({
           </div>
         </div>
       )}
+
+      {/* Quick Create Popup */}
+      <QuickCreatePopup
+        isOpen={isPopupOpen}
+        onClose={handlePopupClose}
+        onCreateEvent={handleQuickCreate}
+        position={popupPosition}
+        date={selectedDate}
+        timeSlot={selectedTimeSlot}
+        subjects={subjects}
+      />
     </div>
   )
 }

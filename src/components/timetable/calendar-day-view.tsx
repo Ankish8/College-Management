@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,12 +9,27 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import { format, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { QuickCreatePopup } from './quick-create-popup'
 
 interface CalendarDayViewProps {
   date: Date
   events: CalendarEvent[]
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
+  onQuickCreate?: (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => void
+  subjects?: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+    facultyId: string
+    facultyName: string
+  }>
   viewTitle?: string
   onPrevious?: () => void
   onNext?: () => void
@@ -32,6 +47,8 @@ export function CalendarDayView({
   events,
   onEventClick,
   onEventCreate,
+  onQuickCreate,
+  subjects = [],
   showWeekends = true,
   className,
   viewTitle,
@@ -43,6 +60,11 @@ export function CalendarDayView({
   onFiltersToggle,
   showFilters
 }: CalendarDayViewProps) {
+  // State for popup management
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
+
   // Filter events for this specific day
   const dayEvents = events.filter(event => isSameDay(event.start, date))
   
@@ -57,10 +79,34 @@ export function CalendarDayView({
     { name: "14:15-15:05", startTime: "14:15", endTime: "15:05" },
   ]
 
-  const handleTimeSlotClick = (timeSlot: string) => {
-    if (onEventCreate) {
+  const handleTimeSlotClick = (timeSlot: string, event: React.MouseEvent) => {
+    if (onQuickCreate && subjects.length > 0) {
+      // Use the new popup system
+      setPopupPosition({ x: event.clientX, y: event.clientY })
+      setSelectedTimeSlot(timeSlot)
+      setIsPopupOpen(true)
+    } else if (onEventCreate) {
+      // Fallback to the old modal system
       onEventCreate(date, timeSlot)
     }
+  }
+
+  const handlePopupClose = () => {
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
+  }
+
+  const handleQuickCreate = (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => {
+    if (onQuickCreate) {
+      onQuickCreate(data)
+    }
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
   }
 
   const handleEventClick = (event: CalendarEvent) => {
@@ -157,7 +203,7 @@ export function CalendarDayView({
             <Button
               variant="ghost"
               className="w-full h-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
-              onClick={() => handleTimeSlotClick(timeSlot.name)}
+              onClick={(e) => handleTimeSlotClick(timeSlot.name, e)}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add class
@@ -296,6 +342,17 @@ export function CalendarDayView({
           </div>
         </div>
       )}
+
+      {/* Quick Create Popup */}
+      <QuickCreatePopup
+        isOpen={isPopupOpen}
+        onClose={handlePopupClose}
+        onCreateEvent={handleQuickCreate}
+        position={popupPosition}
+        date={date}
+        timeSlot={selectedTimeSlot}
+        subjects={subjects}
+      />
     </div>
   )
 }

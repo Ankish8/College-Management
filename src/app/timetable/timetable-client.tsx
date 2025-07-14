@@ -311,6 +311,13 @@ export default function TimetableClient() {
 
   // Convert entries to calendar events
   const events: CalendarEvent[] = React.useMemo(() => {
+    console.log('Processing events - timetableData:', {
+      hasData: !!timetableData,
+      entriesCount: timetableData?.entries?.length || 0,
+      selectedBatchId,
+      isLoading
+    })
+    
     // Use real data if available
     if (timetableData?.entries && timetableData.entries.length > 0) {
       const allEvents: CalendarEvent[] = []
@@ -319,12 +326,13 @@ export default function TimetableClient() {
         allEvents.push(...entryEvents)
       })
       console.log('Using real timetable data:', allEvents.length, 'events from', timetableData.entries.length, 'entries')
-      console.log('First entry details:', {
-        id: timetableData.entries[0]?.id,
-        dayOfWeek: timetableData.entries[0]?.dayOfWeek,
-        timeSlot: timetableData.entries[0]?.timeSlot?.name,
-        updatedAt: timetableData.entries[0]?.updatedAt
-      })
+      console.log('Real entries:', timetableData.entries.map(e => ({
+        id: e.id,
+        subject: e.subject?.name,
+        faculty: e.faculty?.user?.name,
+        dayOfWeek: e.dayOfWeek,
+        timeSlot: e.timeSlot?.name
+      })))
       return allEvents
     }
     
@@ -382,6 +390,65 @@ export default function TimetableClient() {
     return []
   }, [timetableData, selectedBatchId, batchesData, formatBatchDisplay, selectedDate])
 
+  // Fetch real subjects data for quick creation
+  const { data: subjectsData, error: subjectsError, isLoading: subjectsLoading } = useQuery({
+    queryKey: ['subjects-for-creation', selectedBatchId],
+    queryFn: async () => {
+      if (!selectedBatchId) return []
+      console.log('🔍 Fetching subjects for batch:', selectedBatchId)
+      const response = await fetch(`/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty`)
+      if (!response.ok) throw new Error('Failed to fetch subjects')
+      const data = await response.json()
+      console.log('📚 Fetched subjects:', data)
+      return data
+    },
+    enabled: !!selectedBatchId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  console.log('📊 Subjects query state:', {
+    selectedBatchId,
+    subjectsData,
+    subjectsError,
+    subjectsLoading,
+    enabled: !!selectedBatchId
+  })
+
+  // Fetch time slots to get correct IDs
+  const { data: timeSlotsData } = useQuery({
+    queryKey: ['timeslots-for-creation'],
+    queryFn: async () => {
+      console.log('🕐 Fetching time slots')
+      const response = await fetch('/api/timeslots?active=true')
+      if (!response.ok) throw new Error('Failed to fetch time slots')
+      const data = await response.json()
+      console.log('🕐 Fetched time slots:', data)
+      return data
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  })
+
+  // Transform subjects data for quick creation popup
+  const realSubjects = React.useMemo(() => {
+    console.log('Transform subjects - subjectsData:', subjectsData)
+    if (!subjectsData || !Array.isArray(subjectsData)) {
+      console.log('Subjects data is not an array or is null:', subjectsData)
+      return []
+    }
+    
+    const transformed = subjectsData.map((subject: any) => ({
+      id: subject.id,
+      name: subject.name,
+      code: subject.code,
+      credits: subject.credits,
+      facultyId: subject.primaryFacultyId || subject.primaryFaculty?.id,
+      facultyName: subject.primaryFaculty?.user?.name || subject.primaryFaculty?.name || 'No Faculty Assigned'
+    }))
+    
+    console.log('Transformed subjects:', transformed)
+    return transformed
+  }, [subjectsData])
+
   const handleEventClick = (event: CalendarEvent) => {
     toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
   }
@@ -393,6 +460,89 @@ export default function TimetableClient() {
   const handleEventCreate = (date: Date, timeSlot?: string) => {
     setSelectedDate(date)
     setIsCreateModalOpen(true)
+  }
+
+  const handleQuickCreate = async (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => {
+    try {
+      // Map day of week
+      const dayOfWeekMap = {
+        0: 'SUNDAY',
+        1: 'MONDAY', 
+        2: 'TUESDAY',
+        3: 'WEDNESDAY',
+        4: 'THURSDAY',
+        5: 'FRIDAY',
+        6: 'SATURDAY'
+      }
+      const dayOfWeek = dayOfWeekMap[data.date.getDay() as keyof typeof dayOfWeekMap]
+      
+      // Map time slot names to actual IDs from database
+      let timeSlotId = null
+      const timeSlotsList = timeSlotsData?.timeSlots || timeSlotsData
+      if (timeSlotsList && Array.isArray(timeSlotsList)) {
+        const timeSlot = timeSlotsList.find((ts: any) => ts.name === data.timeSlot)
+        timeSlotId = timeSlot?.id
+        console.log('🕐 Found time slot:', { 
+          name: data.timeSlot, 
+          timeSlot, 
+          timeSlotId,
+          allTimeSlots: timeSlotsList.map((ts: any) => ({ id: ts.id, name: ts.name }))
+        })
+      } else {
+        console.log('🕐 Time slots data structure:', timeSlotsData)
+      }
+      
+      if (!timeSlotId) {
+        throw new Error(`Time slot "${data.timeSlot}" not found or is inactive`)
+      }
+      
+      const createData = {
+        batchId: selectedBatchId || '',
+        subjectId: data.subjectId,
+        facultyId: data.facultyId,
+        timeSlotId: timeSlotId,
+        dayOfWeek: dayOfWeek,
+        entryType: 'REGULAR',
+        date: data.date.toISOString().split('T')[0] // Format as YYYY-MM-DD
+      }
+      
+      console.log('Creating timetable entry with data:', createData)
+      
+      const response = await fetch('/api/timetable/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createData),
+      })
+      
+      console.log('API Response status:', response.status)
+      console.log('API Response headers:', response.headers)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('API Error response:', errorText)
+        let error
+        try {
+          error = JSON.parse(errorText)
+        } catch {
+          error = { message: errorText }
+        }
+        throw new Error(error.message || `Failed to create timetable entry (${response.status})`)
+      }
+      
+      const result = await response.json()
+      toast.success('Class created successfully!')
+      
+      // Refetch the timetable data to show the new event
+      refetch()
+    } catch (error) {
+      console.error('Error creating class:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to create class')
+    }
   }
 
   const handleEventDrop = async (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => {
@@ -735,10 +885,12 @@ export default function TimetableClient() {
             onEventClick={handleEventClick}
             onEventEdit={handleEventEdit}
             onEventCreate={handleEventCreate}
+            onQuickCreate={handleQuickCreate}
             onEventDrop={handleEventDrop}
             onEventDelete={handleEventDelete}
             onViewStateChange={handleViewStateChange}
             onCheckConflicts={checkConflicts}
+            subjects={realSubjects}
             isLoading={isLoading}
             conflicts={[]}
             showWeekends={false}

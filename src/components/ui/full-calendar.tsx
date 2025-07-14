@@ -36,6 +36,20 @@ interface FullCalendarProps extends Omit<TimetableViewProps, 'currentDate' | 'on
   onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
   onEventDelete?: (eventId: string) => void
   onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
+  onQuickCreate?: (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => void
+  subjects?: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+    facultyId: string
+    facultyName: string
+  }>
 }
 
 export function FullCalendar({
@@ -47,9 +61,11 @@ export function FullCalendar({
   onFiltersChange,
   onEventClick,
   onEventCreate,
+  onQuickCreate,
   onEventDrop,
   onEventDelete,
   onCheckConflicts,
+  subjects = [],
   isLoading = false,
   className,
   onViewStateChange
@@ -238,6 +254,8 @@ export function FullCalendar({
                   events={processedEvents}
                   onEventClick={handleEventClick}
                   onEventCreate={onEventCreate}
+                  onQuickCreate={onQuickCreate}
+                  subjects={subjects}
                   showWeekends={showWeekends}
                   viewTitle={viewTitle}
                   onPrevious={handlePrevious}
@@ -256,6 +274,8 @@ export function FullCalendar({
                   events={processedEvents}
                   onEventClick={handleEventClick}
                   onEventCreate={onEventCreate}
+                  onQuickCreate={onQuickCreate}
+                  subjects={subjects}
                   onEventDrop={onEventDrop}
                   onEventDelete={onEventDelete}
                   onCheckConflicts={onCheckConflicts}

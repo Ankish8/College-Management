@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
@@ -17,12 +17,27 @@ import {
   useDroppable,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { QuickCreatePopup } from './quick-create-popup'
 
 interface TraditionalTimetableViewProps {
   date: Date
   events: CalendarEvent[]
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
+  onQuickCreate?: (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => void
+  subjects?: Array<{
+    id: string
+    name: string
+    code: string
+    credits: number
+    facultyId: string
+    facultyName: string
+  }>
   onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
   onEventDelete?: (eventId: string) => void
   className?: string
@@ -58,6 +73,8 @@ export function TraditionalTimetableView({
   events,
   onEventClick,
   onEventCreate,
+  onQuickCreate,
+  subjects = [],
   onEventDrop,
   onEventDelete,
   className,
@@ -74,6 +91,12 @@ export function TraditionalTimetableView({
   const [activeEvent, setActiveEvent] = React.useState<CalendarEvent | null>(null)
   const [conflictCache, setConflictCache] = React.useState<Record<string, boolean>>({})
   const [isLoadingConflicts, setIsLoadingConflicts] = React.useState(false)
+  
+  // State for popup management
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
+  const [selectedDay, setSelectedDay] = useState<string>('')
   
   // Calculate week dates
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Monday = 1
@@ -189,14 +212,40 @@ export function TraditionalTimetableView({
     }
   }
 
-  const handleSlotClick = (dayKey: string, timeSlot: string) => {
-    if (onEventCreate) {
-      // Create a date for the clicked slot
+  const handleSlotClick = (dayKey: string, timeSlot: string, event?: React.MouseEvent) => {
+    if (onQuickCreate && event) {
+      // Use the new popup system
+      setPopupPosition({ x: event.clientX, y: event.clientY })
+      setSelectedTimeSlot(timeSlot)
+      setSelectedDay(dayKey)
+      setIsPopupOpen(true)
+    } else if (onEventCreate) {
+      // Fallback to the old modal system
       const dayIndex = WEEKDAYS.findIndex(d => d.key === dayKey)
       const clickDate = new Date(date)
       clickDate.setDate(clickDate.getDate() - clickDate.getDay() + 1 + dayIndex) // Monday = 1
       onEventCreate(clickDate, timeSlot)
     }
+  }
+
+  const handlePopupClose = () => {
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
+    setSelectedDay('')
+  }
+
+  const handleQuickCreate = (data: {
+    subjectId: string
+    facultyId: string
+    date: Date
+    timeSlot: string
+  }) => {
+    if (onQuickCreate) {
+      onQuickCreate(data)
+    }
+    setIsPopupOpen(false)
+    setSelectedTimeSlot('')
+    setSelectedDay('')
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -399,7 +448,7 @@ export function TraditionalTimetableView({
               slotState === 'current' ? "border-blue-300" :
               "border-muted-foreground/25 hover:border-primary/50"
             )}
-            onClick={() => handleSlotClick(dayKey, timeSlot)}
+            onClick={(e) => handleSlotClick(dayKey, timeSlot, e)}
             disabled={slotState === 'conflict'}
           >
             {slotState === 'conflict' ? (
@@ -591,6 +640,22 @@ export function TraditionalTimetableView({
           </div>
         ) : null}
       </DragOverlay>
+
+      {/* Quick Create Popup */}
+      <QuickCreatePopup
+        isOpen={isPopupOpen}
+        onClose={handlePopupClose}
+        onCreateEvent={handleQuickCreate}
+        position={popupPosition}
+        date={selectedDay ? (() => {
+          const dayIndex = WEEKDAYS.findIndex(d => d.key === selectedDay)
+          const clickDate = new Date(date)
+          clickDate.setDate(clickDate.getDate() - clickDate.getDay() + 1 + dayIndex)
+          return clickDate
+        })() : new Date()}
+        timeSlot={selectedTimeSlot}
+        subjects={subjects}
+      />
     </DndContext>
   )
 }

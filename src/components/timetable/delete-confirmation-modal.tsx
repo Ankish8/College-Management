@@ -31,19 +31,19 @@ export function DeleteConfirmationModal({
 }: DeleteConfirmationModalProps) {
   const [dontAskAgain, setDontAskAgain] = React.useState(false)
   
-  if (!event) return null
-
-  const handleConfirm = () => {
-    onConfirm(dontAskAgain)
-    onClose()
-  }
-
   // Reset the checkbox when modal opens
   React.useEffect(() => {
     if (isOpen) {
       setDontAskAgain(false)
     }
   }, [isOpen])
+
+  if (!event) return null
+
+  const handleConfirm = () => {
+    onConfirm(dontAskAgain)
+    onClose()
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

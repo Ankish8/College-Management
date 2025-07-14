@@ -104,8 +104,12 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
           { departmentId: null }, // University-wide holidays
           {
             department: {
-              batches: {
-                some: { id: data.batchId }
+              programs: {
+                some: {
+                  batches: {
+                    some: { id: data.batchId }
+                  }
+                }
               }
             }
           }
@@ -131,8 +135,12 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
         blockRegularClasses: true,
         academicCalendar: {
           department: {
-            batches: {
-              some: { id: data.batchId }
+            programs: {
+              some: {
+                batches: {
+                  some: { id: data.batchId }
+                }
+              }
             }
           }
         }
