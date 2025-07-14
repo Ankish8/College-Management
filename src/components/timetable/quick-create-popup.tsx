@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { X, Clock, User, BookOpen } from 'lucide-react'
+import { X, Clock, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface QuickCreatePopupProps {
@@ -47,7 +47,6 @@ export function QuickCreatePopup({
   timeSlot,
   subjects
 }: QuickCreatePopupProps) {
-  const [selectedSubject, setSelectedSubject] = useState<SubjectOption | null>(null)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const popupRef = useRef<HTMLDivElement>(null)
 
@@ -130,12 +129,11 @@ export function QuickCreatePopup({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, sortedSubjects, highlightedIndex, onClose])
+  }, [isOpen, sortedSubjects, highlightedIndex, onClose, handleSubjectSelect])
 
   // Reset selection when popup opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedSubject(null)
       setHighlightedIndex(0)
     }
   }, [isOpen])
