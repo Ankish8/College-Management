@@ -146,7 +146,9 @@ export class AutoSaveManager {
   // Quick create settings
   setQuickCreateSettings(settings: Partial<TimetablePreferences['quickCreateSettings']>): void {
     this.preferences.quickCreateSettings = {
-      ...this.preferences.quickCreateSettings,
+      autoApplyRecent: this.preferences.quickCreateSettings?.autoApplyRecent ?? true,
+      showPreview: this.preferences.quickCreateSettings?.showPreview ?? true,
+      confirmBeforeCreate: this.preferences.quickCreateSettings?.confirmBeforeCreate ?? false,
       ...settings
     }
     this.savePreferences()

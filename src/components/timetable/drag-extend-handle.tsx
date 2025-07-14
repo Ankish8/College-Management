@@ -129,16 +129,6 @@ export function DragExtendHandle({
     return currentDay || 'MONDAY'
   }
 
-  const updateDragPreview = (slots: string[]) => {
-    // Add visual feedback classes to target slots
-    slots.forEach(slot => {
-      const element = document.querySelector(`[data-slot="${slot}"]`)
-      if (element) {
-        element.classList.add('drag-preview-active')
-      }
-    })
-  }
-
   const clearDragPreview = () => {
     // Remove visual feedback classes
     document.querySelectorAll('.drag-preview-active').forEach(el => {
@@ -151,7 +141,7 @@ export function DragExtendHandle({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [])
+  }, [handleMouseMove, handleMouseUp])
 
   return (
     <div

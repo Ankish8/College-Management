@@ -98,7 +98,7 @@ export function QuickCreatePopup({
   }
 
   // Handle subject selection - now directly creates the class
-  const handleSubjectSelect = (subject: SubjectOption) => {
+  const handleSubjectSelect = React.useCallback((subject: SubjectOption) => {
     if (!subject.facultyId) {
       console.error('Cannot create class: Subject has no faculty assigned')
       return
@@ -123,7 +123,6 @@ export function QuickCreatePopup({
     // Store default preferences if this is a frequent pattern
     const sessions = autoSaveManager.getQuickCreateSessions()
     const timeSlotCount = sessions.filter(s => s.timeSlot === timeSlot).length
-    const dayCount = sessions.filter(s => s.day === date.toISOString().split('T')[0]).length
     
     // Auto-save preferences if patterns are detected
     if (timeSlotCount >= 3 && !autoSaveManager.getDefaultTimeSlot()) {
@@ -131,7 +130,7 @@ export function QuickCreatePopup({
     }
     
     onClose()
-  }
+  }, [onCreateEvent, date, timeSlot, onClose])
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -206,7 +205,9 @@ export function QuickCreatePopup({
               <div className="flex items-center gap-2">
                 <CardTitle className="text-base font-semibold">Quick Add Class</CardTitle>
                 {autoSaveManager.getRecentSubjects().length > 0 && (
-                  <History className="h-3 w-3 text-blue-500" title="Recent subjects loaded" />
+                  <div title="Recent subjects loaded">
+                    <History className="h-3 w-3 text-blue-500" />
+                  </div>
                 )}
               </div>
               <Button

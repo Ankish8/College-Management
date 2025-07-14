@@ -1,3 +1,5 @@
+import { DayOfWeek, EntryType } from '@prisma/client'
+
 export interface CalendarEvent {
   id: string
   title: string
