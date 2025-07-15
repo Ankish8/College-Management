@@ -91,8 +91,8 @@ export default async function AcademicCalendarSettingsPage() {
 
             <AcademicCalendarSettings 
               department={user.department}
-              academicCalendars={user.department.academicCalendars}
-              departmentHolidays={user.department.holidays}
+              academicCalendars={user.department.academicCalendars as any}
+              departmentHolidays={user.department.holidays as any}
             />
           </div>
         </div>

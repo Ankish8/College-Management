@@ -34,11 +34,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert numeric and boolean parameters
-    if (queryParams.year) queryParams.year = parseInt(queryParams.year)
-    if (queryParams.isRecurring) queryParams.isRecurring = queryParams.isRecurring === "true"
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.departmentId) queryParams.departmentId = rawParams.departmentId
+    if (rawParams.type) queryParams.type = rawParams.type
+    if (rawParams.dateFrom) queryParams.dateFrom = rawParams.dateFrom
+    if (rawParams.dateTo) queryParams.dateTo = rawParams.dateTo
+    if (rawParams.academicCalendarId) queryParams.academicCalendarId = rawParams.academicCalendarId
+    
+    // Convert numeric parameters
+    if (rawParams.year) queryParams.year = parseInt(rawParams.year)
+    
+    // Convert boolean parameters
+    if (rawParams.isRecurring) queryParams.isRecurring = rawParams.isRecurring === "true"
     
     const filters = holidayFilterSchema.parse(queryParams)
     

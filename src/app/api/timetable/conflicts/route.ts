@@ -101,8 +101,12 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
           { departmentId: null }, // University-wide holidays
           {
             department: {
-              batches: {
-                some: { id: data.batchId }
+              programs: {
+                some: {
+                  batches: {
+                    some: { id: data.batchId }
+                  }
+                }
               }
             }
           }
@@ -129,8 +133,12 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
         blockRegularClasses: true,
         academicCalendar: {
           department: {
-            batches: {
-              some: { id: data.batchId }
+            programs: {
+              some: {
+                batches: {
+                  some: { id: data.batchId }
+                }
+              }
             }
           }
         }

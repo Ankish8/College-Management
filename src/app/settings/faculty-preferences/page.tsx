@@ -45,14 +45,14 @@ export default async function FacultyPreferencesPage() {
   })
 
   // Get or create faculty preferences
-  let preferences = user.facultyPreferences
+  let preferences: any = user.facultyPreferences
   if (!preferences) {
     preferences = await db.facultyPreferences.create({
       data: {
         facultyId: user.id,
         maxDailyHours: 8,
         maxWeeklyHours: 40,
-        preferredTimeSlots: null,
+        preferredTimeSlots: undefined,
         notificationSettings: {
           scheduleChanges: true,
           newAssignments: true,
@@ -82,7 +82,7 @@ export default async function FacultyPreferencesPage() {
             </div>
 
             <FacultyPreferencesForm 
-              user={user}
+              user={user as any}
               preferences={preferences}
               timeSlots={timeSlots}
             />

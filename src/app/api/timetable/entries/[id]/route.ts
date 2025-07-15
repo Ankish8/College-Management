@@ -20,7 +20,7 @@ const updateTimetableEntrySchema = z.object({
 
 // Conflict detection function (reused from main route)
 async function checkConflicts(data: any, excludeId: string) {
-  const conflicts = []
+  const conflicts: any[] = []
   
   const whereClause: any = {
     isActive: true,

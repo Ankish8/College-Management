@@ -130,7 +130,7 @@ export function EditTimeSlotModal({ open, onOpenChange, timeSlotId }: EditTimeSl
       if (!timeSlotId) return null
       const response = await fetch(`/api/timeslots/${timeSlotId}`)
       if (!response.ok) throw new Error('Failed to fetch time slot details')
-      return response.json() as TimeSlotDetails
+      return await response.json() as TimeSlotDetails
     },
     enabled: !!timeSlotId && open
   })

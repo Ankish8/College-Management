@@ -66,10 +66,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert boolean parameter
-    if (queryParams.isActive) queryParams.isActive = queryParams.isActive === "true"
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.search) queryParams.search = rawParams.search
+    if (rawParams.departmentId) queryParams.departmentId = rawParams.departmentId
+    if (rawParams.sortBy) queryParams.sortBy = rawParams.sortBy
+    if (rawParams.sortOrder) queryParams.sortOrder = rawParams.sortOrder
+    
+    // Convert boolean parameters
+    if (rawParams.isActive) queryParams.isActive = rawParams.isActive === "true"
     
     const filters = timeslotFilterSchema.parse(queryParams)
     

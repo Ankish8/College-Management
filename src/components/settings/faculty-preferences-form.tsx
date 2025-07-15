@@ -113,7 +113,7 @@ export function FacultyPreferencesForm({ user, preferences, timeSlots }: Faculty
   })
 
   const newBlackoutForm = useForm<BlackoutPeriodFormData>({
-    resolver: zodResolver(blackoutPeriodSchema),
+    resolver: zodResolver(blackoutPeriodSchema) as any,
     defaultValues: {
       startDate: "",
       endDate: "",

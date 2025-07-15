@@ -373,7 +373,7 @@ export function SubjectList() {
           {filteredSubjects.map((subject) => (
             <SubjectCard
               key={subject.id}
-              subject={subject}
+              subject={subject as any}
               onUpdate={handleSubjectUpdated}
               onDelete={handleSubjectDeleted}
               onEdit={handleEdit}
@@ -400,7 +400,7 @@ export function SubjectList() {
       <EditSubjectModal
         open={!!editingSubject}
         onOpenChange={(open) => !open && setEditingSubject(null)}
-        subject={editingSubject}
+        subject={editingSubject as any}
         onSubjectUpdated={handleSubjectUpdated}
       />
     </div>

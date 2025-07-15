@@ -27,7 +27,7 @@ const createTimetableEntrySchema = z.object({
   subjectId: z.string().min(1, "Subject is required"),
   facultyId: z.string().min(1, "Faculty is required"),
   timeSlotId: z.string().min(1, "Time slot is required"),
-  dayOfWeek: z.nativeEnum(DayOfWeek, { required_error: "Day of week is required" }),
+  dayOfWeek: z.nativeEnum(DayOfWeek),
   date: z.string().optional(),
   entryType: z.nativeEnum(EntryType).default("REGULAR"),
   notes: z.string().optional(),
@@ -167,7 +167,7 @@ export function CreateTimetableEntryModal({
     reset,
     formState: { errors, isSubmitting }
   } = useForm<CreateTimetableEntryFormData>({
-    resolver: zodResolver(createTimetableEntrySchema),
+    resolver: zodResolver(createTimetableEntrySchema) as any,
     defaultValues: {
       batchId: defaultBatchId || '',
       entryType: 'REGULAR',

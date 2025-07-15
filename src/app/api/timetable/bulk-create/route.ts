@@ -134,8 +134,12 @@ async function checkBulkConflicts(entries: any[]) {
             { departmentId: null }, // University-wide holidays
             {
               department: {
-                batches: {
-                  some: { id: entry.batchId }
+                programs: {
+                  some: {
+                    batches: {
+                      some: { id: entry.batchId }
+                    }
+                  }
                 }
               }
             }
@@ -162,8 +166,12 @@ async function checkBulkConflicts(entries: any[]) {
           blockRegularClasses: true,
           academicCalendar: {
             department: {
-              batches: {
-                some: { id: entry.batchId }
+              programs: {
+                some: {
+                  batches: {
+                    some: { id: entry.batchId }
+                  }
+                }
               }
             }
           }

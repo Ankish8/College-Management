@@ -35,11 +35,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert numeric and boolean parameters
-    if (queryParams.year) queryParams.year = parseInt(queryParams.year)
-    if (queryParams.blockRegularClasses) queryParams.blockRegularClasses = queryParams.blockRegularClasses === "true"
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.academicCalendarId) queryParams.academicCalendarId = rawParams.academicCalendarId
+    if (rawParams.examType) queryParams.examType = rawParams.examType
+    if (rawParams.dateFrom) queryParams.dateFrom = rawParams.dateFrom
+    if (rawParams.dateTo) queryParams.dateTo = rawParams.dateTo
+    if (rawParams.departmentId) queryParams.departmentId = rawParams.departmentId
+    
+    // Convert numeric parameters
+    if (rawParams.year) queryParams.year = parseInt(rawParams.year)
+    
+    // Convert boolean parameters
+    if (rawParams.blockRegularClasses) queryParams.blockRegularClasses = rawParams.blockRegularClasses === "true"
     
     const filters = examPeriodFilterSchema.parse(queryParams)
     
@@ -285,7 +297,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Check for affected timetable entries during this period if regular classes are blocked
-    let affectedEntries = []
+    let affectedEntries: any[] = []
     if (validatedData.blockRegularClasses) {
       affectedEntries = await db.timetableEntry.findMany({
         where: {

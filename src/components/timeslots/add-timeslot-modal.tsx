@@ -111,7 +111,7 @@ export function AddTimeSlotModal({ open, onOpenChange }: AddTimeSlotModalProps) 
   const [suggestions, setSuggestions] = useState<string[]>([])
 
   const form = useForm<TimeSlotFormData>({
-    resolver: zodResolver(timeSlotSchema),
+    resolver: zodResolver(timeSlotSchema) as any,
     defaultValues: {
       name: '',
       startTime: '09:00',

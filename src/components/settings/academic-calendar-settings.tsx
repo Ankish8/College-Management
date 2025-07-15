@@ -30,7 +30,7 @@ const holidaySchema = z.object({
   date: z.string().min(1, "Date is required"),
   type: z.enum(["NATIONAL", "UNIVERSITY", "DEPARTMENT", "LOCAL"]),
   description: z.string().optional(),
-  isRecurring: z.boolean().default(false),
+  isRecurring: z.boolean().optional().default(false),
 })
 
 const examPeriodSchema = z.object({
@@ -70,7 +70,7 @@ interface Holiday {
   date: Date
   type: string
   description?: string
-  isRecurring: boolean
+  isRecurring?: boolean
 }
 
 interface ExamPeriod {
@@ -114,7 +114,7 @@ export function AcademicCalendarSettings({
   })
 
   const newHolidayForm = useForm<HolidayFormData>({
-    resolver: zodResolver(holidaySchema),
+    resolver: zodResolver(holidaySchema) as any,
     defaultValues: {
       name: "",
       date: "",
@@ -125,7 +125,7 @@ export function AcademicCalendarSettings({
   })
 
   const newExamPeriodForm = useForm<ExamPeriodFormData>({
-    resolver: zodResolver(examPeriodSchema),
+    resolver: zodResolver(examPeriodSchema) as any,
     defaultValues: {
       name: "",
       startDate: "",

@@ -31,7 +31,7 @@ export function canMarkAttendance(user: AuthUser | null): boolean {
 
 export function canViewAttendance(user: AuthUser | null, studentId?: string): boolean {
   if (isAdmin(user) || isFaculty(user)) return true
-  if (isStudent(user) && user.student && studentId) {
+  if (isStudent(user) && user && user.student && studentId) {
     return user.student.id === studentId
   }
   return false
@@ -39,7 +39,7 @@ export function canViewAttendance(user: AuthUser | null, studentId?: string): bo
 
 export function canEditSubject(user: AuthUser | null, subjectFacultyId?: string): boolean {
   if (isAdmin(user)) return true
-  if (isFaculty(user) && subjectFacultyId) {
+  if (isFaculty(user) && user && subjectFacultyId) {
     return user.id === subjectFacultyId
   }
   return false

@@ -28,11 +28,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert numeric and boolean parameters
-    if (queryParams.year) queryParams.year = parseInt(queryParams.year)
-    if (queryParams.isActive) queryParams.isActive = queryParams.isActive === "true"
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.departmentId) queryParams.departmentId = rawParams.departmentId
+    if (rawParams.academicYear) queryParams.academicYear = rawParams.academicYear
+    
+    // Convert numeric parameters
+    if (rawParams.year) queryParams.year = parseInt(rawParams.year)
+    
+    // Convert boolean parameters
+    if (rawParams.isActive) queryParams.isActive = rawParams.isActive === "true"
     
     const filters = semesterFilterSchema.parse(queryParams)
     

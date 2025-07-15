@@ -79,7 +79,7 @@ async function generateEntriesFromTemplate(template: any) {
       FRIDAY: 5, SATURDAY: 6, SUNDAY: 0
     }
     
-    if (currentDate.getDay() === dayMapping[template.dayOfWeek]) {
+    if (currentDate.getDay() === dayMapping[template.dayOfWeek as keyof typeof dayMapping]) {
       // Check if this date is not a holiday
       const holidays = await db.holiday.findMany({
         where: {
@@ -88,8 +88,12 @@ async function generateEntriesFromTemplate(template: any) {
             { departmentId: null },
             {
               department: {
-                batches: {
-                  some: { id: template.batchId }
+                programs: {
+                  some: {
+                    batches: {
+                      some: { id: template.batchId }
+                    }
+                  }
                 }
               }
             }
@@ -105,8 +109,12 @@ async function generateEntriesFromTemplate(template: any) {
           blockRegularClasses: true,
           academicCalendar: {
             department: {
-              batches: {
-                some: { id: template.batchId }
+              programs: {
+                some: {
+                  batches: {
+                    some: { id: template.batchId }
+                  }
+                }
               }
             }
           }
@@ -156,12 +164,22 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert page and limit to numbers
-    if (queryParams.page) queryParams.page = parseInt(queryParams.page)
-    if (queryParams.limit) queryParams.limit = parseInt(queryParams.limit)
-    if (queryParams.isActive) queryParams.isActive = queryParams.isActive === "true"
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.batchId) queryParams.batchId = rawParams.batchId
+    if (rawParams.facultyId) queryParams.facultyId = rawParams.facultyId
+    if (rawParams.subjectId) queryParams.subjectId = rawParams.subjectId
+    
+    // Convert numeric parameters
+    if (rawParams.page) queryParams.page = parseInt(rawParams.page)
+    if (rawParams.limit) queryParams.limit = parseInt(rawParams.limit)
+    
+    // Convert boolean parameters
+    if (rawParams.isActive) queryParams.isActive = rawParams.isActive === "true"
     
     const filters = templateFilterSchema.parse(queryParams)
     
@@ -365,7 +383,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    let generatedEntries = []
+    let generatedEntries: any[] = []
 
     // Generate entries immediately if requested
     if (validatedData.generateEntries) {
@@ -378,7 +396,7 @@ export async function POST(request: NextRequest) {
           
           for (const entry of entries) {
             const created = await tx.timetableEntry.create({
-              data: entry,
+              data: entry as any,
               include: {
                 batch: {
                   select: {

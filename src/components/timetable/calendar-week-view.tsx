@@ -20,6 +20,7 @@ import { QuickCreatePopup } from './quick-create-popup'
 interface CalendarWeekViewProps {
   date: Date
   events: CalendarEvent[]
+  batchId?: string
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
   onQuickCreate?: (data: {
@@ -38,17 +39,20 @@ interface CalendarWeekViewProps {
   }>
   showWeekends?: boolean
   className?: string
+  onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
 }
 
 export function CalendarWeekView({
   date,
   events,
+  batchId,
   onEventClick,
   onEventCreate,
   onQuickCreate,
   subjects = [],
   showWeekends = true,
-  className
+  className,
+  onCheckConflicts
 }: CalendarWeekViewProps) {
   const weekDays = getWeekDays(date)
   const displayDays = showWeekends ? weekDays : weekDays.slice(0, 5) // Mon-Fri only
@@ -342,7 +346,10 @@ export function CalendarWeekView({
         position={popupPosition}
         date={selectedDate}
         timeSlot={selectedTimeSlot}
+        batchId={batchId || events[0]?.extendedProps?.batchId || ''}
+        dayOfWeek={format(selectedDate, 'EEEE').toUpperCase()}
         subjects={subjects}
+        onCheckConflicts={onCheckConflicts}
       />
     </div>
   )

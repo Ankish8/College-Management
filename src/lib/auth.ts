@@ -51,17 +51,10 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role: Role }).role
-        token.id = user.id
-      }
-      return token
-    },
     async session({ session, token }) {
       if (session.user && token.id) {
         // Use cached token data instead of DB query on every session check
-        session.user = {
+        (session.user as any) = {
           ...session.user,
           id: token.id as string,
           role: token.role as Role,

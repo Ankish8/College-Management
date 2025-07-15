@@ -332,7 +332,8 @@ export default function AdminTimetablePage() {
                 onEventCreate={handleEventCreate}
                 isLoading={loadingEntries}
                 conflicts={activeConflicts}
-                colorBy="subject"
+                filters={{}}
+                onFiltersChange={() => {}}
                 showWeekends={false}
                 className="h-[600px]"
               />
@@ -436,8 +437,6 @@ export default function AdminTimetablePage() {
       <CreateTimetableEntryModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        selectedDate={selectedDate}
-        selectedTimeSlot={selectedTimeSlot}
         onSuccess={handleCreateSuccess}
       />
 

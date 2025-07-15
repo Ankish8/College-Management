@@ -14,6 +14,7 @@ import { QuickCreatePopup } from './quick-create-popup'
 interface CalendarDayViewProps {
   date: Date
   events: CalendarEvent[]
+  batchId?: string
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
   onQuickCreate?: (data: {
@@ -40,11 +41,13 @@ interface CalendarDayViewProps {
   showFilters?: boolean
   showWeekends?: boolean
   className?: string
+  onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
 }
 
 export function CalendarDayView({
   date,
   events,
+  batchId,
   onEventClick,
   onEventCreate,
   onQuickCreate,
@@ -58,7 +61,8 @@ export function CalendarDayView({
   onViewChange,
   currentView,
   onFiltersToggle,
-  showFilters
+  showFilters,
+  onCheckConflicts
 }: CalendarDayViewProps) {
   // State for popup management
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -351,7 +355,10 @@ export function CalendarDayView({
         position={popupPosition}
         date={date}
         timeSlot={selectedTimeSlot}
+        batchId={batchId || events[0]?.extendedProps?.batchId || ''}
+        dayOfWeek={format(date, 'EEEE').toUpperCase()}
         subjects={subjects}
+        onCheckConflicts={onCheckConflicts}
       />
     </div>
   )

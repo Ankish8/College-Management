@@ -32,7 +32,7 @@ const createTimetableEntrySchema = z.object({
 
 // Conflict detection function
 async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, excludeId?: string) {
-  const conflicts = []
+  const conflicts: any[] = []
   
   const whereClause: any = {
     timeSlotId: data.timeSlotId,
@@ -167,11 +167,24 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
+    const rawParams = Object.fromEntries(searchParams.entries())
     
-    // Convert page and limit to numbers
-    if (queryParams.page) queryParams.page = parseInt(queryParams.page)
-    if (queryParams.limit) queryParams.limit = parseInt(queryParams.limit)
+    // Convert parameters to correct types for schema validation
+    const queryParams: any = {}
+    
+    // Copy string parameters directly
+    if (rawParams.batchId) queryParams.batchId = rawParams.batchId
+    if (rawParams.specializationId) queryParams.specializationId = rawParams.specializationId
+    if (rawParams.facultyId) queryParams.facultyId = rawParams.facultyId
+    if (rawParams.subjectId) queryParams.subjectId = rawParams.subjectId
+    if (rawParams.dateFrom) queryParams.dateFrom = rawParams.dateFrom
+    if (rawParams.dateTo) queryParams.dateTo = rawParams.dateTo
+    if (rawParams.dayOfWeek) queryParams.dayOfWeek = rawParams.dayOfWeek
+    if (rawParams.entryType) queryParams.entryType = rawParams.entryType
+    
+    // Convert numeric parameters
+    if (rawParams.page) queryParams.page = parseInt(rawParams.page)
+    if (rawParams.limit) queryParams.limit = parseInt(rawParams.limit)
     
     const filters = timetableFilterSchema.parse(queryParams)
     

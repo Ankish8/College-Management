@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { X, Clock, BookOpen, Star, History } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { X, Clock, BookOpen, Star, History, Ban, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { autoSaveManager } from '@/lib/utils/auto-save'
 
@@ -20,6 +21,8 @@ interface QuickCreatePopupProps {
   position: { x: number; y: number }
   date: Date
   timeSlot: string
+  batchId: string
+  dayOfWeek: string
   subjects: Array<{
     id: string
     name: string
@@ -28,6 +31,7 @@ interface QuickCreatePopupProps {
     facultyId: string
     facultyName: string
   }>
+  onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
 }
 
 interface SubjectOption {
@@ -39,6 +43,11 @@ interface SubjectOption {
   facultyName: string
 }
 
+interface FilteredSubject extends SubjectOption {
+  isAvailable: boolean
+  conflictReason?: string
+}
+
 export function QuickCreatePopup({
   isOpen,
   onClose,
@@ -46,23 +55,90 @@ export function QuickCreatePopup({
   position,
   date,
   timeSlot,
-  subjects
+  batchId,
+  dayOfWeek,
+  subjects,
+  onCheckConflicts
 }: QuickCreatePopupProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(0)
+  const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
+  const [filteredSubjects, setFilteredSubjects] = useState<FilteredSubject[]>([])
+  const [showUnavailable, setShowUnavailable] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
 
-  // Sort subjects with recently used at the top using auto-save manager
+  // Check conflicts for all subjects when popup opens
+  useEffect(() => {
+    if (!isOpen || !onCheckConflicts || subjects.length === 0) {
+      const defaultFiltered = subjects.map(subject => ({
+        ...subject,
+        isAvailable: true
+      }))
+      setFilteredSubjects(defaultFiltered)
+      return
+    }
+
+    const checkAllConflicts = async () => {
+      setIsCheckingConflicts(true)
+      
+      try {
+        const conflictResults = await Promise.all(
+          subjects.map(async (subject) => {
+            try {
+              const hasConflict = await onCheckConflicts(subject.facultyId, dayOfWeek, timeSlot)
+              return {
+                ...subject,
+                isAvailable: !hasConflict,
+                conflictReason: hasConflict ? `${subject.facultyName} is teaching another class at this time` : undefined
+              }
+            } catch (error) {
+              console.error(`Error checking conflicts for ${subject.name}:`, error)
+              return {
+                ...subject,
+                isAvailable: true // Default to available if check fails
+              }
+            }
+          })
+        )
+        
+        setFilteredSubjects(conflictResults)
+      } catch (error) {
+        console.error('Error checking conflicts:', error)
+        // Fallback to showing all subjects as available
+        const fallbackFiltered = subjects.map(subject => ({
+          ...subject,
+          isAvailable: true
+        }))
+        setFilteredSubjects(fallbackFiltered)
+      } finally {
+        setIsCheckingConflicts(false)
+      }
+    }
+
+    checkAllConflicts()
+  }, [isOpen, subjects, onCheckConflicts, dayOfWeek, timeSlot])
+
+  // Sort subjects with recently used at the top, separated by availability
   const sortedSubjects = React.useMemo(() => {
     const recentSubjectIds = autoSaveManager.getRecentSubjects()
     
-    const recent = subjects.filter(subject => recentSubjectIds.includes(subject.id))
-      .sort((a, b) => recentSubjectIds.indexOf(a.id) - recentSubjectIds.indexOf(b.id))
+    const available = filteredSubjects.filter(subject => subject.isAvailable)
+    const unavailable = filteredSubjects.filter(subject => !subject.isAvailable)
     
-    const remaining = subjects.filter(subject => !recentSubjectIds.includes(subject.id))
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const sortByRecency = (subjects: FilteredSubject[]) => {
+      const recent = subjects.filter(subject => recentSubjectIds.includes(subject.id))
+        .sort((a, b) => recentSubjectIds.indexOf(a.id) - recentSubjectIds.indexOf(b.id))
+      
+      const remaining = subjects.filter(subject => !recentSubjectIds.includes(subject.id))
+        .sort((a, b) => a.name.localeCompare(b.name))
+      
+      return [...recent, ...remaining]
+    }
     
-    return [...recent, ...remaining]
-  }, [subjects])
+    return {
+      available: sortByRecency(available),
+      unavailable: sortByRecency(unavailable)
+    }
+  }, [filteredSubjects])
 
   // Position the popup near the cursor but keep it in viewport
   const getPopupStyle = () => {
@@ -98,9 +174,14 @@ export function QuickCreatePopup({
   }
 
   // Handle subject selection - now directly creates the class
-  const handleSubjectSelect = React.useCallback((subject: SubjectOption) => {
+  const handleSubjectSelect = React.useCallback((subject: FilteredSubject) => {
     if (!subject.facultyId) {
       console.error('Cannot create class: Subject has no faculty assigned')
+      return
+    }
+    
+    if (!subject.isAvailable) {
+      console.error('Cannot create class: Subject is not available due to conflicts')
       return
     }
     
@@ -145,19 +226,19 @@ export function QuickCreatePopup({
         case 'ArrowDown':
           e.preventDefault()
           setHighlightedIndex(prev => 
-            prev < sortedSubjects.length - 1 ? prev + 1 : 0
+            prev < sortedSubjects.available.length - 1 ? prev + 1 : 0
           )
           break
         case 'ArrowUp':
           e.preventDefault()
           setHighlightedIndex(prev => 
-            prev > 0 ? prev - 1 : sortedSubjects.length - 1
+            prev > 0 ? prev - 1 : sortedSubjects.available.length - 1
           )
           break
         case 'Enter':
           e.preventDefault()
-          if (sortedSubjects.length > 0) {
-            handleSubjectSelect(sortedSubjects[highlightedIndex])
+          if (sortedSubjects.available.length > 0) {
+            handleSubjectSelect(sortedSubjects.available[highlightedIndex])
           }
           break
       }
@@ -165,7 +246,7 @@ export function QuickCreatePopup({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, sortedSubjects, highlightedIndex, onClose, handleSubjectSelect])
+  }, [isOpen, sortedSubjects.available, highlightedIndex, onClose, handleSubjectSelect])
 
   // Reset selection when popup opens
   useEffect(() => {
@@ -204,11 +285,13 @@ export function QuickCreatePopup({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-base font-semibold">Quick Add Class</CardTitle>
-                {autoSaveManager.getRecentSubjects().length > 0 && (
+                {isCheckingConflicts ? (
+                  <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />
+                ) : autoSaveManager.getRecentSubjects().length > 0 ? (
                   <div title="Recent subjects loaded">
                     <History className="h-3 w-3 text-blue-500" />
                   </div>
-                )}
+                ) : null}
               </div>
               <Button
                 variant="ghost"
@@ -230,59 +313,145 @@ export function QuickCreatePopup({
           <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div>
-                  <Label className="text-sm font-medium">
-                    Select Subject & Faculty
-                  </Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium">
+                      Select Subject & Faculty
+                    </Label>
+                    {!isCheckingConflicts && (
+                      <div className="text-xs text-muted-foreground">
+                        {sortedSubjects.available.length} available{sortedSubjects.unavailable.length > 0 && `, ${sortedSubjects.unavailable.length} filtered`}
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Subject List */}
                   <div className="mt-2 border rounded-md max-h-64 overflow-y-auto">
-                    {sortedSubjects.length === 0 ? (
+                    {isCheckingConflicts ? (
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Checking availability...</span>
+                        </div>
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-12 w-full" />
+                        ))}
+                      </div>
+                    ) : sortedSubjects.available.length === 0 && sortedSubjects.unavailable.length === 0 ? (
                       <div className="p-4 text-center text-muted-foreground">
                         <div className="text-sm">No subjects found for this batch</div>
                         <div className="text-xs mt-1">Please add subjects to this batch first</div>
                       </div>
-                    ) : (
-                      sortedSubjects.map((subject, index) => {
-                        const isRecent = autoSaveManager.getRecentSubjects().includes(subject.id)
-                        const recentIndex = autoSaveManager.getRecentSubjects().indexOf(subject.id)
-                        
-                        return (
-                          <div
-                            key={subject.id}
-                            className={cn(
-                              "p-2 cursor-pointer border-b last:border-b-0 transition-colors",
-                              index === highlightedIndex ? "bg-primary/20" : "hover:bg-muted/70",
-                              isRecent && "bg-blue-50/50 border-blue-200/50"
-                            )}
-                            onClick={() => handleSubjectSelect(subject)}
+                    ) : sortedSubjects.available.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground">
+                        <Ban className="h-8 w-8 mx-auto mb-2 text-orange-500" />
+                        <div className="text-sm font-medium">No subjects available</div>
+                        <div className="text-xs mt-1">All subjects have conflicts at this time</div>
+                        {sortedSubjects.unavailable.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowUnavailable(true)}
+                            className="mt-2 text-xs"
                           >
-                            <div className="flex items-center gap-2">
-                              {isRecent ? (
-                                <Star className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                              ) : (
-                                <BookOpen className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            Show conflicts ({sortedSubjects.unavailable.length})
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        {/* Available Subjects */}
+                        {sortedSubjects.available.map((subject, index) => {
+                          const isRecent = autoSaveManager.getRecentSubjects().includes(subject.id)
+                          const recentIndex = autoSaveManager.getRecentSubjects().indexOf(subject.id)
+                          
+                          return (
+                            <div
+                              key={subject.id}
+                              className={cn(
+                                "p-2 cursor-pointer border-b transition-colors",
+                                index === highlightedIndex ? "bg-primary/20" : "hover:bg-muted/70",
+                                isRecent && "bg-blue-50/50 border-blue-200/50"
                               )}
-                              <div className="min-w-0 flex-1">
-                                <div className="font-medium text-sm leading-tight flex items-center gap-2">
-                                  {subject.name}
-                                  {isRecent && recentIndex === 0 && (
-                                    <span className="text-xs text-blue-600 font-medium">Recent</span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {subject.facultyName}
+                              onClick={() => handleSubjectSelect(subject)}
+                            >
+                              <div className="flex items-center gap-2">
+                                {isRecent ? (
+                                  <Star className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                                ) : (
+                                  <BookOpen className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-sm leading-tight flex items-center gap-2">
+                                    {subject.name}
+                                    {isRecent && recentIndex === 0 && (
+                                      <span className="text-xs text-blue-600 font-medium">Recent</span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {subject.facultyName}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )
-                      })
+                          )
+                        })}
+                        
+                        {/* Unavailable Subjects - Collapsible */}
+                        {sortedSubjects.unavailable.length > 0 && (
+                          <>
+                            <div className="border-t">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowUnavailable(!showUnavailable)}
+                                className="w-full justify-between p-2 h-auto border-b-0 rounded-none"
+                              >
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Ban className="h-3 w-3" />
+                                  <span>Unavailable ({sortedSubjects.unavailable.length})</span>
+                                </div>
+                                <span className="text-xs">{showUnavailable ? '▼' : '▶'}</span>
+                              </Button>
+                            </div>
+                            
+                            {showUnavailable && (
+                              <div className="bg-muted/30">
+                                {sortedSubjects.unavailable.map((subject) => (
+                                  <div
+                                    key={subject.id}
+                                    className="p-2 border-b last:border-b-0 opacity-60"
+                                    title={subject.conflictReason}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Ban className="h-3 w-3 text-red-500 flex-shrink-0" />
+                                      <div className="min-w-0 flex-1">
+                                        <div className="font-medium text-sm leading-tight line-through">
+                                          {subject.name}
+                                        </div>
+                                        <div className="text-xs text-red-600">
+                                          {subject.conflictReason}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
                 
                 <div className="text-xs text-muted-foreground text-center mt-3 pt-3 border-t">
-                  💡 Click any subject to add instantly • Use ↑↓ arrows + Enter • ESC to cancel
+                  {isCheckingConflicts ? (
+                    "🔍 Filtering subjects based on availability..."
+                  ) : sortedSubjects.available.length > 0 ? (
+                    "💡 Click any subject to add instantly • Use ↑↓ arrows + Enter • ESC to cancel"
+                  ) : (
+                    "⚠️ No subjects available at this time slot"
+                  )}
                 </div>
               </div>
           </CardContent>

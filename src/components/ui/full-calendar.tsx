@@ -32,6 +32,7 @@ interface FullCalendarProps extends Omit<TimetableViewProps, 'currentDate' | 'on
   initialView?: CalendarView
   showWeekends?: boolean
   className?: string
+  batchId?: string
   onViewStateChange?: (state: CalendarViewState) => void
   onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
   onEventDelete?: (eventId: string) => void
@@ -57,6 +58,7 @@ export function FullCalendar({
   initialDate = new Date(),
   initialView = 'week',
   showWeekends = true,
+  batchId,
   filters,
   onFiltersChange,
   onEventClick,
@@ -252,6 +254,7 @@ export function FullCalendar({
                 <CalendarDayView
                   date={viewState.currentDate}
                   events={processedEvents}
+                  batchId={batchId}
                   onEventClick={handleEventClick}
                   onEventCreate={onEventCreate}
                   onQuickCreate={onQuickCreate}
@@ -265,6 +268,7 @@ export function FullCalendar({
                   currentView={viewState.view}
                   onFiltersToggle={() => setShowFilters(!showFilters)}
                   showFilters={showFilters}
+                  onCheckConflicts={onCheckConflicts}
                 />
               )}
               
@@ -272,6 +276,7 @@ export function FullCalendar({
                 <TraditionalTimetableView
                   date={viewState.currentDate}
                   events={processedEvents}
+                  batchId={batchId}
                   onEventClick={handleEventClick}
                   onEventCreate={onEventCreate}
                   onQuickCreate={onQuickCreate}

@@ -18,7 +18,6 @@ export async function createSampleTimetableData() {
           name: "B.Des Semester 5",
           programId: program.id,
           semester: 5,
-          year: 3,
           startYear: 2023,
           endYear: 2027,
           isActive: true

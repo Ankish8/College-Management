@@ -321,12 +321,12 @@ export default function TimetableClient() {
     // Use real data if available
     if (timetableData?.entries && timetableData.entries.length > 0) {
       const allEvents: CalendarEvent[] = []
-      timetableData.entries.forEach(entry => {
+      timetableData.entries.forEach((entry: any) => {
         const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
         allEvents.push(...entryEvents)
       })
       console.log('Using real timetable data:', allEvents.length, 'events from', timetableData.entries.length, 'entries')
-      console.log('Real entries:', timetableData.entries.map(e => ({
+      console.log('Real entries:', timetableData.entries.map((e: any) => ({
         id: e.id,
         subject: e.subject?.name,
         faculty: e.faculty?.user?.name,
@@ -338,7 +338,7 @@ export default function TimetableClient() {
     
     // If no real data, generate sample recurring events for demonstration
     if (selectedBatchId) {
-      const batchInfo = batchesData?.find(b => b.id === selectedBatchId)
+      const batchInfo = batchesData?.find((b: any) => b.id === selectedBatchId)
       if (batchInfo) {
         const batchName = formatBatchDisplay(batchInfo)
         console.log('Using sample data for batch:', batchName)
@@ -589,8 +589,8 @@ export default function TimetableClient() {
         console.error('API Error:', errorData)
         
         // Show user-friendly conflict messages
-        if (response.status === 409 && errorData.conflicts) {
-          const conflict = errorData.conflicts[0]
+        if (response.status === 409 && (errorData as any).conflicts) {
+          const conflict = (errorData as any).conflicts[0]
           if (conflict.type === 'FACULTY_CONFLICT') {
             const facultyName = conflict.details[0]?.subject?.name || 'another subject'
             throw new Error(`Faculty is already teaching ${facultyName} at this time. Please choose a different time slot.`)
@@ -600,7 +600,7 @@ export default function TimetableClient() {
           }
         }
         
-        throw new Error(errorData.error || `Failed to update timetable entry (${response.status})`)
+        throw new Error((errorData as any).error || `Failed to update timetable entry (${response.status})`)
       }
 
       const result = JSON.parse(responseText)
@@ -611,7 +611,7 @@ export default function TimetableClient() {
       toast.success('Class moved successfully!')
     } catch (error) {
       console.error('Error moving class:', error)
-      toast.error(`Failed to move class: ${error.message}`)
+      toast.error(`Failed to move class: ${(error as Error).message}`)
     }
   }
 
@@ -700,7 +700,7 @@ export default function TimetableClient() {
       toast.success('Class deleted successfully!')
     } catch (error) {
       console.error('Error deleting class:', error)
-      toast.error(`Failed to delete class: ${error.message}`)
+      toast.error(`Failed to delete class: ${(error as Error).message}`)
     } finally {
       setIsDeleting(false)
       setEventToDelete(null)
@@ -880,6 +880,7 @@ export default function TimetableClient() {
             key={`calendar-${events.length}-${timetableData?.entries?.[0]?.updatedAt || 'none'}`}
             events={events}
             initialView={currentView}
+            batchId={selectedBatchId}
             filters={filters}
             onFiltersChange={handleFiltersChange}
             onEventClick={handleEventClick}
