@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Layout Debug</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Simulate Sidebar -->
+        <div class="w-64 bg-gray-800 text-white p-4">
+            <h3>Sidebar (256px)</h3>
+        </div>
+        
+        <!-- Simulate Main Content -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Simulate Header -->
+            <div class="bg-white p-4 border-b">
+                <h2>Header</h2>
+            </div>
+            
+            <!-- Simulate Content Area -->
+            <div class="flex-1 p-4 min-w-0">
+                <div class="bg-white p-4 rounded-lg">
+                    <h3 class="mb-4">Subject Allotment Layout Test</h3>
+                    
+                    <!-- The actual layout structure -->
+                    <div class="flex gap-4 min-h-[500px] w-full max-w-full overflow-hidden border-2 border-red-500">
+                        <!-- Fixed Unassigned Subjects Pool -->
+                        <div class="flex-shrink-0 w-80 max-w-80 bg-blue-100 p-4 border-2 border-blue-500">
+                            <h4>Unassigned Subjects</h4>
+                            <div class="text-sm">Fixed: 320px</div>
+                        </div>
+
+                        <!-- Scrollable Faculty Columns -->
+                        <div class="flex-1 overflow-x-auto overflow-y-hidden min-w-0 bg-green-100 border-2 border-green-500">
+                            <div class="flex gap-4 pb-4">
+                                <div class="flex-shrink-0 w-72 bg-yellow-100 p-4 border border-yellow-500">
+                                    <h5>Faculty 1</h5>
+                                    <div class="text-sm">288px</div>
+                                </div>
+                                <div class="flex-shrink-0 w-72 bg-yellow-100 p-4 border border-yellow-500">
+                                    <h5>Faculty 2</h5>
+                                    <div class="text-sm">288px</div>
+                                </div>
+                                <div class="flex-shrink-0 w-72 bg-yellow-100 p-4 border border-yellow-500">
+                                    <h5>Faculty 3</h5>
+                                    <div class="text-sm">288px</div>
+                                </div>
+                                <div class="flex-shrink-0 w-72 bg-yellow-100 p-4 border border-yellow-500">
+                                    <h5>Faculty 4</h5>
+                                    <div class="text-sm">288px</div>
+                                </div>
+                                <div class="flex-shrink-0 w-72 bg-yellow-100 p-4 border border-yellow-500">
+                                    <h5>Faculty 5</h5>
+                                    <div class="text-sm">288px</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-4 bg-gray-100 rounded">
+                        <h4>Debug Info:</h4>
+                        <div id="debug-info"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDebugInfo() {
+            const container = document.querySelector('.flex.gap-4.min-h-\\[500px\\]');
+            const unassigned = document.querySelector('.flex-shrink-0.w-80');
+            const scrollable = document.querySelector('.flex-1.overflow-x-auto');
+            
+            const debugInfo = document.getElementById('debug-info');
+            
+            debugInfo.innerHTML = `
+                <p><strong>Viewport Width:</strong> ${window.innerWidth}px</p>
+                <p><strong>Container Width:</strong> ${container.offsetWidth}px</p>
+                <p><strong>Unassigned Column Width:</strong> ${unassigned.offsetWidth}px</p>
+                <p><strong>Scrollable Area Width:</strong> ${scrollable.offsetWidth}px</p>
+                <p><strong>Available for Faculty:</strong> ${scrollable.offsetWidth}px</p>
+                <p><strong>Needed for 5 Faculty:</strong> ${5 * 288 + 4 * 16}px (5 × 288px + 4 × 16px gaps)</p>
+            `;
+        }
+        
+        updateDebugInfo();
+        window.addEventListener('resize', updateDebugInfo);
+    </script>
+</body>
+</html>

@@ -25,7 +25,13 @@ export function detectEventConflicts(events: CalendarEvent[]): ConflictResult {
   // Group events by date for efficient processing
   const eventsByDate = new Map<string, CalendarEvent[]>()
   events.forEach(event => {
-    const dateKey = event.start.toDateString()
+    // Ensure event.start exists and is a valid Date
+    if (!event.start) return
+    
+    const startDate = event.start instanceof Date ? event.start : new Date(event.start)
+    if (isNaN(startDate.getTime())) return // Skip invalid dates
+    
+    const dateKey = startDate.toDateString()
     if (!eventsByDate.has(dateKey)) {
       eventsByDate.set(dateKey, [])
     }
@@ -78,9 +84,15 @@ function detectBatchConflicts(events: CalendarEvent[]): EventConflict[] {
         const event1 = batchEvents[i]
         const event2 = batchEvents[j]
 
+        // Ensure valid dates before checking overlap
+        const event1Start = event1.start instanceof Date ? event1.start : new Date(event1.start)
+        const event1End = event1.end instanceof Date ? event1.end : new Date(event1.end)
+        const event2Start = event2.start instanceof Date ? event2.start : new Date(event2.start)
+        const event2End = event2.end instanceof Date ? event2.end : new Date(event2.end)
+        
         if (areIntervalsOverlapping(
-          { start: event1.start, end: event1.end },
-          { start: event2.start, end: event2.end }
+          { start: event1Start, end: event1End },
+          { start: event2Start, end: event2End }
         )) {
           conflicts.push({
             eventId: event1.id,
@@ -122,9 +134,15 @@ function detectFacultyConflicts(events: CalendarEvent[]): EventConflict[] {
         const event1 = facultyEvents[i]
         const event2 = facultyEvents[j]
 
+        // Ensure valid dates before checking overlap
+        const event1Start = event1.start instanceof Date ? event1.start : new Date(event1.start)
+        const event1End = event1.end instanceof Date ? event1.end : new Date(event1.end)
+        const event2Start = event2.start instanceof Date ? event2.start : new Date(event2.start)
+        const event2End = event2.end instanceof Date ? event2.end : new Date(event2.end)
+        
         if (areIntervalsOverlapping(
-          { start: event1.start, end: event1.end },
-          { start: event2.start, end: event2.end }
+          { start: event1Start, end: event1End },
+          { start: event2Start, end: event2End }
         )) {
           conflicts.push({
             eventId: event1.id,
@@ -158,9 +176,15 @@ function detectTimeOverlaps(events: CalendarEvent[]): EventConflict[] {
         continue
       }
 
+      // Ensure valid dates before checking overlap
+      const event1Start = event1.start instanceof Date ? event1.start : new Date(event1.start)
+      const event1End = event1.end instanceof Date ? event1.end : new Date(event1.end)
+      const event2Start = event2.start instanceof Date ? event2.start : new Date(event2.start)
+      const event2End = event2.end instanceof Date ? event2.end : new Date(event2.end)
+      
       if (areIntervalsOverlapping(
-        { start: event1.start, end: event1.end },
-        { start: event2.start, end: event2.end }
+        { start: event1Start, end: event1End },
+        { start: event2Start, end: event2End }
       )) {
         conflicts.push({
           eventId: event1.id,

@@ -39,6 +39,15 @@ interface TraditionalTimetableViewProps {
     facultyId: string
     facultyName: string
   }>
+  timeSlots?: Array<{
+    id: string
+    name: string
+    startTime: string
+    endTime: string
+    duration: number
+    isActive: boolean
+    sortOrder: number
+  }>
   onEventDrop?: (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => void
   onEventDelete?: (eventId: string) => void
   className?: string
@@ -77,6 +86,7 @@ export function TraditionalTimetableView({
   onEventCreate,
   onQuickCreate,
   subjects = [],
+  timeSlots = [],
   onEventDrop,
   onEventDelete,
   className,
@@ -111,6 +121,22 @@ export function TraditionalTimetableView({
   }))
   
   
+  // Use dynamic time slots with fallback to default
+  const activeTimeSlots = React.useMemo(() => {
+    if (timeSlots.length > 0) {
+      return timeSlots
+        .filter(ts => ts.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(ts => ({
+          time: ts.name,
+          label: ts.startTime,
+          endTime: ts.endTime,
+          id: ts.id
+        }))
+    }
+    return DEFAULT_TIME_SLOTS
+  }, [timeSlots])
+
   // Preload conflicts when activeEvent changes
   React.useEffect(() => {
     if (!activeEvent || !onCheckConflicts) return
@@ -124,7 +150,7 @@ export function TraditionalTimetableView({
       const conflictPromises: Promise<void>[] = []
       
       for (const day of WEEKDAYS) {
-        for (const timeSlot of DEFAULT_TIME_SLOTS) {
+        for (const timeSlot of activeTimeSlots) {
           const cacheKey = `${facultyId}-${day.key}-${timeSlot.time}-${activeEvent.id}`
           
           // Skip if already cached
@@ -148,7 +174,7 @@ export function TraditionalTimetableView({
     }
     
     loadConflicts()
-  }, [activeEvent, onCheckConflicts, conflictCache])
+  }, [activeEvent, onCheckConflicts, conflictCache, activeTimeSlots])
   
   // Check if dropping an event to a specific slot would cause conflicts
   const checkDropConflict = (draggedEvent: CalendarEvent, targetDayKey: string, targetTimeSlot: string) => {
@@ -293,7 +319,7 @@ export function TraditionalTimetableView({
         // Show user-friendly error message
         if (onEventClick) {
           // Use a toast or alert here instead of console.log
-          console.warn('Cannot move class:', conflict.message)
+          // Cannot move class due to conflict
         }
         setActiveEvent(null)
         return
@@ -351,7 +377,7 @@ export function TraditionalTimetableView({
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              console.log('🗑️ Delete button clicked for event:', event.id)
+              // Delete button clicked for event
               onEventDelete(event.id)
             }}
             title="Delete this class"
@@ -376,7 +402,9 @@ export function TraditionalTimetableView({
           </div>
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            <span>{format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}</span>
+            <span>
+              {event.start && !isNaN(new Date(event.start).getTime()) ? format(new Date(event.start), 'h:mm a') : 'Invalid time'} - {event.end && !isNaN(new Date(event.end).getTime()) ? format(new Date(event.end), 'h:mm a') : 'Invalid time'}
+            </span>
           </div>
           {event.extendedProps?.subjectCode && (
             <div className="text-xs text-muted-foreground">
@@ -489,7 +517,7 @@ export function TraditionalTimetableView({
           {/* Title and Navigation */}
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">
-              {viewTitle || format(date, 'MMMM d, yyyy')}
+              {viewTitle || (date && !isNaN(new Date(date).getTime()) ? format(new Date(date), 'MMMM d, yyyy') : 'Invalid Date')}
             </h2>
             <div className="flex items-center gap-1">
               <Button
@@ -574,22 +602,36 @@ export function TraditionalTimetableView({
           {weekDays.map((day) => (
             <div key={day.key} className="bg-muted/50 p-3 text-center font-medium border rounded-lg">
               <div className="text-sm font-semibold">{day.short} {day.dayNumber}</div>
-              <div className="text-xs text-muted-foreground">{format(day.fullDate, 'MMM')}</div>
+              <div className="text-xs text-muted-foreground">
+                {day.fullDate && !isNaN(new Date(day.fullDate).getTime()) ? format(new Date(day.fullDate), 'MMM') : 'Invalid'}
+              </div>
             </div>
           ))}
 
           {/* Time Slot Rows */}
-          {DEFAULT_TIME_SLOTS.map((timeSlot) => (
+          {activeTimeSlots.map((timeSlot) => (
             <React.Fragment key={timeSlot.time}>
               {/* Time Header */}
               <div className="bg-muted/30 p-3 text-center border rounded-lg">
-                <div className="text-sm font-medium">{timeSlot.label}</div>
+                <div className="text-sm font-medium">
+                  {(() => {
+                    try {
+                      const startDate = new Date(`2000-01-01T${timeSlot.label}`)
+                      return !isNaN(startDate.getTime()) ? format(startDate, 'h:mm a') : timeSlot.label
+                    } catch {
+                      return timeSlot.label
+                    }
+                  })()}
+                </div>
                 <div className="text-xs text-muted-foreground">
-                  to {timeSlot.endTime === "11:05" ? "11:05 AM" : 
-                      timeSlot.endTime === "12:05" ? "12:05 PM" : 
-                      timeSlot.endTime === "13:05" ? "1:05 PM" : 
-                      timeSlot.endTime === "15:05" ? "3:05 PM" : 
-                      format(new Date(`2000-01-01T${timeSlot.endTime}`), 'h:mm a')}
+                  to {(() => {
+                    try {
+                      const endDate = new Date(`2000-01-01T${timeSlot.endTime}`)
+                      return !isNaN(endDate.getTime()) ? format(endDate, 'h:mm a') : timeSlot.endTime
+                    } catch {
+                      return timeSlot.endTime
+                    }
+                  })()}
                 </div>
               </div>
               
@@ -635,7 +677,9 @@ export function TraditionalTimetableView({
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{format(activeEvent.start, 'h:mm a')} - {format(activeEvent.end, 'h:mm a')}</span>
+                <span>
+                  {activeEvent.start && !isNaN(new Date(activeEvent.start).getTime()) ? format(new Date(activeEvent.start), 'h:mm a') : 'Invalid time'} - {activeEvent.end && !isNaN(new Date(activeEvent.end).getTime()) ? format(new Date(activeEvent.end), 'h:mm a') : 'Invalid time'}
+                </span>
               </div>
               {activeEvent.extendedProps?.subjectCode && (
                 <div className="text-xs text-muted-foreground">

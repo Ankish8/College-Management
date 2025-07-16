@@ -181,19 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter(item => !item.items || item.items.length > 0)
   }, [userRole])
 
-  // Debug logging (remove in production) - ALL hooks must be at the top
-  React.useEffect(() => {
-    console.log("AppSidebar Debug:", { status, session, user, userRole })
-  }, [status, session, user, userRole])
-
-  React.useEffect(() => {
-    console.log("Navigation Debug:", { 
-      userRole, 
-      totalNavItems: data.navMain.length, 
-      filteredNavItems: filteredNavMain.length,
-      filteredNavMain 
-    })
-  }, [userRole, filteredNavMain])
+  // Debug logging removed for production
 
   // Show loading state if session is still loading
   if (status === "loading") {

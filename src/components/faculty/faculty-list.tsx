@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { Plus, Search, Grid, List, Filter, RefreshCw } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Plus, Search, Grid, List, Filter, RefreshCw, Users, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,7 @@ import { FacultyCard } from "./faculty-card"
 import { FacultyTable } from "./faculty-table"
 import { AddFacultyModal } from "./add-faculty-modal"
 import { EditFacultyModal } from "./edit-faculty-modal"
+import { FacultyReplacementModal } from "./faculty-replacement-modal"
 import { useToast } from "@/hooks/use-toast"
 
 interface Faculty {
@@ -45,6 +47,7 @@ type FilterType = "all" | "active" | "inactive"
 const ITEMS_PER_PAGE = 12
 
 export function FacultyList() {
+  const router = useRouter()
   const [faculty, setFaculty] = useState<Faculty[]>([])
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([])
   const [paginatedFaculty, setPaginatedFaculty] = useState<Faculty[]>([])
@@ -56,6 +59,7 @@ export function FacultyList() {
   const [currentPage, setCurrentPage] = useState(1)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null)
+  const [isReplacementModalOpen, setIsReplacementModalOpen] = useState(false)
   const { toast } = useToast()
   const toastRef = useRef(toast)
   
@@ -88,6 +92,7 @@ export function FacultyList() {
       setLoading(false)
     }
   }, [])
+
 
   useEffect(() => {
     fetchFaculty()
@@ -237,6 +242,21 @@ export function FacultyList() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setIsReplacementModalOpen(true)}
+            disabled={faculty.length < 2}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Faculty Replacement
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => router.push('/faculty/subject-allotment')}
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Subject Allotment
+          </Button>
           <Button onClick={() => setIsAddModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Faculty
@@ -269,6 +289,7 @@ export function FacultyList() {
           </div>
         )}
       </div>
+
 
       {/* Filters and Controls */}
       <div className="flex items-center gap-4">
@@ -473,6 +494,19 @@ export function FacultyList() {
         onOpenChange={(open) => !open && setEditingFaculty(null)}
         faculty={editingFaculty}
         onFacultyUpdated={handleFacultyUpdated}
+      />
+
+      {/* Faculty Replacement Modal */}
+      <FacultyReplacementModal
+        open={isReplacementModalOpen}
+        onOpenChange={setIsReplacementModalOpen}
+        onReplacementComplete={() => {
+          fetchFaculty()
+          toast({
+            title: "Faculty Replacement Completed",
+            description: "Faculty assignments have been successfully updated",
+          })
+        }}
       />
     </div>
   )

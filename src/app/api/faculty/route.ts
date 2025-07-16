@@ -7,13 +7,14 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's department to only show faculty from same department
+    // Get user's department using email instead of ID (more reliable)
     const user = await db.user.findUnique({
-      where: { id: (session.user as any).id },
+      where: { email: session.user.email! },
       select: { departmentId: true }
     })
 
@@ -52,6 +53,18 @@ export async function GET() {
             name: true,
             code: true,
             credits: true,
+            batch: {
+              select: {
+                id: true,
+                name: true,
+                program: {
+                  select: {
+                    name: true,
+                    shortName: true
+                  }
+                }
+              }
+            }
           }
         },
         coFacultySubjects: {
@@ -63,6 +76,18 @@ export async function GET() {
             name: true,
             code: true,
             credits: true,
+            batch: {
+              select: {
+                id: true,
+                name: true,
+                program: {
+                  select: {
+                    name: true,
+                    shortName: true
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -167,6 +192,18 @@ export async function POST(request: NextRequest) {
             name: true,
             code: true,
             credits: true,
+            batch: {
+              select: {
+                id: true,
+                name: true,
+                program: {
+                  select: {
+                    name: true,
+                    shortName: true
+                  }
+                }
+              }
+            }
           }
         },
         coFacultySubjects: {
@@ -178,6 +215,18 @@ export async function POST(request: NextRequest) {
             name: true,
             code: true,
             credits: true,
+            batch: {
+              select: {
+                id: true,
+                name: true,
+                program: {
+                  select: {
+                    name: true,
+                    shortName: true
+                  }
+                }
+              }
+            }
           }
         }
       }

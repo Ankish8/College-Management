@@ -41,6 +41,7 @@ model Department {
   settings   DepartmentSettings?
   academicCalendars AcademicCalendar[]
   holidays   Holiday[]
+  timetableTemplatesNew TimetableTemplateNew[]
 
   @@map("departments")
 }
@@ -134,6 +135,10 @@ model User {
   timetableEntries TimetableEntry[]
   timetableTemplates TimetableTemplate[] @relation("TemplateAuthors")
   facultyPreferences FacultyPreferences?
+  
+  // Bulk Operations
+  bulkOperations   BulkOperation[]
+  createdTemplates TimetableTemplateNew[] @relation("TemplateCreator")
 
   @@map("users")
 }
@@ -572,4 +577,110 @@ enum EndCondition {
 enum SchedulingMode {
   MODULE_BASED     // Module-based scheduling (Design dept default)
   WEEKLY_RECURRING // Traditional weekly recurring schedule
+}
+
+// Bulk Operations Management
+model BulkOperation {
+  id          String   @id @default(cuid())
+  type        BulkOperationType
+  status      OperationStatus @default(PENDING)
+  progress    Int      @default(0)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  userId      String
+  parameters  Json     // Store operation parameters
+  results     Json?    // Store operation results
+  errorLog    String?
+  affectedCount Int    @default(0)
+  successCount  Int    @default(0)
+  failedCount   Int    @default(0)
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs        OperationLog[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([startedAt])
+  @@map("bulk_operations")
+}
+
+model OperationLog {
+  id          String        @id @default(cuid())
+  operationId String
+  level       LogLevel      
+  message     String
+  details     Json?
+  timestamp   DateTime      @default(now())
+  
+  // Relations
+  operation   BulkOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  
+  @@index([operationId])
+  @@index([level])
+  @@index([timestamp])
+  @@map("operation_logs")
+}
+
+// Enhanced Timetable Template System
+model TimetableTemplateNew {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  templateData Json    // Puck.js JSON output
+  isDefault   Boolean  @default(false)
+  isPublic    Boolean  @default(false)
+  departmentId String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Template metadata
+  templateType String?  // "semester", "weekly", "intensive", etc.
+  targetBatches Json?   // Array of batch IDs this template is designed for
+  creditHours Int?     // Total credit hours in template
+  subjectCount Int?    // Number of subjects in template
+  
+  // Usage tracking
+  timesUsed   Int      @default(0)
+  lastUsed    DateTime?
+  
+  // Relations
+  creator     User     @relation("TemplateCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  department  Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  @@index([createdBy])
+  @@index([departmentId])
+  @@index([isDefault])
+  @@index([isPublic])
+  @@index([templateType])
+  @@map("timetable_templates_new")
+}
+
+// Bulk Operation Enums
+enum BulkOperationType {
+  CLONE_TIMETABLE
+  FACULTY_REPLACE  
+  BULK_RESCHEDULE
+  TEMPLATE_APPLY
+  BATCH_ASSIGN
+  CONFLICT_RESOLUTION
+  SEMESTER_ROLLOVER
+}
+
+enum OperationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  PAUSED
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  DEBUG
 }

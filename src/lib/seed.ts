@@ -26,6 +26,20 @@ async function seedDatabase() {
       })
     }
 
+    // Create Department Settings
+    await db.departmentSettings.upsert({
+      where: { departmentId: department.id },
+      update: {},
+      create: {
+        departmentId: department.id,
+        creditHoursRatio: 15,
+        maxFacultyCredits: 30,
+        coFacultyWeight: 0.5,
+        schedulingMode: "MODULE_BASED",
+        autoCreateAttendance: true,
+      },
+    })
+
     // Create B.Des Program
     let bdesProgram = await db.program.findFirst({ where: { shortName: "B.Des" } })
     if (!bdesProgram) {
@@ -107,7 +121,9 @@ async function seedDatabase() {
     // Create Admin User
     const adminUser = await db.user.upsert({
       where: { email: "admin@jlu.edu.in" },
-      update: {},
+      update: {
+        departmentId: department.id, // Ensure department ID is set
+      },
       create: {
         email: "admin@jlu.edu.in",
         name: "System Admin",
@@ -117,18 +133,88 @@ async function seedDatabase() {
       },
     })
 
-    // Create Faculty User
-    const facultyUser = await db.user.upsert({
-      where: { email: "ankish.khatri@jlu.edu.in" },
-      update: {},
-      create: {
+    // Create Faculty Users
+    const facultyUsers = [
+      {
         email: "ankish.khatri@jlu.edu.in",
         name: "Ankish Khatri",
-        role: "FACULTY",
         employeeId: "JLU618",
-        departmentId: department.id,
       },
-    })
+      {
+        email: "dr.neha.gupta@jlu.edu.in",
+        name: "Dr. Neha Gupta",
+        employeeId: "JLU501",
+      },
+      {
+        email: "dr.priya.sharma@jlu.edu.in",
+        name: "Dr. Priya Sharma",
+        employeeId: "JLU502",
+      },
+      {
+        email: "prof.amit.patel@jlu.edu.in",
+        name: "Prof. Amit Patel",
+        employeeId: "JLU503",
+      },
+      {
+        email: "prof.rajesh.kumar@jlu.edu.in",
+        name: "Prof. Rajesh Kumar",
+        employeeId: "JLU504",
+      },
+      {
+        email: "dr.kavita.singh@jlu.edu.in",
+        name: "Dr. Kavita Singh",
+        employeeId: "JLU505",
+      },
+      {
+        email: "prof.rahul.verma@jlu.edu.in",
+        name: "Prof. Rahul Verma",
+        employeeId: "JLU506",
+      },
+      {
+        email: "dr.anjali.mehta@jlu.edu.in",
+        name: "Dr. Anjali Mehta",
+        employeeId: "JLU507",
+      },
+      {
+        email: "prof.sanjay.joshi@jlu.edu.in",
+        name: "Prof. Sanjay Joshi",
+        employeeId: "JLU508",
+      },
+      {
+        email: "dr.pooja.agarwal@jlu.edu.in",
+        name: "Dr. Pooja Agarwal",
+        employeeId: "JLU509",
+      },
+      {
+        email: "prof.vikram.singh@jlu.edu.in",
+        name: "Prof. Vikram Singh",
+        employeeId: "JLU510",
+      },
+      {
+        email: "dr.ritu.sharma@jlu.edu.in",
+        name: "Dr. Ritu Sharma",
+        employeeId: "JLU511",
+      },
+    ]
+
+    const createdFaculty = []
+    for (const faculty of facultyUsers) {
+      const facultyUser = await db.user.upsert({
+        where: { email: faculty.email },
+        update: {},
+        create: {
+          email: faculty.email,
+          name: faculty.name,
+          role: "FACULTY",
+          employeeId: faculty.employeeId,
+          departmentId: department.id,
+        },
+      })
+      createdFaculty.push(facultyUser)
+    }
+
+    // Use the first faculty user for backward compatibility
+    const facultyUser = createdFaculty[0]
 
     // Create Sample Batches
     let batch5 = await db.batch.findFirst({ where: { name: "B.Des Semester 5" } })
@@ -176,22 +262,118 @@ async function seedDatabase() {
       }
     }
 
-    // Create Sample Subjects
-    const gamificationSubject = await db.subject.upsert({
-      where: { code: "JSD012" },
-      update: {},
-      create: {
+    // Create Sample Subjects and assign to different faculty members
+    const subjects = [
+      {
+        name: "Digital Prototyping",
+        code: "DPR501",
+        credits: 4,
+        totalHours: 60,
+        primaryFacultyId: createdFaculty[0].id, // Dr. Neha Gupta
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Advanced digital prototyping techniques"
+      },
+      {
+        name: "User Experience Design",
+        code: "UXD501",
+        credits: 4,
+        totalHours: 60,
+        primaryFacultyId: createdFaculty[1].id, // Dr. Priya Sharma
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Comprehensive UX design principles"
+      },
+      {
+        name: "Design Thinking",
+        code: "DTH301",
+        credits: 2,
+        totalHours: 30,
+        primaryFacultyId: createdFaculty[2].id, // Prof. Amit Patel
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Design thinking methodology"
+      },
+      {
+        name: "Design Research Methods",
+        code: "DRM501",
+        credits: 3,
+        totalHours: 45,
+        primaryFacultyId: createdFaculty[3].id, // Prof. Rajesh Kumar
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Research methodologies in design"
+      },
+      {
+        name: "Visual Communication",
+        code: "VCD301",
+        credits: 3,
+        totalHours: 45,
+        primaryFacultyId: createdFaculty[4].id, // Dr. Kavita Singh
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Visual communication principles"
+      },
+      {
+        name: "UX Portfolio Development",
+        code: "UXP701",
+        credits: 4,
+        totalHours: 60,
+        primaryFacultyId: createdFaculty[5].id, // Prof. Rahul Verma
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Building professional UX portfolios"
+      },
+      {
+        name: "Advanced Interaction Design",
+        code: "AID701",
+        credits: 3,
+        totalHours: 45,
+        primaryFacultyId: createdFaculty[6].id, // Dr. Anjali Mehta
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Advanced interaction design techniques"
+      },
+      {
+        name: "Typography & Layout",
+        code: "TYP301",
+        credits: 3,
+        totalHours: 45,
+        primaryFacultyId: createdFaculty[7].id, // Prof. Sanjay Joshi
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Typography and layout design"
+      },
+      {
         name: "Gamification & UX",
         code: "JSD012",
         credits: 4,
         totalHours: 60,
-        batchId: batch5.id,
-        primaryFacultyId: facultyUser.id,
-        examType: "THEORY",
-        subjectType: "CORE",
-        description: "Understanding gamification principles and UX design",
-      },
-    })
+        primaryFacultyId: facultyUser.id, // Ankish Khatri
+        examType: "THEORY" as const,
+        subjectType: "CORE" as const,
+        description: "Understanding gamification principles and UX design"
+      }
+    ]
+
+    // Create all subjects
+    for (const subject of subjects) {
+      await db.subject.upsert({
+        where: { code: subject.code },
+        update: {},
+        create: {
+          name: subject.name,
+          code: subject.code,
+          credits: subject.credits,
+          totalHours: subject.totalHours,
+          batchId: batch5.id,
+          primaryFacultyId: subject.primaryFacultyId,
+          examType: subject.examType,
+          subjectType: subject.subjectType,
+          description: subject.description,
+        },
+      })
+    }
 
     // Create Sample Student
     const studentUser = await db.user.upsert({

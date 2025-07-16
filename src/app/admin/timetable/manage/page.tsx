@@ -6,9 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
 import { 
   Settings, 
   Download, 
@@ -29,7 +26,7 @@ import ImportExportTab from './import-export/page'
 import FacultyWorkloadTab from './faculty-workload/page'
 import AcademicCalendarTab from './academic-calendar/page'
 
-function ManageTimetableContent() {
+export default function ManageTimetablePage() {
   const { data: session, status } = useSession()
   const [activeTab, setActiveTab] = useState("bulk-operations")
 
@@ -181,19 +178,5 @@ function ManageTimetableContent() {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
-
-export default function ManageTimetablePage() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <ManageTimetableContent />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }
