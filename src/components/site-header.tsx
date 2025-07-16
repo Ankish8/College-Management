@@ -8,8 +8,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import SignOutButton from "@/components/auth/sign-out-button"
 import { useSession } from "next-auth/react"
-import { Bell, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Bell } from "lucide-react"
+import { UniversalSearchTrigger } from "./universal-search-trigger"
 
 export function SiteHeader() {
   const { data: session } = useSession()
@@ -29,15 +29,12 @@ export function SiteHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
       
-      {/* Search Bar */}
+      {/* Universal Search */}
       <div className="flex flex-1 items-center gap-2">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search students, subjects, batches..."
-            className="pl-8"
-          />
-        </div>
+        <UniversalSearchTrigger 
+          placeholder="Search students, subjects, batches..."
+          className="max-w-md"
+        />
       </div>
 
       {/* Right side actions */}
