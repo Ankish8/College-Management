@@ -77,7 +77,7 @@ export function BatchList() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, []) // Remove toast dependency to prevent infinite loops
 
   useEffect(() => {
     fetchBatches()

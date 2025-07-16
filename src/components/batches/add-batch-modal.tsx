@@ -149,7 +149,7 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, []) // Remove toast dependency to prevent infinite loops
 
   useEffect(() => {
     if (open) {
