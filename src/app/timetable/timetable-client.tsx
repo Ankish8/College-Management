@@ -28,8 +28,7 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
     }
   })
 
-  console.log('Fetching timetable entries with filters:', filters)
-  console.log('API URL:', `/api/timetable/entries?${searchParams.toString()}`)
+  // Fetch timetable entries with filters
 
   const response = await fetch(`/api/timetable/entries?${searchParams.toString()}`)
   
@@ -39,7 +38,6 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
   }
 
   const data = await response.json()
-  console.log('Timetable API response:', data)
   return data
 }
 
@@ -199,7 +197,6 @@ export default function TimetableClient() {
 
   // Create stable filters object
   const filters = React.useMemo(() => {
-    console.log('Creating filters with selectedBatchId:', selectedBatchId)
     return selectedBatchId ? { batchId: selectedBatchId } : {}
   }, [selectedBatchId])
 
@@ -311,12 +308,6 @@ export default function TimetableClient() {
 
   // Convert entries to calendar events
   const events: CalendarEvent[] = React.useMemo(() => {
-    console.log('Processing events - timetableData:', {
-      hasData: !!timetableData,
-      entriesCount: timetableData?.entries?.length || 0,
-      selectedBatchId,
-      isLoading
-    })
     
     // Use real data if available
     if (timetableData?.entries && timetableData.entries.length > 0) {
@@ -325,14 +316,7 @@ export default function TimetableClient() {
         const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
         allEvents.push(...entryEvents)
       })
-      console.log('Using real timetable data:', allEvents.length, 'events from', timetableData.entries.length, 'entries')
-      console.log('Real entries:', timetableData.entries.map((e: any) => ({
-        id: e.id,
-        subject: e.subject?.name,
-        faculty: e.faculty?.user?.name,
-        dayOfWeek: e.dayOfWeek,
-        timeSlot: e.timeSlot?.name
-      })))
+      // Using real timetable data
       return allEvents
     }
     
@@ -341,7 +325,7 @@ export default function TimetableClient() {
       const batchInfo = batchesData?.find((b: any) => b.id === selectedBatchId)
       if (batchInfo) {
         const batchName = formatBatchDisplay(batchInfo)
-        console.log('Using sample data for batch:', batchName)
+        // Using sample data for demonstration
         
         // Create sample recurring events
         const sampleTimetableEntries = [
@@ -395,34 +379,24 @@ export default function TimetableClient() {
     queryKey: ['subjects-for-creation', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return []
-      console.log('🔍 Fetching subjects for batch:', selectedBatchId)
       const response = await fetch(`/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty`)
       if (!response.ok) throw new Error('Failed to fetch subjects')
       const data = await response.json()
-      console.log('📚 Fetched subjects:', data)
       return data
     },
     enabled: !!selectedBatchId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  console.log('📊 Subjects query state:', {
-    selectedBatchId,
-    subjectsData,
-    subjectsError,
-    subjectsLoading,
-    enabled: !!selectedBatchId
-  })
+  // Track subjects query state for debugging if needed
 
   // Fetch time slots to get correct IDs
   const { data: timeSlotsData } = useQuery({
     queryKey: ['timeslots-for-creation'],
     queryFn: async () => {
-      console.log('🕐 Fetching time slots')
       const response = await fetch('/api/timeslots?active=true')
       if (!response.ok) throw new Error('Failed to fetch time slots')
       const data = await response.json()
-      console.log('🕐 Fetched time slots:', data)
       return data
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -430,9 +404,7 @@ export default function TimetableClient() {
 
   // Transform subjects data for quick creation popup
   const realSubjects = React.useMemo(() => {
-    console.log('Transform subjects - subjectsData:', subjectsData)
     if (!subjectsData || !Array.isArray(subjectsData)) {
-      console.log('Subjects data is not an array or is null:', subjectsData)
       return []
     }
     
@@ -445,7 +417,6 @@ export default function TimetableClient() {
       facultyName: subject.primaryFaculty?.user?.name || subject.primaryFaculty?.name || 'No Faculty Assigned'
     }))
     
-    console.log('Transformed subjects:', transformed)
     return transformed
   }, [subjectsData])
 
@@ -487,14 +458,7 @@ export default function TimetableClient() {
       if (timeSlotsList && Array.isArray(timeSlotsList)) {
         const timeSlot = timeSlotsList.find((ts: any) => ts.name === data.timeSlot)
         timeSlotId = timeSlot?.id
-        console.log('🕐 Found time slot:', { 
-          name: data.timeSlot, 
-          timeSlot, 
-          timeSlotId,
-          allTimeSlots: timeSlotsList.map((ts: any) => ({ id: ts.id, name: ts.name }))
-        })
-      } else {
-        console.log('🕐 Time slots data structure:', timeSlotsData)
+        // Time slot found and mapped successfully
       }
       
       if (!timeSlotId) {
@@ -511,7 +475,7 @@ export default function TimetableClient() {
         date: data.date.toISOString().split('T')[0] // Format as YYYY-MM-DD
       }
       
-      console.log('Creating timetable entry with data:', createData)
+      // Creating timetable entry
       
       const response = await fetch('/api/timetable/entries', {
         method: 'POST',
@@ -519,12 +483,10 @@ export default function TimetableClient() {
         body: JSON.stringify(createData),
       })
       
-      console.log('API Response status:', response.status)
-      console.log('API Response headers:', response.headers)
+      // API request sent
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('API Error response:', errorText)
         let error
         try {
           error = JSON.parse(errorText)
@@ -547,7 +509,6 @@ export default function TimetableClient() {
 
   const handleEventDrop = async (eventId: string, newDate: Date, newTimeSlot: string, newDayOfWeek: string) => {
     try {
-      console.log('Dropping event:', { eventId, newDate, newTimeSlot, newDayOfWeek })
       
       // Check if this is a sample event (sample events have simple numeric IDs)
       if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
@@ -558,13 +519,11 @@ export default function TimetableClient() {
       // Extract the base timetable entry ID from the event ID
       // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
       const baseEntryId = eventId.includes('-202') ? eventId.split('-202')[0] : eventId
-      console.log('Base entry ID:', baseEntryId)
       
       const requestBody = {
         dayOfWeek: newDayOfWeek,
         timeSlotName: newTimeSlot,
       }
-      console.log('Request body:', requestBody)
       
       // Update the timetable entry via API
       const response = await fetch(`/api/timetable/entries/${baseEntryId}`, {
@@ -575,9 +534,7 @@ export default function TimetableClient() {
         body: JSON.stringify(requestBody),
       })
 
-      console.log('Response status:', response.status)
       const responseText = await response.text()
-      console.log('Response body:', responseText)
       
       if (!response.ok) {
         let errorData = {}
@@ -586,7 +543,7 @@ export default function TimetableClient() {
         } catch {
           errorData = { error: `HTTP ${response.status}: ${responseText}` }
         }
-        console.error('API Error:', errorData)
+        // API Error occurred
         
         // Show user-friendly conflict messages
         if (response.status === 409 && (errorData as any).conflicts) {
@@ -604,7 +561,6 @@ export default function TimetableClient() {
       }
 
       const result = JSON.parse(responseText)
-      console.log('Update successful:', result)
 
       // Refresh the timetable data
       refetch()
@@ -645,7 +601,6 @@ export default function TimetableClient() {
 
   // Show delete confirmation modal or directly delete if skipping confirmation
   const handleEventDelete = (eventId: string) => {
-    console.log('🗑️ handleEventDelete called with eventId:', eventId)
     
     // Check if this is a sample event
     if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
@@ -684,7 +639,6 @@ export default function TimetableClient() {
       // Extract the base timetable entry ID from the event ID
       // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
       const baseEntryId = eventToDelete.id.includes('-202') ? eventToDelete.id.split('-202')[0] : eventToDelete.id
-      console.log('Deleting entry with base ID:', baseEntryId)
 
       const response = await fetch(`/api/timetable/entries/${baseEntryId}`, {
         method: 'DELETE',
@@ -710,7 +664,6 @@ export default function TimetableClient() {
   const handleFiltersChange = (newFilters: TimetableFilters) => {
     // For now, we only support batch filtering from the main selector
     // Additional filters can be implemented here if needed
-    console.log('Filters changed:', newFilters)
   }
 
   const handleViewStateChange = (viewState: any) => {
@@ -820,15 +773,6 @@ export default function TimetableClient() {
               <Plus className="h-4 w-4 mr-2" />
               Add Class
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                console.log('Manual refetch triggered')
-                refetch()
-              }}
-            >
-              🔄 Refresh Data
-            </Button>
             {skipDeleteConfirmation && (
               <Button 
                 variant="outline" 
@@ -892,6 +836,7 @@ export default function TimetableClient() {
             onViewStateChange={handleViewStateChange}
             onCheckConflicts={checkConflicts}
             subjects={realSubjects}
+            timeSlots={timeSlotsData?.timeSlots || timeSlotsData || []}
             isLoading={isLoading}
             conflicts={[]}
             showWeekends={false}

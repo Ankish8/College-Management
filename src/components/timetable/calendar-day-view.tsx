@@ -31,6 +31,15 @@ interface CalendarDayViewProps {
     facultyId: string
     facultyName: string
   }>
+  timeSlots?: Array<{
+    id: string
+    name: string
+    startTime: string
+    endTime: string
+    duration: number
+    isActive: boolean
+    sortOrder: number
+  }>
   viewTitle?: string
   onPrevious?: () => void
   onNext?: () => void
@@ -52,6 +61,7 @@ export function CalendarDayView({
   onEventCreate,
   onQuickCreate,
   subjects = [],
+  timeSlots = [],
   showWeekends = true,
   className,
   viewTitle,
@@ -75,13 +85,45 @@ export function CalendarDayView({
   // Sort events by start time
   const sortedEvents = dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
   
-  // Our actual time slots from the database
-  const timeSlots = [
-    { name: "10:15-11:05", startTime: "10:15", endTime: "11:05" },
-    { name: "11:15-12:05", startTime: "11:15", endTime: "12:05" },
-    { name: "12:15-13:05", startTime: "12:15", endTime: "13:05" },
-    { name: "14:15-15:05", startTime: "14:15", endTime: "15:05" },
-  ]
+  // Get unique time slots from events and database time slots
+  const allTimeSlots = new Set<string>()
+  
+  // Add time slots from database
+  timeSlots
+    .filter(slot => slot.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .forEach(slot => allTimeSlots.add(slot.name))
+  
+  // Add time slots from existing events (in case some events use time slots not in the database)
+  dayEvents.forEach(event => {
+    if (event.extendedProps?.timeSlotName) {
+      allTimeSlots.add(event.extendedProps.timeSlotName)
+    }
+  })
+  
+  // Convert to array and create time slot objects
+  const displayTimeSlots = Array.from(allTimeSlots).map(timeSlotName => {
+    // Try to find in database first
+    const dbTimeSlot = timeSlots.find(slot => slot.name === timeSlotName)
+    if (dbTimeSlot) {
+      return {
+        name: dbTimeSlot.name,
+        startTime: dbTimeSlot.startTime,
+        endTime: dbTimeSlot.endTime
+      }
+    }
+    
+    // Fallback: parse from name (format: "HH:MM-HH:MM")
+    const [startTime, endTime] = timeSlotName.split('-')
+    return {
+      name: timeSlotName,
+      startTime: startTime || timeSlotName,
+      endTime: endTime || timeSlotName
+    }
+  }).sort((a, b) => {
+    // Sort by start time
+    return a.startTime.localeCompare(b.startTime)
+  })
 
   const handleTimeSlotClick = (timeSlot: string, event: React.MouseEvent) => {
     if (onQuickCreate && subjects.length > 0) {
@@ -328,7 +370,7 @@ export function CalendarDayView({
       {/* Time Slots Grid */}
       <ScrollArea className="flex-1">
         <div className="divide-y">
-          {timeSlots.map((timeSlot) => (
+          {displayTimeSlots.map((timeSlot) => (
             <TimeSlotRow key={timeSlot.name} timeSlot={timeSlot} />
           ))}
         </div>

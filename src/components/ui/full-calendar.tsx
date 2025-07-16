@@ -51,6 +51,15 @@ interface FullCalendarProps extends Omit<TimetableViewProps, 'currentDate' | 'on
     facultyId: string
     facultyName: string
   }>
+  timeSlots?: Array<{
+    id: string
+    name: string
+    startTime: string
+    endTime: string
+    duration: number
+    isActive: boolean
+    sortOrder: number
+  }>
 }
 
 export function FullCalendar({
@@ -68,6 +77,7 @@ export function FullCalendar({
   onEventDelete,
   onCheckConflicts,
   subjects = [],
+  timeSlots = [],
   isLoading = false,
   className,
   onViewStateChange
@@ -213,7 +223,6 @@ export function FullCalendar({
               conflicts={conflictResults.conflicts}
               onResolveAll={() => {
                 // TODO: Implement conflict resolution
-                console.log('Resolve all conflicts')
               }}
             />
           </CardContent>
@@ -259,6 +268,7 @@ export function FullCalendar({
                   onEventCreate={onEventCreate}
                   onQuickCreate={onQuickCreate}
                   subjects={subjects}
+                  timeSlots={timeSlots}
                   showWeekends={showWeekends}
                   viewTitle={viewTitle}
                   onPrevious={handlePrevious}
@@ -281,6 +291,7 @@ export function FullCalendar({
                   onEventCreate={onEventCreate}
                   onQuickCreate={onQuickCreate}
                   subjects={subjects}
+                  timeSlots={timeSlots}
                   onEventDrop={onEventDrop}
                   onEventDelete={onEventDelete}
                   onCheckConflicts={onCheckConflicts}
