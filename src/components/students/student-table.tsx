@@ -35,6 +35,8 @@ import {
 import { StudentDetailPanel } from "./student-detail-panel"
 import { EditStudentModal } from "./edit-student-modal"
 import { useToast } from "@/hooks/use-toast"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSorting } from "@/hooks/useSorting"
 
 interface Student {
   id: string
@@ -103,6 +105,10 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
     attendance: true,
   })
   const { toast } = useToast()
+  const { sortedData, handleSort, getSortDirection } = useSorting({
+    data: students,
+    defaultSort: { key: 'user.name', direction: 'asc' }
+  })
 
   const toggleColumnVisibility = (column: keyof ColumnVisibility) => {
     setColumnVisibility(prev => ({
@@ -269,17 +275,71 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                {columnVisibility.student && <TableHead className="min-w-[250px]">Student</TableHead>}
-                {columnVisibility.studentId && <TableHead className="min-w-[120px]">Student ID</TableHead>}
-                {columnVisibility.rollNumber && <TableHead className="min-w-[120px]">Roll Number</TableHead>}
-                {columnVisibility.batch && <TableHead className="min-w-[200px]">Batch</TableHead>}
-                {columnVisibility.status && <TableHead className="min-w-[100px]">Status</TableHead>}
-                {columnVisibility.attendance && <TableHead className="min-w-[120px]">Attendance</TableHead>}
-                <TableHead className="w-[50px]"></TableHead>
+                {columnVisibility.student && (
+                  <SortableTableHead
+                    sortKey="user.name"
+                    sortDirection={getSortDirection('user.name')}
+                    onSort={handleSort}
+                    className="min-w-[250px]"
+                  >
+                    Student
+                  </SortableTableHead>
+                )}
+                {columnVisibility.studentId && (
+                  <SortableTableHead
+                    sortKey="studentId"
+                    sortDirection={getSortDirection('studentId')}
+                    onSort={handleSort}
+                    className="min-w-[120px]"
+                  >
+                    Student ID
+                  </SortableTableHead>
+                )}
+                {columnVisibility.rollNumber && (
+                  <SortableTableHead
+                    sortKey="rollNumber"
+                    sortDirection={getSortDirection('rollNumber')}
+                    onSort={handleSort}
+                    className="min-w-[120px]"
+                  >
+                    Roll Number
+                  </SortableTableHead>
+                )}
+                {columnVisibility.batch && (
+                  <SortableTableHead
+                    sortKey="batch.name"
+                    sortDirection={getSortDirection('batch.name')}
+                    onSort={handleSort}
+                    className="min-w-[200px]"
+                  >
+                    Batch
+                  </SortableTableHead>
+                )}
+                {columnVisibility.status && (
+                  <SortableTableHead
+                    sortKey="user.status"
+                    sortDirection={getSortDirection('user.status')}
+                    onSort={handleSort}
+                    className="min-w-[100px]"
+                  >
+                    Status
+                  </SortableTableHead>
+                )}
+                {columnVisibility.attendance && (
+                  <SortableTableHead
+                    sortKey="attendancePercentage"
+                    sortDirection={getSortDirection('attendancePercentage')}
+                    onSort={handleSort}
+                    className="min-w-[120px]"
+                  >
+                    Attendance
+                  </SortableTableHead>
+                )}
+                <TableHead className="w-[50px]" canSort={false}></TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>
-            {students.map((student) => (
+            {sortedData.map((student) => (
               <TableRow 
                 key={student.id} 
                 className="hover:bg-muted/50 cursor-pointer"

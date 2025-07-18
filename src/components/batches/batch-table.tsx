@@ -32,6 +32,8 @@ import {
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSorting } from "@/hooks/useSorting"
 
 interface Batch {
   id: string
@@ -69,6 +71,10 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
   })
   const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
+  const { sortedData, handleSort, getSortDirection } = useSorting({
+    data: batches,
+    defaultSort: { key: 'name', direction: 'asc' }
+  })
 
   const handleDelete = async () => {
     if (!deleteDialog.batch) return
@@ -132,19 +138,67 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Batch Name</TableHead>
-              <TableHead>Program</TableHead>
-              <TableHead>Specialization</TableHead>
-              <TableHead>Semester</TableHead>
-              <TableHead>Year</TableHead>
-              <TableHead>Students</TableHead>
-              <TableHead>Subjects</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
+              <SortableTableHead
+                sortKey="name"
+                sortDirection={getSortDirection('name')}
+                onSort={handleSort}
+              >
+                Batch Name
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="program.shortName"
+                sortDirection={getSortDirection('program.shortName')}
+                onSort={handleSort}
+              >
+                Program
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="specialization.shortName"
+                sortDirection={getSortDirection('specialization.shortName')}
+                onSort={handleSort}
+              >
+                Specialization
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="semester"
+                sortDirection={getSortDirection('semester')}
+                onSort={handleSort}
+              >
+                Semester
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="startYear"
+                sortDirection={getSortDirection('startYear')}
+                onSort={handleSort}
+              >
+                Year
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="_count.students"
+                sortDirection={getSortDirection('_count.students')}
+                onSort={handleSort}
+              >
+                Students
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="_count.subjects"
+                sortDirection={getSortDirection('_count.subjects')}
+                onSort={handleSort}
+              >
+                Subjects
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="isActive"
+                sortDirection={getSortDirection('isActive')}
+                onSort={handleSort}
+              >
+                Status
+              </SortableTableHead>
+              <TableHead className="w-[70px]" canSort={false}></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {batches.map((batch) => (
+            {sortedData.map((batch) => (
               <TableRow key={batch.id}>
                 <TableCell className="font-medium">{batch.name}</TableCell>
                 <TableCell>

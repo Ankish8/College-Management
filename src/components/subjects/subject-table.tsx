@@ -19,6 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSorting } from "@/hooks/useSorting"
 
 interface Subject {
   id: string
@@ -44,7 +46,7 @@ interface Subject {
   primaryFaculty: {
     name: string
     email: string
-  }
+  } | null
   coFaculty?: {
     name: string
     email: string
@@ -63,6 +65,10 @@ interface SubjectTableProps {
 
 export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTableProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const { sortedData, handleSort, getSortDirection } = useSorting({
+    data: subjects,
+    defaultSort: { key: 'name', direction: 'asc' }
+  })
 
   const getExamTypeColor = (examType: string) => {
     const colors = {
@@ -89,18 +95,67 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px]">Subject</TableHead>
-              <TableHead className="min-w-[100px]">Code</TableHead>
-              <TableHead className="min-w-[120px]">Credits/Hours</TableHead>
-              <TableHead className="min-w-[150px]">Faculty</TableHead>
-              <TableHead className="min-w-[200px]">Batch</TableHead>
-              <TableHead className="min-w-[120px]">Type</TableHead>
-              <TableHead className="min-w-[100px]">Classes</TableHead>
-              <TableHead className="w-[50px]">Actions</TableHead>
+              <SortableTableHead
+                sortKey="name"
+                sortDirection={getSortDirection('name')}
+                onSort={handleSort}
+                className="min-w-[200px]"
+              >
+                Subject
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="code"
+                sortDirection={getSortDirection('code')}
+                onSort={handleSort}
+                className="min-w-[100px]"
+              >
+                Code
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="credits"
+                sortDirection={getSortDirection('credits')}
+                onSort={handleSort}
+                className="min-w-[120px]"
+              >
+                Credits/Hours
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="primaryFaculty.name"
+                sortDirection={getSortDirection('primaryFaculty.name')}
+                onSort={handleSort}
+                className="min-w-[150px]"
+              >
+                Faculty
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="batch.name"
+                sortDirection={getSortDirection('batch.name')}
+                onSort={handleSort}
+                className="min-w-[200px]"
+              >
+                Batch
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="subjectType"
+                sortDirection={getSortDirection('subjectType')}
+                onSort={handleSort}
+                className="min-w-[120px]"
+              >
+                Type
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="_count.attendanceSessions"
+                sortDirection={getSortDirection('_count.attendanceSessions')}
+                onSort={handleSort}
+                className="min-w-[100px]"
+              >
+                Classes
+              </SortableTableHead>
+              <TableHead className="w-[50px]" canSort={false}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {subjects.map((subject) => (
+            {sortedData.map((subject) => (
               <TableRow key={subject.id} className="hover:bg-muted/50">
                 <TableCell>
                   <div className="space-y-1">
@@ -136,7 +191,9 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Users className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm font-medium">{subject.primaryFaculty.name}</span>
+                      <span className="text-sm font-medium">
+                        {subject.primaryFaculty?.name || "No Faculty Assigned"}
+                      </span>
                     </div>
                     {subject.coFaculty && (
                       <div className="text-xs text-muted-foreground ml-5">

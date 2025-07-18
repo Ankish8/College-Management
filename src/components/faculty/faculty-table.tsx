@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSorting } from "@/hooks/useSorting"
 
 interface Faculty {
   id: string
@@ -65,6 +67,10 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
   })
   const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
+  const { sortedData, handleSort, getSortDirection } = useSorting({
+    data: faculty,
+    defaultSort: { key: 'name', direction: 'asc' }
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,18 +173,61 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[150px]">Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Employee ID</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="min-w-[80px]">Credits</TableHead>
-                <TableHead className="min-w-[80px]">Subjects</TableHead>
-                <TableHead className="hidden lg:table-cell min-w-[200px]">Teaching</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[70px]"></TableHead>
+                <SortableTableHead
+                  sortKey="name"
+                  sortDirection={getSortDirection('name')}
+                  onSort={handleSort}
+                  className="min-w-[150px]"
+                >
+                  Name
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="employeeId"
+                  sortDirection={getSortDirection('employeeId')}
+                  onSort={handleSort}
+                  className="hidden sm:table-cell"
+                >
+                  Employee ID
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="email"
+                  sortDirection={getSortDirection('email')}
+                  onSort={handleSort}
+                  className="hidden md:table-cell"
+                >
+                  Email
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="totalCredits"
+                  sortDirection={getSortDirection('totalCredits')}
+                  onSort={handleSort}
+                  className="min-w-[80px]"
+                >
+                  Credits
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="totalSubjects"
+                  sortDirection={getSortDirection('totalSubjects')}
+                  onSort={handleSort}
+                  className="min-w-[80px]"
+                >
+                  Subjects
+                </SortableTableHead>
+                <TableHead className="hidden lg:table-cell min-w-[200px]" canSort={false}>
+                  Teaching
+                </TableHead>
+                <SortableTableHead
+                  sortKey="status"
+                  sortDirection={getSortDirection('status')}
+                  onSort={handleSort}
+                >
+                  Status
+                </SortableTableHead>
+                <TableHead className="w-[70px]" canSort={false}></TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>
-            {faculty.map((facultyMember) => (
+            {sortedData.map((facultyMember) => (
               <TableRow key={facultyMember.id}>
                 <TableCell className="font-medium">
                   <div>
