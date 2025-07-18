@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MoreHorizontal, Mail, Phone, Eye, Edit, Trash2, UserCheck, UserX, GraduationCap, Settings } from "lucide-react"
+import { MoreHorizontal, Mail, Phone, Eye, Edit, Trash2, UserCheck, UserX, GraduationCap, Settings, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -96,6 +96,7 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
   const [deletingStudent, setDeletingStudent] = useState<Student | null>(null)
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
     student: true,
     studentId: true,
@@ -146,6 +147,24 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
       toast({
         title: "Error",
         description: (error as Error).message || "Failed to delete student",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(`${fieldName}-${text}`)
+      setTimeout(() => setCopiedField(null), 2000)
+      toast({
+        title: "Copied!",
+        description: `${fieldName} copied to clipboard`,
+      })
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try again",
         variant: "destructive",
       })
     }
@@ -335,7 +354,7 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
                     Attendance
                   </SortableTableHead>
                 )}
-                <TableHead className="w-[50px]" canSort={false}></TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>
@@ -355,9 +374,23 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
                       </Avatar>
                       <div className="space-y-1">
                         <p className="font-medium leading-none">{student.user.name}</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="group flex items-center gap-1 text-xs text-muted-foreground relative">
                           <Mail className="h-3 w-3" />
-                          {student.user.email}
+                          <span className="pr-5">{student.user.email}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyToClipboard(student.user.email, "Email")
+                            }}
+                            className="absolute right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-muted rounded-sm"
+                            title="Copy email"
+                          >
+                            {copiedField === `Email-${student.user.email}` ? (
+                              <Check className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <Copy className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </button>
                         </div>
                         {student.user.phone && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -371,16 +404,48 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
                 )}
                 {columnVisibility.studentId && (
                   <TableCell>
-                    <Badge variant="outline" className="font-mono">
-                      {student.studentId}
-                    </Badge>
+                    <div className="group flex items-center gap-1">
+                      <Badge variant="outline" className="font-mono">
+                        {student.studentId}
+                      </Badge>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          copyToClipboard(student.studentId, "Student ID")
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-muted rounded-sm"
+                        title="Copy Student ID"
+                      >
+                        {copiedField === `Student ID-${student.studentId}` ? (
+                          <Check className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <Copy className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
                   </TableCell>
                 )}
                 {columnVisibility.rollNumber && (
                   <TableCell>
-                    <Badge variant="outline" className="font-mono">
-                      {student.rollNumber}
-                    </Badge>
+                    <div className="group flex items-center gap-1">
+                      <Badge variant="outline" className="font-mono">
+                        {student.rollNumber}
+                      </Badge>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          copyToClipboard(student.rollNumber, "Roll Number")
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-muted rounded-sm"
+                        title="Copy Roll Number"
+                      >
+                        {copiedField === `Roll Number-${student.rollNumber}` ? (
+                          <Check className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <Copy className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
                   </TableCell>
                 )}
                 {columnVisibility.batch && (
