@@ -1,19 +1,13 @@
 "use client"
 
 import { useState, useEffect, useMemo, memo, useCallback } from "react"
-import { Plus, Search, Filter, Settings, RefreshCw, Users, GraduationCap } from "lucide-react"
+import { Plus, Search, Settings, RefreshCw, Users, GraduationCap, UserCheck, TrendingUp, Grid, List, X } from "lucide-react"
+import { useViewMode } from "@/hooks/useViewMode"
+import type { ViewMode } from "@/types/preferences"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -26,8 +20,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { StudentTable } from "./student-table"
 import { AddStudentModal } from "./add-student-modal"
 import { BulkUploadModal } from "./bulk-upload-modal"
+import { HorizontalStudentFilter } from "./horizontal-student-filter"
 import { useToast } from "@/hooks/use-toast"
 import { useQuery } from "@tanstack/react-query"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { StudentFilterState } from "@/types/student-filters"
+import { filterStudents, getFilterDescription } from "@/utils/student-filter-utils"
 
 interface Student {
   id: string
@@ -81,8 +80,7 @@ interface Batch {
   }
 }
 
-type FilterType = "all" | "active" | "inactive"
-type SpecializationFilter = "all" | "ux" | "gd" | string
+// Remove old filter types - now using advanced filtering
 
 // API fetch functions
 const fetchBatchesData = async (): Promise<Batch[]> => {
@@ -93,6 +91,12 @@ const fetchBatchesData = async (): Promise<Batch[]> => {
     console.error(`Batches API error - Status: ${response.status}, URL: ${response.url}`)
     const text = await response.text()
     console.error('Response text:', text.substring(0, 200))
+    
+    // Handle 401 specifically
+    if (response.status === 401) {
+      throw new Error('401: Unauthorized - Please sign in')
+    }
+    
     throw new Error(`Failed to fetch batches. Status: ${response.status}`)
   }
   
@@ -130,6 +134,11 @@ const fetchStudentsData = async (params: { searchQuery?: string; selectedBatch?:
     const text = await response.text()
     console.error('Response text:', text.substring(0, 200))
     
+    // Handle 401 specifically
+    if (response.status === 401) {
+      throw new Error('401: Unauthorized - Please sign in')
+    }
+    
     try {
       const errorData = JSON.parse(text)
       throw new Error(errorData.error || "Failed to fetch students")
@@ -150,13 +159,23 @@ const fetchStudentsData = async (params: { searchQuery?: string; selectedBatch?:
 
 function StudentListComponent() {
   const [selectedBatch, setSelectedBatch] = useState<string>("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<FilterType>("all")
-  const [specializationFilter, setSpecializationFilter] = useState<SpecializationFilter>("all")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false)
   const [lastSelectedBatch, setLastSelectedBatch] = useState<string>("")
+  // Remove showAdvancedFilters state - now always horizontal
+  const { viewMode, setViewMode } = useViewMode("students")
   const { toast } = useToast()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  // Advanced filter state
+  const [filterState, setFilterState] = useState<StudentFilterState>({
+    criteria: [],
+    searchQuery: "",
+    selectedBatch: "all",
+    appliedFilters: [],
+    logicalOperator: "AND"
+  })
 
   // Use React Query for batches with aggressive caching
   const { data: batches = [] } = useQuery({
@@ -165,59 +184,51 @@ function StudentListComponent() {
     staleTime: 10 * 60 * 1000, // 10 minutes - batches rarely change
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnMount: false,
-    retry: 0
+    retry: (failureCount, error) => {
+      // Don't retry on 401 errors
+      if (error instanceof Error && error.message.includes('401')) {
+        return false
+      }
+      return failureCount < 2
+    },
+    enabled: status === "authenticated"
   })
 
   // Use React Query for students with optimized caching
   const { data: students = [], isLoading: loading, refetch: refetchStudents } = useQuery({
-    queryKey: ['students', searchQuery, selectedBatch, statusFilter],
-    queryFn: () => fetchStudentsData({ searchQuery, selectedBatch, statusFilter }),
+    queryKey: ['students', filterState.searchQuery, selectedBatch],
+    queryFn: () => fetchStudentsData({ 
+      searchQuery: filterState.searchQuery, 
+      selectedBatch, 
+      statusFilter: 'all' // Let advanced filters handle status filtering
+    }),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnMount: false,
-    retry: 0,
-    enabled: true // Always enabled for immediate data
+    retry: (failureCount, error) => {
+      // Don't retry on 401 errors
+      if (error instanceof Error && error.message.includes('401')) {
+        return false
+      }
+      return failureCount < 2
+    },
+    enabled: status === "authenticated" // Only fetch when authenticated
   })
 
-  // Filter students based on search and filters using useMemo to prevent infinite loops
+  // Apply advanced filtering using the new filtering system
   const filteredStudents = useMemo(() => {
-    let filtered = students
+    return filterStudents(students, filterState.appliedFilters, filterState.searchQuery, filterState.logicalOperator)
+  }, [students, filterState.appliedFilters, filterState.searchQuery, filterState.logicalOperator])
 
-    // Apply status filter
-    if (statusFilter === "active") {
-      filtered = filtered.filter(student => student.user.status === "ACTIVE")
-    } else if (statusFilter === "inactive") {
-      filtered = filtered.filter(student => student.user.status !== "ACTIVE")
-    }
+  // Update filter state when search query changes
+  const handleSearchChange = useCallback((query: string) => {
+    setFilterState(prev => ({ ...prev, searchQuery: query }))
+  }, [])
 
-    // Apply specialization filter
-    if (specializationFilter !== "all") {
-      if (specializationFilter === "ux") {
-        filtered = filtered.filter(student => 
-          student.batch.specialization?.shortName.toLowerCase().includes("ux")
-        )
-      } else if (specializationFilter === "gd") {
-        filtered = filtered.filter(student => 
-          student.batch.specialization?.shortName.toLowerCase().includes("gd") ||
-          student.batch.specialization?.shortName.toLowerCase().includes("graphic")
-        )
-      }
-    }
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(student =>
-        student.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.guardianName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.batch.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    return filtered
-  }, [students, statusFilter, specializationFilter, searchQuery])
+  // Handle filter state changes from AdvancedStudentFilter
+  const handleFilterChange = useCallback((newFilterState: StudentFilterState) => {
+    setFilterState(newFilterState)
+  }, [])
 
   const handleStudentCreated = useCallback((newStudent: Student) => {
     refetchStudents() // Refresh the list to get updated data
@@ -253,70 +264,39 @@ function StudentListComponent() {
     })
   }, [refetchStudents, toast])
 
-  // Show loading skeleton for initial load
-  if (loading && students.length === 0) {
+  // Check auth status and redirect if needed
+  if (status === "loading") {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-72" />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-32" />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Students</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage student records and information
+            </p>
           </div>
         </div>
-        
-        <div className="grid gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-4 w-16 mb-2" />
-                <Skeleton className="h-8 w-12" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
         <div className="space-y-4">
-          <div className="flex gap-4">
-            <Skeleton className="h-10 flex-1 max-w-sm" />
-            <Skeleton className="h-10 w-20" />
-          </div>
-          
-          <div className="border rounded-lg">
-            <div className="p-4 border-b">
-              <Skeleton className="h-4 w-full" />
-            </div>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 border-b last:border-b-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div>
-                      <Skeleton className="h-4 w-32 mb-1" />
-                      <Skeleton className="h-3 w-24" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              </div>
-            ))}
-          </div>
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-16 bg-muted animate-pulse rounded"></div>
+          ))}
         </div>
       </div>
     )
   }
 
+  if (status === "unauthenticated") {
+    router.push('/auth/signin')
+    return null
+  }
+
+
   const selectedBatchData = selectedBatch !== "all" 
     ? batches.find(b => b.id === selectedBatch)
     : null
 
-  const activeFiltersCount = [
-    statusFilter !== "all",
-    specializationFilter !== "all",
-  ].filter(Boolean).length
+  // Count active filters
+  const activeFiltersCount = filterState.appliedFilters.length
 
   if (loading && students.length === 0) {
     return (
@@ -412,16 +392,19 @@ function StudentListComponent() {
       {/* Stats */}
       <div className="flex items-center gap-6 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
           <span className="font-medium text-foreground">{filteredStudents.length}</span>
           <span>Students {selectedBatch !== "all" ? "in batch" : "total"}</span>
         </div>
         <div className="flex items-center gap-2">
+          <UserCheck className="h-4 w-4" />
           <span className="font-medium text-foreground">
             {filteredStudents.filter(s => s.user.status === "ACTIVE").length}
           </span>
           <span>Active</span>
         </div>
         <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
           <span className="font-medium text-foreground">
             {filteredStudents.length > 0 
               ? Math.round(
@@ -435,87 +418,57 @@ function StudentListComponent() {
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      {/* Search and Filters */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative">
           <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search students..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
+            value={filterState.searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-8 h-9 w-[300px]"
           />
         </div>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Status</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={statusFilter === "all"}
-              onCheckedChange={() => setStatusFilter("all")}
-            >
-              All Students
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={statusFilter === "active"}
-              onCheckedChange={() => setStatusFilter("active")}
-            >
-              Active Only
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={statusFilter === "inactive"}
-              onCheckedChange={() => setStatusFilter("inactive")}
-            >
-              Inactive Only
-            </DropdownMenuCheckboxItem>
-            
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Specialization</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={specializationFilter === "all"}
-              onCheckedChange={() => setSpecializationFilter("all")}
-            >
-              All Specializations
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={specializationFilter === "ux"}
-              onCheckedChange={() => setSpecializationFilter("ux")}
-            >
-              UX Design
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={specializationFilter === "gd"}
-              onCheckedChange={() => setSpecializationFilter("gd")}
-            >
-              Graphic Design
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <HorizontalStudentFilter
+          students={students}
+          batches={batches}
+          filterState={filterState}
+          onFilterChange={handleFilterChange}
+        />
+
+        <div className="flex items-center rounded-md border ml-auto">
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("cards")}
+            className="rounded-r-none h-9"
+          >
+            <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("table")}
+            className="rounded-l-none h-9"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Student Table */}
+      {/* Student Content */}
       {filteredStudents.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No students found</p>
-            {searchQuery && (
+            {(filterState.searchQuery || filterState.appliedFilters.length > 0) && (
               <p className="text-sm text-muted-foreground mt-1">
                 Try adjusting your search or filters
               </p>
             )}
-            {selectedBatch === "all" && !searchQuery && (
+            {selectedBatch === "all" && !filterState.searchQuery && filterState.appliedFilters.length === 0 && (
               <Button 
                 className="mt-4"
                 onClick={() => setIsAddModalOpen(true)}
@@ -525,6 +478,30 @@ function StudentListComponent() {
             )}
           </CardContent>
         </Card>
+      ) : viewMode === "cards" ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* Cards view - to be implemented */}
+          {filteredStudents.map((student) => (
+            <Card key={student.id} className="p-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{student.user.name}</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {student.studentId} • {student.batch.name}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Badge variant={student.user.status === "ACTIVE" ? "default" : "secondary"}>
+                    {student.user.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {student.attendancePercentage}% attendance
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
         <StudentTable
           students={filteredStudents}

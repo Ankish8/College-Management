@@ -236,61 +236,7 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
 
   return (
     <>
-      <div className="space-y-4">
-        {/* Column Visibility Controls */}
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings className="mr-2 h-4 w-4" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.student}
-                onCheckedChange={() => toggleColumnVisibility('student')}
-                disabled={true}
-              >
-                Student (Required)
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.studentId}
-                onCheckedChange={() => toggleColumnVisibility('studentId')}
-              >
-                Student ID
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.rollNumber}
-                onCheckedChange={() => toggleColumnVisibility('rollNumber')}
-              >
-                Roll Number
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.batch}
-                onCheckedChange={() => toggleColumnVisibility('batch')}
-              >
-                Batch
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.status}
-                onCheckedChange={() => toggleColumnVisibility('status')}
-              >
-                Status
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={columnVisibility.attendance}
-                onCheckedChange={() => toggleColumnVisibility('attendance')}
-              >
-                Attendance
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="border rounded-md">
+      <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -547,7 +493,6 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
             ))}
           </TableBody>
         </Table>
-        </div>
       </div>
 
       {/* Student Detail Panel */}
