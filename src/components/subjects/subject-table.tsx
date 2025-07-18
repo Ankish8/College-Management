@@ -151,7 +151,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
               >
                 Classes
               </SortableTableHead>
-              <TableHead className="w-[50px]" canSort={false}>Actions</TableHead>
+              <TableHead className="w-[50px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

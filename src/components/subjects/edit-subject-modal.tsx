@@ -79,6 +79,10 @@ interface EditSubjectModalProps {
 
 // Dynamic schema - will be created based on available types
 const createFormSchema = (examTypes: string[], subjectTypes: string[]) => {
+  // Ensure we have valid arrays with at least one element
+  const validExamTypes = examTypes && examTypes.length > 0 ? examTypes : ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"]
+  const validSubjectTypes = subjectTypes && subjectTypes.length > 0 ? subjectTypes : ["CORE", "ELECTIVE"]
+  
   return z.object({
     name: z.string().min(1, "Subject name is required"),
     code: z.string().min(1, "Subject code is required"),
@@ -86,8 +90,8 @@ const createFormSchema = (examTypes: string[], subjectTypes: string[]) => {
     batchId: z.string().min(1, "Batch is required"),
     primaryFacultyId: z.string().min(1, "Primary faculty is required"),
     coFacultyId: z.string().optional(),
-    examType: z.enum(examTypes as [string, ...string[]]),
-    subjectType: z.enum(subjectTypes as [string, ...string[]]),
+    examType: z.enum(validExamTypes as [string, ...string[]]),
+    subjectType: z.enum(validSubjectTypes as [string, ...string[]]),
     description: z.string().optional(),
   })
 }
@@ -143,7 +147,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
   const { toast } = useToast()
 
   // Create form schema with current settings
-  const formSchema = createFormSchema(settings.examTypes, settings.subjectTypes)
+  const formSchema = createFormSchema(settings?.examTypes || [], settings?.subjectTypes || [])
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -169,7 +173,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
         credits: subject.credits,
         batchId: subject.batchId,
         primaryFacultyId: subject.primaryFacultyId,
-        coFacultyId: subject.coFacultyId || "",
+        coFacultyId: subject.coFacultyId || "none",
         examType: subject.examType,
         subjectType: subject.subjectType,
         description: subject.description || "",
@@ -231,7 +235,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
         },
         body: JSON.stringify({
           ...data,
-          coFacultyId: data.coFacultyId || null,
+          coFacultyId: data.coFacultyId === "none" ? null : data.coFacultyId || null,
           description: data.description || null,
         }),
       })
@@ -272,7 +276,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px] lg:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Subject</DialogTitle>
           <DialogDescription>
@@ -287,15 +291,20 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Subject Name and Batch - Same Row */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Subject Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Design Thinking" {...field} />
+                        <Input 
+                          placeholder="e.g., Design Thinking" 
+                          className="h-9 w-full"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -304,12 +313,75 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
 
                 <FormField
                   control={form.control}
+                  name="batchId"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel>Batch</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder="Select batch" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {batches.map((batch) => (
+                            <SelectItem key={batch.id} value={batch.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{batch.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({batch.program.shortName} Sem {batch.semester})
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Subject Code and Credits - Same Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
                   name="code"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Subject Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., DT101" {...field} />
+                        <Input 
+                          placeholder="e.g., DT101" 
+                          className="h-9 w-full"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="credits"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="flex items-center justify-between">
+                        <span>Credits</span>
+                        <span className="text-xs text-muted-foreground font-normal">
+                          Total Hours: {field.value * (settings?.creditHoursRatio || 15)}
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="6"
+                          className="h-9 w-full"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -317,46 +389,24 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="credits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Credits</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="6"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {field.value * settings.creditHoursRatio}h total
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              {/* Exam Type and Subject Type - Same Row */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="examType"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Exam Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select exam type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {settings.examTypes.map((type) => (
+                          {(settings?.examTypes || ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"]).map((type) => (
                             <SelectItem key={type} value={type}>
-                              {type}
+                              {type.charAt(0) + type.slice(1).toLowerCase()}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -370,18 +420,18 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   control={form.control}
                   name="subjectType"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Subject Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select subject type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {settings.subjectTypes.map((type) => (
+                          {(settings?.subjectTypes || ["CORE", "ELECTIVE"]).map((type) => (
                             <SelectItem key={type} value={type}>
-                              {type}
+                              {type.charAt(0) + type.slice(1).toLowerCase()}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -392,49 +442,31 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="batchId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Batch</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select batch" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {batches.map((batch) => (
-                          <SelectItem key={batch.id} value={batch.id}>
-                            {batch.name} - {batch.program.shortName} Sem {batch.semester}
-                            {batch.specialization && ` (${batch.specialization.shortName})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* Primary Faculty and Co-Faculty - Same Row */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="primaryFacultyId"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Primary Faculty</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select primary faculty" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {faculty.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
-                              {member.name}
+                              <div className="flex items-center gap-2">
+                                <span>{member.name}</span>
+                                {member.employeeId && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({member.employeeId})
+                                  </span>
+                                )}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -448,21 +480,28 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   control={form.control}
                   name="coFacultyId"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1.5">
                       <FormLabel>Co-Faculty (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select co-faculty" />
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder="Select co-faculty (optional)" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {faculty
                             .filter((member) => member.id !== form.watch("primaryFacultyId"))
                             .map((member) => (
                               <SelectItem key={member.id} value={member.id}>
-                                {member.name}
+                                <div className="flex items-center gap-2">
+                                  <span>{member.name}</span>
+                                  {member.employeeId && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({member.employeeId})
+                                    </span>
+                                  )}
+                                </div>
                               </SelectItem>
                             ))}
                         </SelectContent>
