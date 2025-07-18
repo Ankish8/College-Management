@@ -283,7 +283,7 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] lg:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Subject</DialogTitle>
           <DialogDescription>
@@ -293,16 +293,18 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Subject Name and Batch - Same Row */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-1.5">
                     <FormLabel>Subject Name</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="e.g., Gamification & UX"
+                        className="h-9 w-full"
                         {...field}
                       />
                     </FormControl>
@@ -313,65 +315,72 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
 
               <FormField
                 control={form.control}
-                name="code"
+                name="batchId"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subject Code</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., JSD012"
-                        {...field}
-                      />
-                    </FormControl>
+                  <FormItem className="space-y-1.5">
+                    <FormLabel>Batch</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue placeholder="Select batch" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {batches.map((batch) => (
+                          <SelectItem key={batch.id} value={batch.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{batch.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({batch.program.shortName} Sem {batch.semester})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="batchId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select batch" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {batches.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{batch.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              ({batch.program.shortName} Sem {batch.semester})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {/* Subject Code and Credits - Same Row */}
             <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel>Subject Code</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., JSD012"
+                        className="h-9 w-full"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="credits"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Credits</FormLabel>
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="flex items-center justify-between">
+                      <span>Credits</span>
+                      <span className="text-xs text-muted-foreground font-normal">
+                        Total Hours: {totalHours}
+                      </span>
+                    </FormLabel>
                     <Select 
                       onValueChange={(value) => field.onChange(parseInt(value))} 
                       defaultValue={field.value?.toString()}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 w-full">
                           <SelectValue placeholder="Select credits" />
                         </SelectTrigger>
                       </FormControl>
@@ -383,23 +392,23 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Total Hours: {totalHours} ({settings?.creditHoursRatio || 15} hours per credit)
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
 
+            {/* Exam Type and Subject Type - Same Row */}
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="examType"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-1.5">
                     <FormLabel>Exam Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 w-full">
                           <SelectValue placeholder="Select exam type" />
                         </SelectTrigger>
                       </FormControl>
@@ -415,97 +424,100 @@ export function AddSubjectModal({ open, onOpenChange, onSubjectCreated }: AddSub
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="subjectType"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel>Subject Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue placeholder="Select subject type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {allSubjectTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0) + type.slice(1).toLowerCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField
-              control={form.control}
-              name="subjectType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subject type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {allSubjectTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type.charAt(0) + type.slice(1).toLowerCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Primary Faculty and Co-Faculty - Same Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="primaryFacultyId"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel>Primary Faculty</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue placeholder="Select primary faculty" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {faculty.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{f.name}</span>
+                              {f.employeeId && (
+                                <span className="text-xs text-muted-foreground">
+                                  ({f.employeeId})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="primaryFacultyId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Primary Faculty</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select primary faculty" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {faculty.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{f.name}</span>
-                            {f.employeeId && (
-                              <span className="text-xs text-muted-foreground">
-                                ({f.employeeId})
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="coFacultyId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Co-Faculty (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select co-faculty (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">No co-faculty</SelectItem>
-                      {availableFaculty.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{f.name}</span>
-                            {f.employeeId && (
-                              <span className="text-xs text-muted-foreground">
-                                ({f.employeeId})
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="coFacultyId"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel>Co-Faculty (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue placeholder="Select co-faculty (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No co-faculty</SelectItem>
+                        {availableFaculty.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{f.name}</span>
+                              {f.employeeId && (
+                                <span className="text-xs text-muted-foreground">
+                                  ({f.employeeId})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

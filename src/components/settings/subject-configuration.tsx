@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Plus, X, Save, ArrowLeft } from "lucide-react"
+import { Plus, X, Save, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -101,10 +103,7 @@ export function SubjectConfiguration() {
         description: "Settings saved successfully",
       })
       
-      // Navigate back after successful save
-      setTimeout(() => {
-        router.back()
-      }, 1000)
+      // Don't navigate back automatically - let user stay on page
     },
     onError: (error) => {
       console.error("Error saving settings:", error)
@@ -194,55 +193,67 @@ export function SubjectConfiguration() {
     })
   }
 
+  const breadcrumbItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Subjects", href: "/subjects" },
+    { label: "Subject Configuration", current: true }
+  ]
+
   if (status === "loading" || loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-semibold">Subject Configuration</h1>
-              <p className="text-sm text-muted-foreground">Configure department-specific subject settings</p>
-            </div>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Breadcrumb items={breadcrumbItems} />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Subject Configuration</h1>
+            <p className="text-sm text-muted-foreground">
+              Configure department-specific subject settings
+            </p>
           </div>
         </div>
-        <div className="text-center py-12 text-muted-foreground">Loading configuration...</div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading configuration...</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (status === "unauthenticated" || !settings) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-semibold">Subject Configuration</h1>
-              <p className="text-sm text-muted-foreground">Configure department-specific subject settings</p>
-            </div>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Breadcrumb items={breadcrumbItems} />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Subject Configuration</h1>
+            <p className="text-sm text-muted-foreground">
+              Configure department-specific subject settings
+            </p>
           </div>
         </div>
-        <div className="text-center py-12 text-muted-foreground">Unable to load configuration</div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground">Unable to load configuration</p>
+            <p className="text-sm text-muted-foreground mt-1">Please check your permissions and try again</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold">Subject Configuration</h1>
-            <p className="text-sm text-muted-foreground">Configure department-specific subject settings</p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Breadcrumb items={breadcrumbItems} />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Subject Configuration</h1>
+            <p className="text-sm text-muted-foreground">
+              Configure department-specific subject settings
+            </p>
           </div>
         </div>
         <Button onClick={saveSettings} disabled={saveSettingsMutation.isPending}>
@@ -251,11 +262,16 @@ export function SubjectConfiguration() {
         </Button>
       </div>
 
-      <div className="max-w-4xl space-y-8">
+      <div className="space-y-6">
         {/* Credit Hours */}
-        <div>
-          <h2 className="text-lg font-medium mb-4">Credit Hours Ratio</h2>
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Credit Hours Ratio</CardTitle>
+            <CardDescription>
+              Configure the number of hours per credit for your department
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium">Hours per Credit:</label>
@@ -265,20 +281,25 @@ export function SubjectConfiguration() {
                   max="50"
                   value={creditHoursRatio}
                   onChange={(e) => setCreditHoursRatio(parseInt(e.target.value) || 15)}
-                  className="w-20 h-9"
+                  className="w-20"
                 />
               </div>
               <div className="text-sm text-muted-foreground">
                 Examples: 2 credits = {2 * creditHoursRatio}h, 4 credits = {4 * creditHoursRatio}h, 6 credits = {6 * creditHoursRatio}h
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Exam Types */}
-        <div>
-          <h2 className="text-lg font-medium mb-4">Exam Types</h2>
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Exam Types</CardTitle>
+            <CardDescription>
+              Manage the types of examinations available for subjects
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex gap-3">
               <Input
                 placeholder="Add new exam type..."
@@ -309,13 +330,18 @@ export function SubjectConfiguration() {
                 <p className="text-sm text-muted-foreground py-2">No exam types configured yet</p>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Subject Types */}
-        <div>
-          <h2 className="text-lg font-medium mb-4">Subject Types</h2>
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Subject Types</CardTitle>
+            <CardDescription>
+              Manage the categories of subjects (Core, Elective, etc.)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex gap-3">
               <Input
                 placeholder="Add new subject type..."
@@ -346,8 +372,8 @@ export function SubjectConfiguration() {
                 <p className="text-sm text-muted-foreground py-2">No subject types configured yet</p>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
