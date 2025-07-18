@@ -32,6 +32,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { Plus } from "lucide-react"
+import { AddProgramModal } from "@/components/settings/add-program-modal"
+import { AddSpecializationModal } from "@/components/settings/add-specialization-modal"
 
 const formSchema = z.object({
   programId: z.string().min(1, "Program is required"),
@@ -90,6 +93,8 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showProgramModal, setShowProgramModal] = useState(false)
+  const [showSpecializationModal, setShowSpecializationModal] = useState(false)
   const { toast } = useToast()
 
   const form = useForm({
@@ -157,9 +162,10 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     }
   }, [open, fetchPrograms])
 
-  // Reset specialization when program changes
+  // Reset specialization and semester when program changes
   useEffect(() => {
     form.setValue("specializationId", "")
+    form.setValue("semester", 1)
   }, [watchedProgramId, form])
 
   const onSubmit = async (data: FormData) => {
@@ -211,6 +217,33 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
     [selectedProgram]
   )
 
+  // Handle program creation
+  const handleProgramCreated = useCallback((newProgram: any) => {
+    setPrograms(prev => [...prev, newProgram])
+    form.setValue("programId", newProgram.id)
+    setShowProgramModal(false)
+    toast({
+      title: "Success",
+      description: "Program created and selected successfully",
+    })
+  }, [form, toast])
+
+  // Handle specialization creation
+  const handleSpecializationCreated = useCallback((newSpecialization: any) => {
+    // Update the programs list to include the new specialization
+    setPrograms(prev => prev.map(program => 
+      program.id === watchedProgramId 
+        ? { ...program, specializations: [...(program.specializations || []), newSpecialization] }
+        : program
+    ))
+    form.setValue("specializationId", newSpecialization.id)
+    setShowSpecializationModal(false)
+    toast({
+      title: "Success",
+      description: "Specialization created and selected successfully",
+    })
+  }, [form, toast, watchedProgramId])
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -229,55 +262,73 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Program</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    disabled={loading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select program" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {programs.map((program) => (
-                        <SelectItem key={program.id} value={program.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{program.shortName}</span>
-                            <span className="text-muted-foreground">-</span>
-                            <span className="text-sm">{program.name}</span>
+                  <div className="flex gap-2">
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={loading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select program" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {programs.length === 0 ? (
+                          <div className="p-2 text-center text-sm text-muted-foreground">
+                            No programs available. Click the + button to add one.
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        ) : (
+                          programs.map((program) => (
+                            <SelectItem key={program.id} value={program.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{program.shortName}</span>
+                                <span className="text-muted-foreground">-</span>
+                                <span className="text-sm">{program.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="px-3 shrink-0 h-9"
+                      onClick={() => setShowProgramModal(true)}
+                      title="Add new program"
+                      aria-label="Add new program"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {selectedProgram?.specializations?.length && selectedProgram.specializations.length > 0 && (
+            {selectedProgram && (
               <FormField
                 control={form.control}
-                name="specializationId"
+                name="semester"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Specialization</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Semester</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(parseInt(value))} 
+                      defaultValue={field.value?.toString()}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select specialization (optional)" />
+                          <SelectValue placeholder="Select semester" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No specialization</SelectItem>
-                        {selectedProgram.specializations.map((spec) => (
-                          <SelectItem key={spec.id} value={spec.id}>
-                            <div className="flex items-center gap-2">
-                              <span>{spec.shortName}</span>
-                              <span className="text-muted-foreground">-</span>
-                              <span className="text-sm">{spec.name}</span>
-                            </div>
+                        {availableSemesters.map((sem) => (
+                          <SelectItem key={sem} value={sem.toString()}>
+                            Semester {sem}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -288,83 +339,107 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="semester"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Semester</FormLabel>
-                  <Select 
-                    onValueChange={(value) => field.onChange(parseInt(value))} 
-                    defaultValue={field.value?.toString()}
-                  >
+            {selectedProgram && (
+              <FormField
+                control={form.control}
+                name="specializationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specialization (Optional)</FormLabel>
+                    <div className="flex gap-2">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select specialization (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No specialization</SelectItem>
+                          {selectedProgram.specializations?.map((spec) => (
+                            <SelectItem key={spec.id} value={spec.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{spec.shortName}</span>
+                                <span className="text-muted-foreground">-</span>
+                                <span className="text-sm">{spec.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="px-3 shrink-0 h-9"
+                        onClick={() => setShowSpecializationModal(true)}
+                        title="Add new specialization to this program"
+                        aria-label="Add new specialization"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Year</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select semester" />
-                      </SelectTrigger>
+                      <Input 
+                        type="number" 
+                        min="2020" 
+                        max="2030" 
+                        className="w-full"
+                        {...field}
+                        value={field.value as number}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {availableSemesters.map((sem) => (
-                        <SelectItem key={sem} value={sem.toString()}>
-                          Semester {sem}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="startYear"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Year</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="2020" 
-                      max="2030" 
-                      {...field}
-                      value={field.value as number}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {selectedProgram && watchedStartYear && (
-                      <span>
-                        End Year: {watchedStartYear + selectedProgram.duration - 1}
+                    <FormDescription>
+                      <span className="text-xs">
+                        {selectedProgram && watchedStartYear 
+                          ? `End Year: ${watchedStartYear + selectedProgram.duration - 1}`
+                          : 'Academic year when batch starts'
+                        }
                       </span>
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="maxCapacity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Capacity (Optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      placeholder="e.g., 30"
-                      {...field}
-                      value={field.value as number || ""}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Leave empty for unlimited capacity
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="maxCapacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Max Capacity</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        placeholder="e.g., 30"
+                        className="w-full"
+                        {...field}
+                        value={field.value as number || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      <span className="text-xs">Optional - leave empty for unlimited</span>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Batch Name Preview */}
             {generateBatchName() && (
@@ -387,6 +462,21 @@ export function AddBatchModal({ open, onOpenChange, onBatchCreated }: AddBatchMo
           </form>
         </Form>
       </DialogContent>
+
+      {/* Nested Modals */}
+      <AddProgramModal
+        open={showProgramModal}
+        onOpenChange={setShowProgramModal}
+        onProgramCreated={handleProgramCreated}
+      />
+
+      <AddSpecializationModal
+        open={showSpecializationModal}
+        onOpenChange={setShowSpecializationModal}
+        programs={programs}
+        onSpecializationCreated={handleSpecializationCreated}
+        defaultProgramId={watchedProgramId}
+      />
     </Dialog>
   )
 }

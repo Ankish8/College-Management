@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -65,13 +65,15 @@ interface AddSpecializationModalProps {
   onOpenChange: (open: boolean) => void
   programs: Program[]
   onSpecializationCreated: (specialization: Specialization) => void
+  defaultProgramId?: string
 }
 
 export function AddSpecializationModal({ 
   open, 
   onOpenChange, 
   programs, 
-  onSpecializationCreated 
+  onSpecializationCreated,
+  defaultProgramId = ""
 }: AddSpecializationModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
@@ -81,9 +83,16 @@ export function AddSpecializationModal({
     defaultValues: {
       name: "",
       shortName: "",
-      programId: "",
+      programId: defaultProgramId,
     },
   })
+
+  // Update form when defaultProgramId changes
+  useEffect(() => {
+    if (defaultProgramId) {
+      form.setValue("programId", defaultProgramId)
+    }
+  }, [defaultProgramId, form])
 
   const onSubmit = async (data: FormData) => {
     try {
