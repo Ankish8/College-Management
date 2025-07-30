@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     // Handle dry-run requests
     if (options.options?.dryRun) {
-      const dryRunResult = await dryRunBulkOperation(options, session.user.id)
+      const dryRunResult = await dryRunBulkOperation(options, (session.user as any).id)
       return NextResponse.json(dryRunResult)
     }
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
           endDate: options.sourceData.dateRange?.end,
           preserveFaculty: options.options?.preserveConflicts !== false,
           handleConflicts: options.options?.updateExisting ? 'override' : 'skip'
-        }, session.user.id)
+        }, (session.user as any).id)
         break
 
       case 'faculty_replace':
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
           batchIds: options.targetData?.batchId ? [options.targetData.batchId] : undefined,
           effectiveDate: options.sourceData.dateRange?.start,
           maintainWorkload: true
-        }, session.user.id)
+        }, (session.user as any).id)
         break
 
       case 'reschedule':
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
           moveType: options.targetData?.dayOffset ? 'shift' : 'map',
           excludeWeekends: true,
           respectBlackouts: true
-        }, session.user.id)
+        }, (session.user as any).id)
         break
 
       case 'template_apply':
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
       // Get operation history
       const { getOperationHistory } = await import('@/lib/timetable/bulk-operations')
       const limit = parseInt(searchParams.get('limit') || '10')
-      const operations = await getOperationHistory(limit, session.user.id)
+      const operations = await getOperationHistory(limit, (session.user as any).id)
       return NextResponse.json({ operations })
     }
 

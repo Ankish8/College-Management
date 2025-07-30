@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X } from "lucide-react"
-import { useViewMode } from "@/hooks/useViewMode"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
+import type { ViewMode } from "@/types/preferences"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,8 +61,6 @@ interface Subject {
   }
 }
 
-import type { ViewMode } from "@/types/preferences"
-
 type FilterType = "all" | "theory" | "practical" | "core" | "elective"
 
 interface SubjectFilters {
@@ -80,8 +79,21 @@ export function SubjectList() {
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(true)
-  const { viewMode, setViewMode } = useViewMode("subjects")
+  const { preferences, updateViewMode } = useUserPreferences()
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Get current view mode from preferences, fallback to "cards"
+  const viewMode: ViewMode = preferences?.viewModes?.subjects || "cards"
+
+  // Handler to update view mode
+  const handleViewModeChange = async (newViewMode: ViewMode) => {
+    try {
+      await updateViewMode("subjects", newViewMode)
+    } catch (error) {
+      console.error("Failed to update view mode:", error)
+      // Could add toast here if needed
+    }
+  }
   const [filters, setFilters] = useState<SubjectFilters>({
     examType: "all",
     subjectType: [],
@@ -627,8 +639,9 @@ export function SubjectList() {
                         <div key={faculty} className="flex items-center space-x-2">
                           <Checkbox
                             id={`faculty-${faculty}`}
-                            checked={filters.faculty.includes(faculty)}
+                            checked={faculty ? filters.faculty.includes(faculty) : false}
                             onCheckedChange={(checked) => {
+                              if (!faculty) return
                               setFilters(prev => ({
                                 ...prev,
                                 faculty: checked 
@@ -736,7 +749,7 @@ export function SubjectList() {
             <Button
               variant={viewMode === "cards" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode("cards")}
+              onClick={() => handleViewModeChange("cards")}
               className="rounded-r-none"
             >
               <Grid className="h-4 w-4" />
@@ -744,7 +757,7 @@ export function SubjectList() {
             <Button
               variant={viewMode === "table" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode("table")}
+              onClick={() => handleViewModeChange("table")}
               className="rounded-l-none"
             >
               <List className="h-4 w-4" />

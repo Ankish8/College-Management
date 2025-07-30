@@ -461,9 +461,9 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                             <SelectItem key={member.id} value={member.id}>
                               <div className="flex items-center gap-2">
                                 <span>{member.name}</span>
-                                {member.employeeId && (
+                                {member.email && (
                                   <span className="text-xs text-muted-foreground">
-                                    ({member.employeeId})
+                                    ({member.email})
                                   </span>
                                 )}
                               </div>
@@ -496,9 +496,9 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                               <SelectItem key={member.id} value={member.id}>
                                 <div className="flex items-center gap-2">
                                   <span>{member.name}</span>
-                                  {member.employeeId && (
+                                  {member.email && (
                                     <span className="text-xs text-muted-foreground">
-                                      ({member.employeeId})
+                                      ({member.email})
                                     </span>
                                   )}
                                 </div>

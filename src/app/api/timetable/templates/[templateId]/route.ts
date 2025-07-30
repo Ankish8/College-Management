@@ -5,11 +5,6 @@ import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/utils/permissions"
 import { z } from "zod"
 
-interface RouteParams {
-  params: {
-    templateId: string
-  }
-}
 
 const updateTemplateSchema = z.object({
   name: z.string().min(1, "Template name is required").optional(),
@@ -24,7 +19,7 @@ const updateTemplateSchema = z.object({
 })
 
 // GET /api/timetable/templates/[templateId] - Get specific template
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, context: { params: Promise<{ templateId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -32,7 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { templateId } = params
+    const { templateId } = await context.params
 
     const template = await db.timetableTemplateNew.findUnique({
       where: { id: templateId },
@@ -57,7 +52,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Check if user has permission to view this template
-    if (!template.isPublic && template.createdBy !== session.user.id && !isAdmin(session.user as any)) {
+    if (!template.isPublic && template.createdBy !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -73,7 +68,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/timetable/templates/[templateId] - Update template
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ templateId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -81,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { templateId } = params
+    const { templateId } = await context.params
     const body = await req.json()
     const validatedData = updateTemplateSchema.parse(body)
 
@@ -95,7 +90,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     // Check if user has permission to update this template
-    if (existingTemplate.createdBy !== session.user.id && !isAdmin(session.user as any)) {
+    if (existingTemplate.createdBy !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -184,7 +179,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/timetable/templates/[templateId] - Delete template
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ templateId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -192,7 +187,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { templateId } = params
+    const { templateId } = await context.params
 
     // Check if template exists
     const existingTemplate = await db.timetableTemplateNew.findUnique({
@@ -204,7 +199,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     // Check if user has permission to delete this template
-    if (existingTemplate.createdBy !== session.user.id && !isAdmin(session.user as any)) {
+    if (existingTemplate.createdBy !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

@@ -4,11 +4,11 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { ExamPeriodType } from "@prisma/client"
+// ExamPeriodType is just a string field in the schema
 
 const examPeriodFilterSchema = z.object({
   academicCalendarId: z.string().optional(),
-  examType: z.nativeEnum(ExamPeriodType).optional(),
+  examType: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   year: z.number().min(2020).max(2030).optional(),
@@ -21,7 +21,7 @@ const createExamPeriodSchema = z.object({
   academicCalendarId: z.string().min(1, "Academic calendar is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  examType: z.nativeEnum(ExamPeriodType),
+  examType: z.string(),
   blockRegularClasses: z.boolean().default(true),
   allowReviewClasses: z.boolean().default(true),
   description: z.string().optional(),
@@ -147,10 +147,10 @@ export async function GET(request: NextRequest) {
         upcoming: enrichedExamPeriods.filter(p => p.status === "upcoming").length,
         ongoing: enrichedExamPeriods.filter(p => p.status === "ongoing").length,
         completed: enrichedExamPeriods.filter(p => p.status === "completed").length,
-        byType: Object.values(ExamPeriodType).reduce((acc, type) => {
+        byType: ["INTERNAL", "EXTERNAL"].reduce((acc, type) => {
           acc[type] = examPeriods.filter(p => p.examType === type).length
           return acc
-        }, {} as Record<ExamPeriodType, number>),
+        }, {} as Record<string, number>),
       }
     })
   } catch (error) {

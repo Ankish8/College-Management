@@ -144,8 +144,8 @@ export function SubjectAllotmentContent() {
       setSaving(true)
       
       // If builder has its own save method, use it
-      if (typeof window !== 'undefined' && window.handleBuilderSave && !allotmentData) {
-        await window.handleBuilderSave()
+      if (typeof window !== 'undefined' && (window as any).handleBuilderSave && !allotmentData) {
+        await (window as any).handleBuilderSave()
         return
       }
       

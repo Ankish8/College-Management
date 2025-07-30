@@ -5,14 +5,9 @@ import { isAdmin, isFaculty } from '@/lib/utils/permissions'
 import { getOperationProgress, cancelOperation } from '@/lib/timetable/bulk-operations'
 import { db } from '@/lib/db'
 
-interface RouteParams {
-  params: {
-    operationId: string
-  }
-}
 
 // GET /api/timetable/bulk-operations/[operationId] - Get specific operation status
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, context: { params: Promise<{ operationId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -20,7 +15,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { operationId } = params
+    const { operationId } = await context.params
 
     // Check if user has permission to view this operation
     const operation = await db.bulkOperation.findUnique({
@@ -32,7 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Users can only view their own operations unless they're admin
-    if (operation.userId !== session.user.id && !isAdmin(session.user as any)) {
+    if (operation.userId !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -49,7 +44,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/timetable/bulk-operations/[operationId] - Cancel specific operation
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ operationId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -57,7 +52,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { operationId } = params
+    const { operationId } = await context.params
 
     // Check if user has permission to cancel this operation
     const operation = await db.bulkOperation.findUnique({
@@ -69,7 +64,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     // Users can only cancel their own operations unless they're admin
-    if (operation.userId !== session.user.id && !isAdmin(session.user as any)) {
+    if (operation.userId !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -96,7 +91,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 }
 
 // PATCH /api/timetable/bulk-operations/[operationId] - Update operation (e.g., pause/resume)
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ operationId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -104,7 +99,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { operationId } = params
+    const { operationId } = await context.params
     const body = await req.json()
     const { action } = body // 'pause' | 'resume'
 

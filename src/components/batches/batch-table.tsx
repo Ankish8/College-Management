@@ -194,7 +194,7 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
               >
                 Status
               </SortableTableHead>
-              <TableHead className="w-[70px]" canSort={false}></TableHead>
+              <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

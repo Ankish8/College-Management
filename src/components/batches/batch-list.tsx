@@ -16,6 +16,8 @@ import { BatchCard } from "./batch-card"
 import { BatchTable } from "./batch-table"
 import { AddBatchModal } from "./add-batch-modal"
 import { useToast } from "@/hooks/use-toast"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
+import { ViewMode } from "@/types/preferences"
 
 interface Batch {
   id: string
@@ -41,18 +43,34 @@ interface Batch {
   }
 }
 
-type ViewMode = "cards" | "table"
 type FilterType = "all" | "active" | "inactive"
 
 export function BatchList() {
   const [batches, setBatches] = useState<Batch[]>([])
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { toast } = useToast()
+  const { preferences, updateViewMode } = useUserPreferences()
+
+  // Get current view mode from preferences, fallback to "cards"
+  const viewMode: ViewMode = preferences?.viewModes?.batches || "cards"
+
+  // Handler to update view mode
+  const handleViewModeChange = async (newViewMode: ViewMode) => {
+    try {
+      await updateViewMode("batches", newViewMode)
+    } catch (error) {
+      console.error("Failed to update view mode:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save view preference",
+        variant: "destructive",
+      })
+    }
+  }
 
   const fetchBatches = useCallback(async () => {
     try {
@@ -285,7 +303,7 @@ export function BatchList() {
           <Button
             variant={viewMode === "cards" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("cards")}
+            onClick={() => handleViewModeChange("cards")}
             className="rounded-r-none"
           >
             <Grid className="h-4 w-4" />
@@ -293,7 +311,7 @@ export function BatchList() {
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("table")}
+            onClick={() => handleViewModeChange("table")}
             className="rounded-l-none"
           >
             <List className="h-4 w-4" />

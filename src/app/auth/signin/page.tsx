@@ -96,6 +96,7 @@ export default function SignInPage() {
             <h4 className="text-sm font-medium text-blue-900 mb-2">Development Access:</h4>
             <div className="text-xs text-blue-700 space-y-1">
               <p><strong>Admin:</strong> admin@jlu.edu.in / admin123</p>
+              <p><strong>Faculty:</strong> ankish.khatri@jlu.edu.in / password123</p>
               <p><strong>Any User:</strong> any@email.com / password123</p>
               <p><em>Note: Create users in database for proper testing</em></p>
             </div>

@@ -3,14 +3,9 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 
-interface RouteParams {
-  params: {
-    templateId: string
-  }
-}
 
 // POST /api/timetable/templates/[templateId]/use - Track template usage
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(req: NextRequest, context: { params: Promise<{ templateId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -18,7 +13,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { templateId } = params
+    const { templateId } = await context.params
 
     // Check if template exists
     const template = await db.timetableTemplateNew.findUnique({
@@ -30,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Check if user has permission to use this template
-    if (!template.isPublic && template.createdBy !== session.user.id) {
+    if (!template.isPublic && template.createdBy !== (session.user as any).id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

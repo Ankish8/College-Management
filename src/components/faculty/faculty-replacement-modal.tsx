@@ -172,7 +172,7 @@ export function FacultyReplacementModal({
         
         // Check if currently selected faculty is still valid
         if (selectedCurrentFaculty) {
-          const updatedCurrentFaculty = data.find(f => f.id === selectedCurrentFaculty.id)
+          const updatedCurrentFaculty = data.find((f: any) => f.id === selectedCurrentFaculty.id)
           if (!updatedCurrentFaculty) {
             toast({
               title: "Faculty No Longer Available",
@@ -199,7 +199,7 @@ export function FacultyReplacementModal({
         
         // Check if selected new faculty is still valid
         if (selectedNewFaculty) {
-          const updatedNewFaculty = data.find(f => f.id === selectedNewFaculty)
+          const updatedNewFaculty = data.find((f: any) => f.id === selectedNewFaculty)
           if (!updatedNewFaculty || updatedNewFaculty.status !== 'ACTIVE') {
             toast({
               title: "Replacement Faculty No Longer Available",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, memo, useCallback } from "react"
 import { Plus, Search, Settings, RefreshCw, Users, GraduationCap, UserCheck, TrendingUp, Grid, List, X } from "lucide-react"
-import { useViewMode } from "@/hooks/useViewMode"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
 import type { ViewMode } from "@/types/preferences"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -163,10 +163,27 @@ function StudentListComponent() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false)
   const [lastSelectedBatch, setLastSelectedBatch] = useState<string>("")
   // Remove showAdvancedFilters state - now always horizontal
-  const { viewMode, setViewMode } = useViewMode("students")
   const { toast } = useToast()
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { preferences, updateViewMode } = useUserPreferences()
+
+  // Get current view mode from preferences, fallback to "cards"
+  const viewMode: ViewMode = preferences?.viewModes?.students || "cards"
+
+  // Handler to update view mode
+  const handleViewModeChange = async (newViewMode: ViewMode) => {
+    try {
+      await updateViewMode("students", newViewMode)
+    } catch (error) {
+      console.error("Failed to update view mode:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save view preference",
+        variant: "destructive",
+      })
+    }
+  }
 
   // Advanced filter state
   const [filterState, setFilterState] = useState<StudentFilterState>({
@@ -441,7 +458,7 @@ function StudentListComponent() {
           <Button
             variant={viewMode === "cards" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("cards")}
+            onClick={() => handleViewModeChange("cards")}
             className="rounded-r-none h-9"
           >
             <Grid className="h-4 w-4" />
@@ -449,7 +466,7 @@ function StudentListComponent() {
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("table")}
+            onClick={() => handleViewModeChange("table")}
             className="rounded-l-none h-9"
           >
             <List className="h-4 w-4" />

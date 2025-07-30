@@ -140,7 +140,7 @@ export function HorizontalStudentFilter({
         const rangeValue = criteria.value as { from: string | number; to: string | number }
         return rangeValue.from !== '' && rangeValue.to !== ''
       }
-      return criteria.value !== '' && criteria.value !== null && criteria.value !== undefined
+      return criteria.value !== null && criteria.value !== undefined && (typeof criteria.value !== 'string' || criteria.value !== '')
     })
 
     onFilterChange({
@@ -183,7 +183,7 @@ export function HorizontalStudentFilter({
         const rangeValue = criteria.value as { from: string | number; to: string | number }
         return rangeValue.from !== '' && rangeValue.to !== ''
       }
-      return criteria.value !== '' && criteria.value !== null && criteria.value !== undefined
+      return criteria.value !== null && criteria.value !== undefined && (typeof criteria.value !== 'string' || criteria.value !== '')
     })
 
     onFilterChange({

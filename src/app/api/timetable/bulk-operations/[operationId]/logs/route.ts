@@ -5,13 +5,11 @@ import { isAdmin } from '@/lib/utils/permissions'
 import { db } from '@/lib/db'
 
 interface RouteParams {
-  params: {
-    operationId: string
-  }
+  operationId: string
 }
 
 // GET /api/timetable/bulk-operations/[operationId]/logs - Get operation logs
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -19,6 +17,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const params = await context.params
     const { operationId } = params
     const { searchParams } = new URL(req.url)
     const level = searchParams.get('level') // Filter by log level
@@ -35,7 +34,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Users can only view logs for their own operations unless they're admin
-    if (operation.userId !== session.user.id && !isAdmin(session.user as any)) {
+    if (operation.userId !== (session.user as any).id && !isAdmin(session.user as any)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -60,7 +59,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       id: log.id,
       level: log.level.toLowerCase(),
       message: log.message,
-      details: log.details ? JSON.parse(log.details) : null,
+      details: log.details ? JSON.parse(log.details as string) : null,
       timestamp: log.timestamp.toISOString()
     }))
 
@@ -84,7 +83,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 }
 
 // POST /api/timetable/bulk-operations/[operationId]/logs - Add custom log entry (admin only)
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -92,6 +91,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const params = await context.params
     const { operationId } = params
     const body = await req.json()
     const { level, message, details } = body
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         operationId,
         level: level.toUpperCase(),
         message,
-        details: details ? JSON.stringify(details) : null
+        details: details ? JSON.stringify(details) : undefined
       }
     })
 
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         id: logEntry.id,
         level: logEntry.level.toLowerCase(),
         message: logEntry.message,
-        details: logEntry.details ? JSON.parse(logEntry.details) : null,
+        details: logEntry.details ? JSON.parse(logEntry.details as string) : null,
         timestamp: logEntry.timestamp.toISOString()
       }
     })

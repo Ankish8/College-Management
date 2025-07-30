@@ -213,7 +213,7 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
                 >
                   Subjects
                 </SortableTableHead>
-                <TableHead className="hidden lg:table-cell min-w-[200px]" canSort={false}>
+                <TableHead className="hidden lg:table-cell min-w-[200px]">
                   Teaching
                 </TableHead>
                 <SortableTableHead
@@ -223,7 +223,7 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
                 >
                   Status
                 </SortableTableHead>
-                <TableHead className="w-[70px]" canSort={false}></TableHead>
+                <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>

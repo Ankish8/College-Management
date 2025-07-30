@@ -529,7 +529,7 @@ export function SimpleDragDropBuilder({
   // Expose save handler to parent
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.handleBuilderSave = handleSaveWithCurrentData
+      (window as any).handleBuilderSave = handleSaveWithCurrentData
     }
   }, [localFacultyAssignments])
 

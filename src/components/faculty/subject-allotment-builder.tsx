@@ -76,7 +76,7 @@ export function SubjectAllotmentBuilder({
 
   // Initialize Puck data with current state
   useEffect(() => {
-    const initialData: Data = {
+    const initialData = {
       content: [
         // Summary Section
         {
@@ -112,7 +112,7 @@ export function SubjectAllotmentBuilder({
               examType: subject.examType,
               subjectType: subject.subjectType,
               batchName: subject.batch?.name || 'Unknown Batch',
-              priority: (subject.subjectType === 'CORE' ? 'high' : 'medium') as const,
+              priority: (subject.subjectType === 'CORE' ? 'high' : 'medium'),
               isDraggable: true
             })),
             isDropZone: true
@@ -129,7 +129,7 @@ export function SubjectAllotmentBuilder({
             examType: subject.examType,
             subjectType: subject.subjectType,
             batchName: subject.batch?.name || 'Unknown Batch',
-            priority: (subject.subjectType === 'CORE' ? 'high' : 'medium') as const,
+            priority: (subject.subjectType === 'CORE' ? 'high' : 'medium'),
             isDraggable: true
           }
         }))
@@ -141,7 +141,7 @@ export function SubjectAllotmentBuilder({
       }
     }
 
-    setPuckData(initialData)
+    setPuckData(initialData as any)
   }, [unassignedSubjects, facultyList])
 
   const handlePuckChange = (data: Data) => {

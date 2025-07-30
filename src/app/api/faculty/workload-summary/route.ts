@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         maxCreditsPerFaculty: 30,
         coFacultyWeight: 0.5,
         generatedAt: new Date().toISOString(),
-        requestedBy: session.user.id || 'unknown'
+        requestedBy: (session.user as any).id || 'unknown'
       }
     })
 

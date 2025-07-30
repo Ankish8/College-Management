@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     
     const whereClause: any = {
       OR: [
-        { createdBy: session.user.id }, // User's own templates
+        { createdBy: (session.user as any).id }, // User's own templates
         { isPublic: true }              // Public templates
       ]
     }
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's department for templates
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       select: { departmentId: true }
     })
 
@@ -165,8 +165,8 @@ export async function POST(request: NextRequest) {
         isDefault: validatedData.isDefault,
         isPublic: validatedData.isPublic,
         departmentId: user?.departmentId,
-        createdBy: session.user.id,
-        targetBatches: validatedData.targetBatches ? JSON.stringify(validatedData.targetBatches) : null,
+        createdBy: (session.user as any).id,
+        targetBatches: validatedData.targetBatches ? JSON.stringify(validatedData.targetBatches) : undefined,
         creditHours: validatedData.creditHours,
         subjectCount: validatedData.subjectCount,
         timesUsed: 0

@@ -19,6 +19,8 @@ import { AddFacultyModal } from "./add-faculty-modal"
 import { EditFacultyModal } from "./edit-faculty-modal"
 import { FacultyReplacementModal } from "./faculty-replacement-modal"
 import { useToast } from "@/hooks/use-toast"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
+import { ViewMode } from "@/types/preferences"
 
 interface Faculty {
   id: string
@@ -41,7 +43,6 @@ interface Faculty {
   }>
 }
 
-type ViewMode = "cards" | "table"
 type FilterType = "all" | "active" | "inactive"
 
 const ITEMS_PER_PAGE = 12
@@ -52,7 +53,6 @@ export function FacultyList() {
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([])
   const [paginatedFaculty, setPaginatedFaculty] = useState<Faculty[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
@@ -61,7 +61,25 @@ export function FacultyList() {
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null)
   const [isReplacementModalOpen, setIsReplacementModalOpen] = useState(false)
   const { toast } = useToast()
+  const { preferences, updateViewMode } = useUserPreferences()
   const toastRef = useRef(toast)
+
+  // Get current view mode from preferences, fallback to "cards"
+  const viewMode: ViewMode = preferences?.viewModes?.faculty || "cards"
+
+  // Handler to update view mode
+  const handleViewModeChange = async (newViewMode: ViewMode) => {
+    try {
+      await updateViewMode("faculty", newViewMode)
+    } catch (error) {
+      console.error("Failed to update view mode:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save view preference",
+        variant: "destructive",
+      })
+    }
+  }
   
   // Keep toast ref updated
   useEffect(() => {
@@ -341,7 +359,7 @@ export function FacultyList() {
           <Button
             variant={viewMode === "cards" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("cards")}
+            onClick={() => handleViewModeChange("cards")}
             className="rounded-r-none"
           >
             <Grid className="h-4 w-4" />
@@ -349,7 +367,7 @@ export function FacultyList() {
           <Button
             variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("table")}
+            onClick={() => handleViewModeChange("table")}
             className="rounded-l-none"
           >
             <List className="h-4 w-4" />

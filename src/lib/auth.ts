@@ -14,10 +14,15 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log("Auth attempt:", credentials?.email)
+          console.log("Database URL:", process.env.DATABASE_URL ? "Set" : "Not set")
+          
           if (!credentials?.email || !credentials?.password) {
+            console.log("Missing credentials")
             return null
           }
 
+          console.log("Attempting to find user in database...")
           const user = await db.user.findUnique({
             where: {
               email: credentials.email as string
@@ -25,13 +30,21 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (!user) {
+            console.log("User not found:", credentials.email)
+            // Let's check if database connection works
+            const userCount = await db.user.count()
+            console.log("Total users in database:", userCount)
             return null
           }
+
+          console.log("User found:", user.email, user.role)
 
           // For development, we'll create a simple password check
           // In production, you should hash passwords properly
           const isPasswordValid = credentials.password === "password123" || 
             (user.email === "admin@jlu.edu.in" && credentials.password === "admin123")
+
+          console.log("Password valid:", isPasswordValid, "Password provided:", credentials.password)
 
           if (!isPasswordValid) {
             return null

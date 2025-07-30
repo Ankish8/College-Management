@@ -152,7 +152,9 @@ export const puckConfig: Config = {
         showWeekends: false,
         timeSlots: []
       },
-      render: ({ weekStart, workingDays, displayMode, showWeekends, timeSlots }: TimetableLayoutProps) => (
+      render: (props: any) => {
+        const { weekStart, workingDays, displayMode, showWeekends, timeSlots } = props as TimetableLayoutProps
+        return (
         <div className="timetable-layout p-4 border-2 border-dashed border-gray-300 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className="h-5 w-5 text-blue-500" />
@@ -166,7 +168,8 @@ export const puckConfig: Config = {
             <p>Weekends: {showWeekends ? 'Shown' : 'Hidden'}</p>
           </div>
         </div>
-      )
+        )
+      }
     },
 
     // Time Slot Component
@@ -199,7 +202,9 @@ export const puckConfig: Config = {
         label: "Morning Session",
         isBreak: false
       },
-      render: ({ startTime, endTime, label, isBreak }: TimeSlotProps) => (
+      render: (props: any) => {
+        const { startTime, endTime, label, isBreak } = props as TimeSlotProps
+        return (
         <div className={`time-slot p-3 rounded-lg border-2 ${
           isBreak 
             ? 'border-orange-300 bg-orange-50' 
@@ -216,7 +221,8 @@ export const puckConfig: Config = {
             <div className="text-xs text-orange-600 mt-1">Break Period</div>
           )}
         </div>
-      )
+        )
+      }
     },
 
     // Subject Block Component

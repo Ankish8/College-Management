@@ -4,11 +4,11 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { HolidayType } from "@prisma/client"
+// HolidayType is just a string field in the schema
 
 const holidayFilterSchema = z.object({
   departmentId: z.string().optional(),
-  type: z.nativeEnum(HolidayType).optional(),
+  type: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   year: z.number().min(2020).max(2030).optional(),
@@ -19,7 +19,7 @@ const holidayFilterSchema = z.object({
 const createHolidaySchema = z.object({
   name: z.string().min(1, "Holiday name is required"),
   date: z.string().min(1, "Holiday date is required"),
-  type: z.nativeEnum(HolidayType),
+  type: z.string(),
   departmentId: z.string().optional(), // null for university-wide holidays
   academicCalendarId: z.string().optional(),
   isRecurring: z.boolean().default(false),
@@ -123,10 +123,10 @@ export async function GET(request: NextRequest) {
       holidaysByMonth,
       summary: {
         total: holidays.length,
-        byType: Object.values(HolidayType).reduce((acc, type) => {
+        byType: ["NATIONAL", "RELIGIOUS", "UNIVERSITY"].reduce((acc, type) => {
           acc[type] = holidays.filter(h => h.type === type).length
           return acc
-        }, {} as Record<HolidayType, number>),
+        }, {} as Record<string, number>),
         recurring: holidays.filter(h => h.isRecurring).length,
         universityWide: holidays.filter(h => h.departmentId === null).length,
       }
