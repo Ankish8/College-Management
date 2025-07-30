@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { AttendanceHeader } from '@/components/attendance/attendance-header'
 import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'
+import { AttendanceModeToggle, AttendanceMode } from '@/components/attendance/attendance-mode-toggle'
 import { LoadingState, TableLoadingState } from '@/components/ui/loading-spinner'
 import { ErrorState, NoDataState } from '@/components/ui/error-state'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -39,6 +40,7 @@ export function AttendancePageProduction({
     initialDate || new Date().toISOString().split('T')[0]
   )
   const [activeView, setActiveView] = useState<ViewMode>('session')
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('detailed')
 
   // API hooks
   const { 
@@ -294,6 +296,14 @@ export function AttendancePageProduction({
                     </TabsTrigger>
                   </TabsList>
 
+                  {/* Attendance Mode Toggle - Only show for session view */}
+                  {activeView === 'session' && (
+                    <AttendanceModeToggle
+                      mode={attendanceMode}
+                      onModeChange={setAttendanceMode}
+                    />
+                  )}
+
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
@@ -327,7 +337,7 @@ export function AttendancePageProduction({
                         searchTerm=""
                         attendanceData={attendanceData}
                         onAttendanceChange={handleAttendanceChange}
-                        attendanceMode="detailed"
+                        attendanceMode={attendanceMode}
                       />
                     )}
                   </TabsContent>
