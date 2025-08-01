@@ -113,16 +113,19 @@ const data = {
           title: "My Attendance",
           url: "/my-attendance",
           roles: ["STUDENT"],
+          disabled: true,
         },
         {
           title: "Attendance Reports",
           url: "/attendance/reports",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "Disputes",
           url: "/attendance/disputes",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
       ],
     },
@@ -135,16 +138,19 @@ const data = {
           title: "Overview",
           url: "/analytics",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "Performance",
           url: "/analytics/performance",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "Trends",
           url: "/analytics/trends",
           roles: ["ADMIN"],
+          disabled: true,
         },
       ],
     },
@@ -262,11 +268,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       <SidebarMenuSub>
                         {item.items.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <Link href={subItem.url || "#"}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
+                            {(subItem as any).disabled ? (
+                              <div title="Coming Soon" className="relative">
+                                <SidebarMenuSubButton className="opacity-50 cursor-not-allowed">
+                                  <span>{subItem.title}</span>
+                                </SidebarMenuSubButton>
+                              </div>
+                            ) : (
+                              <SidebarMenuSubButton asChild>
+                                <Link href={subItem.url || "#"}>
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            )}
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
@@ -330,11 +344,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <User2 className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
+                <DropdownMenuItem disabled title="Coming Soon">
+                  <User2 className="mr-2 h-4 w-4" />
+                  Profile
                 </DropdownMenuItem>
                 {isAdmin(user as any) && (
                   <DropdownMenuItem asChild>
