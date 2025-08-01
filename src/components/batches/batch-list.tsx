@@ -18,6 +18,8 @@ import { AddBatchModal } from "./add-batch-modal"
 import { useToast } from "@/hooks/use-toast"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { ViewMode } from "@/types/preferences"
+import { useSession } from "next-auth/react"
+import { canCreateBatch } from "@/lib/utils/permissions"
 
 interface Batch {
   id: string
@@ -54,6 +56,8 @@ export function BatchList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { toast } = useToast()
   const { preferences, updateViewMode } = useUserPreferences()
+  const { data: session } = useSession()
+  const canCreate = canCreateBatch(session?.user as any)
 
   // Get current view mode from preferences, fallback to "cards"
   const viewMode: ViewMode = preferences?.viewModes?.batches || "cards"
@@ -224,10 +228,12 @@ export function BatchList() {
           >
             <Settings className="h-4 w-4" />
           </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Batch
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Batch
+            </Button>
+          )}
         </div>
       </div>
 

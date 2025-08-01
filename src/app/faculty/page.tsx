@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { isAdmin } from "@/lib/utils/permissions"
+import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -14,7 +14,7 @@ export default async function FacultyPage() {
     redirect("/auth/signin")
   }
 
-  if (!isAdmin(session.user as any)) {
+  if (!isAdmin(session.user as any) && !isFaculty(session.user as any)) {
     redirect("/dashboard")
   }
 

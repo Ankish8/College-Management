@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { canCreateSubject } from "@/lib/utils/permissions"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X } from "lucide-react"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import type { ViewMode } from "@/types/preferences"
@@ -80,6 +81,7 @@ export function SubjectList() {
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(true)
   const { preferences, updateViewMode } = useUserPreferences()
+  const canCreate = canCreateSubject(session?.user as any)
   const [searchQuery, setSearchQuery] = useState("")
 
   // Get current view mode from preferences, fallback to "cards"
@@ -360,10 +362,12 @@ export function SubjectList() {
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Subject
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Subject
+            </Button>
+          )}
         </div>
       </div>
 

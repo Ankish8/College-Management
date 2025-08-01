@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { canCreateStudent } from "@/lib/utils/permissions"
 import { StudentFilterState } from "@/types/student-filters"
 import { filterStudents, getFilterDescription } from "@/utils/student-filter-utils"
 
@@ -167,6 +168,7 @@ function StudentListComponent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { preferences, updateViewMode } = useUserPreferences()
+  const canCreate = canCreateStudent(session?.user as any)
 
   // Get current view mode from preferences, fallback to "cards"
   const viewMode: ViewMode = preferences?.viewModes?.students || "cards"
@@ -365,17 +367,21 @@ function StudentListComponent() {
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setIsBulkUploadOpen(true)}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Bulk Upload
-          </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Student
-          </Button>
+          {canCreate && (
+            <>
+              <Button 
+                variant="outline"
+                onClick={() => setIsBulkUploadOpen(true)}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Bulk Upload
+              </Button>
+              <Button onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Student
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -485,7 +491,7 @@ function StudentListComponent() {
                 Try adjusting your search or filters
               </p>
             )}
-            {selectedBatch === "all" && !filterState.searchQuery && filterState.appliedFilters.length === 0 && (
+            {selectedBatch === "all" && !filterState.searchQuery && filterState.appliedFilters.length === 0 && canCreate && (
               <Button 
                 className="mt-4"
                 onClick={() => setIsAddModalOpen(true)}

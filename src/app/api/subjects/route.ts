@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdmin, isFaculty } from "@/lib/utils/permissions"
+import { isAdmin, isFaculty, canCreateSubject } from "@/lib/utils/permissions"
 import { calculateSubjectHours, getMaxFacultyCredits } from "@/lib/utils/credit-hours"
 import { z } from "zod"
 
@@ -39,14 +39,12 @@ export async function GET(request: NextRequest) {
       whereClause.OR = [
         {
           name: {
-            contains: search,
-            mode: "insensitive"
+            contains: search
           }
         },
         {
           code: {
-            contains: search,
-            mode: "insensitive"
+            contains: search
           }
         }
       ]
@@ -112,7 +110,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user || !canCreateSubject(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

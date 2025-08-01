@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdmin } from "@/lib/utils/permissions"
+import { isAdmin, isFaculty, canCreateStudent } from "@/lib/utils/permissions"
 import { z } from "zod"
 import { hash } from "bcryptjs"
 
@@ -26,7 +26,7 @@ const bulkCreateStudentsSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -49,11 +49,11 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       whereClause.OR = [
-        { studentId: { contains: search, mode: "insensitive" } },
-        { rollNumber: { contains: search, mode: "insensitive" } },
-        { user: { name: { contains: search, mode: "insensitive" } } },
-        { user: { email: { contains: search, mode: "insensitive" } } },
-        { guardianName: { contains: search, mode: "insensitive" } },
+        { studentId: { contains: search } },
+        { rollNumber: { contains: search } },
+        { user: { name: { contains: search } } },
+        { user: { email: { contains: search } } },
+        { guardianName: { contains: search } },
       ]
     }
 
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user || !canCreateStudent(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     // Search functionality
     if (filters.search) {
       whereClause.OR = [
-        { name: { contains: filters.search, mode: 'insensitive' } },
+        { name: { contains: filters.search } },
         { startTime: { contains: filters.search } },
         { endTime: { contains: filters.search } },
       ]

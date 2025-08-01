@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client"
+import type { Role } from "@/lib/auth"
 import type { AuthUser } from "@/types/auth"
 
 export function hasRole(user: AuthUser | null, role: Role): boolean {
@@ -43,4 +43,21 @@ export function canEditSubject(user: AuthUser | null, subjectFacultyId?: string)
     return user.id === subjectFacultyId
   }
   return false
+}
+
+// Granular create permissions
+export function canCreateStudent(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canCreateSubject(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canCreateBatch(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canCreateTimetableEntry(user: AuthUser | null): boolean {
+  return isAdmin(user) || isFaculty(user)
 }

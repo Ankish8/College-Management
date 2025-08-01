@@ -68,12 +68,12 @@ const data = {
         {
           title: "Students",
           url: "/students",
-          roles: ["ADMIN"],
+          roles: ["ADMIN", "FACULTY"],
         },
         {
           title: "Faculty",
           url: "/faculty",
-          roles: ["ADMIN"],
+          roles: ["ADMIN", "FACULTY"],
         },
       ],
     },

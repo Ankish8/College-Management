@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdmin, isFaculty } from "@/lib/utils/permissions"
+import { isAdmin, isFaculty, canCreateBatch } from "@/lib/utils/permissions"
 import { z } from "zod"
 
 const createBatchSchema = z.object({
@@ -32,8 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       whereClause.name = {
-        contains: search,
-        mode: "insensitive"
+        contains: search
       }
     }
 
@@ -85,7 +84,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user || !canCreateBatch(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
