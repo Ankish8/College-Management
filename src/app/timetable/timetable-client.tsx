@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FullCalendar } from '@/components/ui/full-calendar'
 import { CalendarEvent, TimetableFilters, CalendarView } from '@/types/timetable'
 import { Button } from '@/components/ui/button'
@@ -73,8 +73,15 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
     const end = new Date(eventDate)
     end.setHours(endHour, endMin, 0, 0)
 
+    const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
+    
+    // Debug logging for date-specific entries
+    if (entry.subject.name === 'Design Ethics' || (entry.dayOfWeek === 'WEDNESDAY' && entry.subject.name === 'Thesis Project')) {
+      console.log(`📍 Date-specific event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
+    }
+
     events.push({
-      id: `${entry.id}-${eventDate.toISOString().split('T')[0]}`,
+      id: eventId,
       title: `${entry.subject.name} - ${entry.faculty.name}`,
       start,
       end,
@@ -117,8 +124,15 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       const end = new Date(eventDate)
       end.setHours(endHour, endMin, 0, 0)
 
+      const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
+      
+      // Debug logging for recurring entries on Wednesday (to debug Thesis Project issue)
+      if (entry.dayOfWeek === 'WEDNESDAY' && entry.subject.name === 'Thesis Project') {
+        console.log(`🔄 Recurring WEDNESDAY event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
+      }
+
       events.push({
-        id: `${entry.id}-${eventDate.toISOString().split('T')[0]}`,
+        id: eventId,
         title: `${entry.subject.name} - ${entry.faculty.name}`,
         start,
         end,
@@ -157,14 +171,16 @@ async function fetchBatches() {
 
 export default function TimetableClient() {
   const { data: session } = useSession()
+  const queryClient = useQueryClient()
   const [currentView, setCurrentView] = useState<CalendarView>('week')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // Today's date
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
+  const [forceRefreshKey, setForceRefreshKey] = useState<number>(Date.now())
   const hasInitializedBatch = React.useRef(false)
 
   // Initialize "don't ask again" state from session storage
@@ -209,7 +225,9 @@ export default function TimetableClient() {
   } = useQuery({
     queryKey: ['timetable-entries', filters],
     queryFn: () => fetchTimetableEntries(filters),
-    enabled: !!session?.user && !!selectedBatchId
+    enabled: !!session?.user && !!selectedBatchId,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache data
   })
 
   // Sample events for testing (will be replaced with real data)
@@ -311,12 +329,62 @@ export default function TimetableClient() {
     
     // Use real data if available
     if (timetableData?.entries && timetableData.entries.length > 0) {
+      console.log(`🎯 Processing ${timetableData.entries.length} timetable entries for calendar`)
+      console.log(`📅 Current selected date for event generation: ${selectedDate.toDateString()} (${selectedDate.toISOString().split('T')[0]})`)
+      
+      // Calculate the visible week range for the current calendar view
+      // Use the FullCalendar's actual visible date range
+      const currentWeekStart = new Date(selectedDate)
+      currentWeekStart.setDate(selectedDate.getDate() - selectedDate.getDay()) // Start of week (Sunday)
+      const currentWeekEnd = new Date(currentWeekStart)
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 6) // End of week (Saturday)
+      
+      console.log(`📅 Visible week: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`)
+      
+      // Separate recurring and date-specific entries
+      const recurringEntries = timetableData.entries.filter((entry: any) => !entry.date)
+      const dateSpecificEntries = timetableData.entries.filter((entry: any) => entry.date)
+      
+      console.log(`   📅 Recurring entries: ${recurringEntries.length}`)
+      console.log(`   📍 Date-specific entries: ${dateSpecificEntries.length}`)
+      
       const allEvents: CalendarEvent[] = []
-      timetableData.entries.forEach((entry: any) => {
-        const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
-        allEvents.push(...entryEvents)
+      
+      // Process date-specific entries first (they take priority)
+      const occupiedSlots = new Set<string>()
+      dateSpecificEntries.forEach((entry: any) => {
+        // Only show date-specific entries that fall within the visible week
+        const entryDate = new Date(entry.date)
+        if (entryDate >= currentWeekStart && entryDate <= currentWeekEnd) {
+          const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
+          allEvents.push(...entryEvents)
+          
+          // Track occupied slots to avoid conflicts with recurring patterns
+          entryEvents.forEach(event => {
+            const slotKey = `${entry.dayOfWeek}-${entry.timeSlot.name}-${event.start.toDateString()}`
+            occupiedSlots.add(slotKey)
+          })
+        }
       })
-      // Using real timetable data
+      
+      // Process recurring entries, but skip any that conflict with date-specific entries
+      recurringEntries.forEach((entry: any) => {
+        const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
+        
+        // Filter to only show events in the visible week and avoid conflicts
+        const visibleEvents = entryEvents.filter(event => {
+          const eventDate = new Date(event.start)
+          const isInVisibleWeek = eventDate >= currentWeekStart && eventDate <= currentWeekEnd
+          const slotKey = `${entry.dayOfWeek}-${entry.timeSlot.name}-${event.start.toDateString()}`
+          const hasNoConflict = !occupiedSlots.has(slotKey)
+          
+          return isInVisibleWeek && hasNoConflict
+        })
+        
+        allEvents.push(...visibleEvents)
+      })
+      
+      console.log(`   🎉 Generated ${allEvents.length} calendar events for visible week`)
       return allEvents
     }
     
@@ -637,21 +705,60 @@ export default function TimetableClient() {
       setIsDeleting(true)
       
       // Extract the base timetable entry ID from the event ID
-      // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
-      const baseEntryId = eventToDelete.id.includes('-202') ? eventToDelete.id.split('-202')[0] : eventToDelete.id
+      // Event IDs are formatted as "entryId-YYYY-MM-DD"
+      console.log(`🔍 Parsing event ID for deletion: ${eventToDelete.id}`)
+      
+      let baseEntryId = eventToDelete.id
+      let specificDate = null
+      
+      // Use a more robust approach: look for ISO date pattern at the end
+      const datePattern = /(\d{4}-\d{2}-\d{2})$/
+      const dateMatch = eventToDelete.id.match(datePattern)
+      
+      if (dateMatch) {
+        specificDate = dateMatch[1]
+        // Remove the date part (including the hyphen before it) to get the base entry ID
+        baseEntryId = eventToDelete.id.replace(`-${specificDate}`, '')
+        console.log(`✅ Date-specific entry: ${specificDate}, base ID: ${baseEntryId}`)
+      } else {
+        console.log(`🔄 Recurring entry (no date): ID: ${baseEntryId}`)
+      }
+      
+      // Build the delete URL
+      let deleteUrl = `/api/timetable/entries/${baseEntryId}`
+      if (specificDate) {
+        deleteUrl += `?date=${specificDate}`
+      }
+      
+      console.log(`🌐 Sending DELETE request to: ${deleteUrl}`)
 
-      const response = await fetch(`/api/timetable/entries/${baseEntryId}`, {
+      const response = await fetch(deleteUrl, {
         method: 'DELETE',
       })
+      
+      console.log(`📡 DELETE response status: ${response.status}`)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }))
         throw new Error(errorData.error || `Failed to delete class (${response.status})`)
       }
 
-      // Refresh the timetable data
-      refetch()
-      toast.success('Class deleted successfully!')
+      const result = await response.json()
+      
+      // Invalidate and refetch the timetable data to get fresh data
+      queryClient.invalidateQueries({ queryKey: ['timetable-entries'] })
+      queryClient.removeQueries({ queryKey: ['timetable-entries'] }) // Force remove cached data
+      await refetch()
+      
+      // Force calendar re-render
+      setForceRefreshKey(Date.now())
+      
+      // Show appropriate success message
+      if (result.converted_to_specific) {
+        toast.success(`Class deleted for this date. Converted recurring pattern to ${result.entries_created} individual entries.`)
+      } else {
+        toast.success('Class deleted successfully!')
+      }
     } catch (error) {
       console.error('Error deleting class:', error)
       toast.error(`Failed to delete class: ${(error as Error).message}`)
@@ -667,9 +774,11 @@ export default function TimetableClient() {
   }
 
   const handleViewStateChange = (viewState: any) => {
+    console.log(`📆 Calendar view state changed:`, viewState)
     setCurrentView(viewState.view)
     // Update selected date when view date changes (for month navigation)
     if (viewState.currentDate && viewState.currentDate !== selectedDate) {
+      console.log(`📅 Updating selected date from ${selectedDate.toDateString()} to ${viewState.currentDate.toDateString()}`)
       setSelectedDate(viewState.currentDate)
     }
   }
@@ -821,9 +930,10 @@ export default function TimetableClient() {
           </div>
         ) : (
           <FullCalendar
-            key={`calendar-${events.length}-${timetableData?.entries?.[0]?.updatedAt || 'none'}`}
+            key={`calendar-${events.length}-${forceRefreshKey}-${timetableData?.entries?.[0]?.updatedAt || 'none'}`}
             events={events}
             initialView={currentView}
+            initialDate={selectedDate}
             batchId={selectedBatchId}
             filters={filters}
             onFiltersChange={handleFiltersChange}

@@ -4,16 +4,18 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { DayOfWeek, EntryType } from "@prisma/client"
+// String-based types matching the Prisma schema
+const DayOfWeekValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+const EntryTypeValues = ['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM'] as const
 
 const updateTimetableEntrySchema = z.object({
   batchId: z.string().optional(),
   subjectId: z.string().optional(),
   facultyId: z.string().optional(),
   timeSlotId: z.string().optional(),
-  dayOfWeek: z.nativeEnum(DayOfWeek).optional(),
+  dayOfWeek: z.enum(DayOfWeekValues).optional(),
   date: z.string().optional(),
-  entryType: z.nativeEnum(EntryType).optional(),
+  entryType: z.enum(EntryTypeValues).optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
 })
@@ -473,13 +475,20 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log(`🗑️ DELETE request received`)
+  
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
+      console.log(`❌ Unauthorized deletion attempt`)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { id } = await params
+    console.log(`🗑️ DELETE request for timetable entry: ${id}`)
+    const url = new URL(request.url)
+    const specificDate = url.searchParams.get('date') // Get specific date if provided
+
     // Verify entry exists
     const existingEntry = await db.timetableEntry.findUnique({
       where: { id }
@@ -492,6 +501,103 @@ export async function DELETE(
       )
     }
 
+    // If this is a recurring entry (date = null) and user wants to delete a specific occurrence
+    if (!existingEntry.date && specificDate) {
+      console.log(`🔍 Processing date-specific deletion for entry ${id}, date: ${specificDate}`)
+      
+      // Convert recurring entry to date-specific entries, excluding the date to be deleted
+      const dateToDelete = new Date(specificDate)
+      console.log(`📅 Date to delete: ${dateToDelete.toISOString()}`)
+      
+      // Generate date-specific entries for the next 12 weeks, excluding the date to delete
+      const currentDate = new Date()
+      console.log(`📅 Current date: ${currentDate.toDateString()} (${currentDate.toISOString().split('T')[0]})`)
+      
+      // Start from beginning of current week to ensure we don't miss any classes
+      const startDate = new Date(currentDate)
+      startDate.setDate(currentDate.getDate() - currentDate.getDay()) // Go to start of week (Sunday)
+      console.log(`📅 Week start date: ${startDate.toDateString()} (${startDate.toISOString().split('T')[0]})`)
+      
+      const entries = []
+      
+      // Get the day of week number (0 = Sunday, 1 = Monday, etc.)
+      const dayOfWeekMap = {
+        'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3,
+        'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6
+      }
+      const targetDayOfWeek = dayOfWeekMap[existingEntry.dayOfWeek as keyof typeof dayOfWeekMap]
+      console.log(`🎯 Target day of week: ${existingEntry.dayOfWeek} (${targetDayOfWeek})`)
+      
+      // Generate entries for 12 weeks starting from current week
+      for (let week = 0; week < 12; week++) {
+        const weekStart = new Date(startDate)
+        weekStart.setDate(startDate.getDate() + (week * 7))
+        
+        const entryDate = new Date(weekStart)
+        entryDate.setDate(weekStart.getDate() + targetDayOfWeek)
+        
+        console.log(`📅 Week ${week}: weekStart=${weekStart.toDateString()}, entryDate=${entryDate.toDateString()}`)
+        
+        // Skip the date we want to delete
+        if (entryDate.toDateString() === dateToDelete.toDateString()) {
+          console.log(`❌ Skipping deleted date: ${entryDate.toDateString()}`)
+          continue
+        }
+        
+        // Only include current and future dates
+        if (entryDate >= currentDate) {
+          console.log(`✅ Adding entry for: ${entryDate.toDateString()}`)
+          entries.push({
+            batchId: existingEntry.batchId,
+            subjectId: existingEntry.subjectId,
+            facultyId: existingEntry.facultyId,
+            timeSlotId: existingEntry.timeSlotId,
+            dayOfWeek: existingEntry.dayOfWeek,
+            date: entryDate,
+            entryType: existingEntry.entryType,
+            notes: existingEntry.notes,
+            isActive: true,
+          })
+        } else {
+          console.log(`⏭️  Skipping past date: ${entryDate.toDateString()}`)
+        }
+      }
+
+      console.log(`📊 Generated ${entries.length} date-specific entries`)
+
+      // Delete the original recurring entry and create new date-specific entries
+      await db.$transaction(async (tx) => {
+        console.log(`🗑️  Deleting recurring entry: ${id}`)
+        // Delete the recurring entry
+        await tx.timetableEntry.delete({
+          where: { id }
+        })
+        
+        // Create new date-specific entries
+        if (entries.length > 0) {
+          console.log(`➕ Creating ${entries.length} new date-specific entries`)
+          await tx.timetableEntry.createMany({
+            data: entries
+          })
+        }
+      })
+      
+      console.log(`✅ Transaction completed successfully`)
+      
+      return NextResponse.json({ 
+        message: "Specific occurrence deleted, recurring pattern converted to individual entries",
+        converted_to_specific: true,
+        entries_created: entries.length,
+        debug: {
+          originalEntryId: id,
+          deletedDate: specificDate,
+          entriesCreated: entries.length
+        }
+      })
+    }
+
+    // Handle normal deletion (date-specific entries or full recurring deletion)
+    
     // Check if there are any attendance sessions linked to this entry
     const relatedAttendance = await db.attendanceSession.findFirst({
       where: {

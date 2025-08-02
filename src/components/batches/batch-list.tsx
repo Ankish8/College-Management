@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { ViewMode } from "@/types/preferences"
 import { useSession } from "next-auth/react"
-import { canCreateBatch } from "@/lib/utils/permissions"
+import { canCreateBatch, isAdmin } from "@/lib/utils/permissions"
 
 interface Batch {
   id: string
@@ -220,14 +220,16 @@ export function BatchList() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => window.open('/settings/batch-config', '_blank')}
-            title="Batch Configuration"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          {isAdmin(session?.user as any) && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => window.open('/settings/batch-config', '_blank')}
+              title="Batch Configuration"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
           {canCreate && (
             <Button onClick={() => setIsAddModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />

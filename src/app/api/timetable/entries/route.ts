@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty, isStudent } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { DayOfWeek, EntryType } from "@prisma/client"
+// String-based types matching the Prisma schema
+const DayOfWeekValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+const EntryTypeValues = ['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM'] as const
 
 const timetableFilterSchema = z.object({
   batchId: z.string().optional(),
@@ -13,8 +15,8 @@ const timetableFilterSchema = z.object({
   subjectId: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  dayOfWeek: z.nativeEnum(DayOfWeek).optional(),
-  entryType: z.nativeEnum(EntryType).optional(),
+  dayOfWeek: z.enum(DayOfWeekValues).optional(),
+  entryType: z.enum(EntryTypeValues).optional(),
   page: z.number().min(1).default(1),
   limit: z.number().min(1).max(100).default(50),
 })
@@ -24,9 +26,9 @@ const createTimetableEntrySchema = z.object({
   subjectId: z.string().min(1, "Subject is required"), 
   facultyId: z.string().min(1, "Faculty is required"),
   timeSlotId: z.string().min(1, "Time slot is required"),
-  dayOfWeek: z.nativeEnum(DayOfWeek),
+  dayOfWeek: z.enum(DayOfWeekValues),
   date: z.string().optional(), // ISO date string for specific date entries
-  entryType: z.nativeEnum(EntryType).default("REGULAR"),
+  entryType: z.enum(EntryTypeValues).default("REGULAR"),
   notes: z.string().optional(),
 })
 
@@ -264,6 +266,18 @@ export async function GET(request: NextRequest) {
       }),
       db.timetableEntry.count({ where: whereClause })
     ])
+
+    // Debug logging to understand what's being returned
+    console.log(`📊 Timetable query results:`)
+    console.log(`   Total entries found: ${entries.length}`)
+    console.log(`   Recurring entries (date=null): ${entries.filter(e => !e.date).length}`)
+    console.log(`   Date-specific entries: ${entries.filter(e => e.date).length}`)
+    
+    entries.forEach((entry, index) => {
+      if (index < 10) { // Only log first 10 for brevity
+        console.log(`   ${index + 1}. ${entry.id} ${entry.subject.name} ${entry.date ? entry.date.toISOString().split('T')[0] : 'null'} ${entry.dayOfWeek}`)
+      }
+    })
 
     const response = {
       entries,

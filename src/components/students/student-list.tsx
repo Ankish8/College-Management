@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { canCreateStudent } from "@/lib/utils/permissions"
+import { canCreateStudent, isAdmin } from "@/lib/utils/permissions"
 import { StudentFilterState } from "@/types/student-filters"
 import { filterStudents, getFilterDescription } from "@/utils/student-filter-utils"
 
@@ -357,16 +357,18 @@ function StudentListComponent() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            asChild
-            title="Student Configuration"
-          >
-            <Link href="/settings/students">
-              <Settings className="h-4 w-4" />
-            </Link>
-          </Button>
+          {isAdmin(session?.user as any) && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              asChild
+              title="Student Configuration"
+            >
+              <Link href="/settings/students">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           {canCreate && (
             <>
               <Button 

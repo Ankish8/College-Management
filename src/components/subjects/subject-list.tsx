@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { canCreateSubject } from "@/lib/utils/permissions"
+import { canCreateSubject, isAdmin } from "@/lib/utils/permissions"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X } from "lucide-react"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import type { ViewMode } from "@/types/preferences"
@@ -352,16 +352,18 @@ export function SubjectList() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            asChild
-            title="Subject Configuration"
-          >
-            <Link href="/settings/subjects">
-              <Settings className="h-4 w-4" />
-            </Link>
-          </Button>
+          {isAdmin(session?.user as any) && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              asChild
+              title="Subject Configuration"
+            >
+              <Link href="/settings/subjects">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           {canCreate && (
             <Button onClick={() => setIsAddModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
