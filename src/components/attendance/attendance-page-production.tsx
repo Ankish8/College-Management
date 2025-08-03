@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
-import { DatePicker } from '@/components/ui/date-picker'
 
 // Custom hooks
 import { 
@@ -333,17 +332,16 @@ export function AttendancePageProduction({
                   <span className="text-xs text-muted-foreground">⌘K</span>
                 </div>
                 
-                {/* Beautiful Calendar Picker */}
-                <DatePicker
-                  date={new Date(selectedDate)}
-                  onDateChange={(date) => {
-                    if (date) {
-                      setSelectedDate(date.toISOString().split('T')[0])
-                    }
-                  }}
-                  placeholder="Select date"
-                  className="w-auto"
-                />
+                {/* Clean Date Input */}
+                <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-transparent border-none outline-none text-sm w-auto font-mono"
+                  />
+                </div>
               </div>
 
               {/* Right: Stats and Actions */}

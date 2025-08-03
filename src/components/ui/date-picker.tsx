@@ -36,17 +36,17 @@ export function DatePicker({
         <Button
           variant={"outline"}
           className={cn(
-            "w-[240px] justify-start text-left font-normal",
+            "w-[160px] justify-start text-left font-normal text-sm h-9",
             !date && "text-muted-foreground",
             className
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>{placeholder}</span>}
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+          {date ? format(date, "MMM d, yyyy") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 shadow-lg border" align="start">
         <Calendar
           mode="single"
           selected={date}
@@ -55,6 +55,7 @@ export function DatePicker({
             setIsOpen(false)
           }}
           initialFocus
+          className="rounded-md"
         />
       </PopoverContent>
     </Popover>
