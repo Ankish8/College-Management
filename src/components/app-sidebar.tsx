@@ -96,6 +96,7 @@ const data = {
           title: "Time Slots",
           url: "/settings/timeslots",
           roles: ["ADMIN"],
+          disabled: true,
         },
       ],
     },
