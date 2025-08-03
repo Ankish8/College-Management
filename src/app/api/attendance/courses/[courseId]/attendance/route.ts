@@ -162,26 +162,15 @@ export async function GET(
     // data[studentId][sessionId] = status
     const attendanceData: Record<string, Record<string, string>> = {}
 
+    // Create a consistent sessionId mapping strategy
+    // Since attendance is marked per date regardless of specific time slot,
+    // we'll map all attendance for this date to ALL available time slots for this subject
+    const timeSlots = Array.from(timeSlotMap.values())
+    
     // For each attendance session, process the records
     attendanceSessions.forEach(attendanceSession => {
       attendanceSession.attendanceRecords.forEach(record => {
         const studentId = record.student.userId // Use userId as primary identifier
-        
-        // Strategy: Create a consistent sessionId that maps to the actual time slots used for this subject
-        // We'll use a combination approach:
-        // 1. If there are timeSlots defined for this subject, use the first one's ID
-        // 2. Otherwise, use a synthetic sessionId based on the attendance session
-        const timeSlots = Array.from(timeSlotMap.values())
-        let mappedSessionId: string
-        
-        if (timeSlots.length > 0) {
-          // Use the actual time slot ID for consistency
-          mappedSessionId = timeSlots[0].id
-        } else {
-          // Fallback: Create a synthetic session ID based on the subject and date
-          // This ensures consistency across different calls
-          mappedSessionId = `session-${subjectId}-${date}`
-        }
         
         // Initialize student record if not exists
         if (!attendanceData[studentId]) {
@@ -205,7 +194,17 @@ export async function GET(
             status = 'absent'
         }
         
-        attendanceData[studentId][mappedSessionId] = status
+        // Apply this attendance status to ALL time slots for this subject
+        // This ensures that marking attendance in any session applies to all sessions for that day
+        if (timeSlots.length > 0) {
+          timeSlots.forEach(timeSlot => {
+            attendanceData[studentId][timeSlot.id] = status
+          })
+        } else {
+          // Fallback: Create a synthetic session ID
+          const fallbackSessionId = `session-${subjectId}-${attendanceSession.date.toISOString().split('T')[0]}`
+          attendanceData[studentId][fallbackSessionId] = status
+        }
       })
     })
 

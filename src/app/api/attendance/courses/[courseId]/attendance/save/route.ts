@@ -119,12 +119,14 @@ export async function POST(
       }
     })
 
-    // Calculate statistics
+    // Calculate statistics correctly
     const recordCount = attendanceSession.attendanceRecords.length
     const presentCount = attendanceSession.attendanceRecords.filter(r => r.status === 'PRESENT').length
     const absentCount = attendanceSession.attendanceRecords.filter(r => r.status === 'ABSENT').length
     const excusedCount = attendanceSession.attendanceRecords.filter(r => r.status === 'EXCUSED').length
-    const attendancePercentage = recordCount > 0 ? Math.round((presentCount / recordCount) * 100) : 0
+    
+    // Calculate percentage based on total students in batch, not just those with records
+    const attendancePercentage = totalStudentsInBatch > 0 ? Math.round((presentCount / totalStudentsInBatch) * 100) : 0
 
     console.log('💾 Attendance saved successfully:', {
       sessionId: attendanceSession.id,
@@ -151,11 +153,12 @@ export async function POST(
         completedAt: updatedSession.updatedAt,
         completedBy: user.name || user.email,
         statistics: {
-          totalStudents: recordCount,
-          totalStudentsInBatch,
+          totalStudents: totalStudentsInBatch,
+          totalStudentsWithRecords: recordCount,
           presentCount,
           absentCount,
           excusedCount,
+          unmarkedCount: totalStudentsInBatch - recordCount,
           attendancePercentage,
           isComplete: recordCount === totalStudentsInBatch
         },

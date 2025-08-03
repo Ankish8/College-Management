@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3 } from 'lucide-react'
+import { toast } from 'sonner'
+import { DatePicker } from '@/components/ui/date-picker'
 
 // Custom hooks
 import { 
@@ -180,7 +182,9 @@ export function AttendancePageProduction({
   const handleSaveDay = async () => {
     if (!hasSelection || !courseId || !selectedDate) {
       console.warn('Cannot save: missing required data', { hasSelection, courseId, selectedDate })
-      alert('❌ Cannot save: Please ensure batch and subject are selected')
+      toast.error('Cannot save attendance', {
+        description: 'Please ensure batch and subject are selected'
+      })
       return
     }
 
@@ -195,9 +199,10 @@ export function AttendancePageProduction({
       
       if (saveResponse.success && saveResponse.data) {
         const stats = saveResponse.data.statistics
-        const recordCount = stats.totalStudents
+        const totalStudents = stats.totalStudents
         const presentCount = stats.presentCount
         const attendancePercentage = stats.attendancePercentage
+        const unmarkedCount = stats.unmarkedCount
         
         console.log('✅ Attendance saved successfully:', saveResponse.data)
         
@@ -208,15 +213,11 @@ export function AttendancePageProduction({
           refetchSessions()
         ])
         
-        // Show detailed success feedback
-        alert(
-          `✅ Attendance Saved Successfully!\n\n` +
-          `📅 Date: ${selectedDate}\n` +
-          `👥 Students: ${recordCount}\n` +
-          `✅ Present: ${presentCount}\n` +
-          `📊 Attendance: ${attendancePercentage}%\n` +
-          `${stats.isComplete ? '✨ All students marked!' : '⚠️ Some students not marked'}`
-        )
+        // Show beautiful toast notification with correct statistics
+        toast.success("Attendance Saved Successfully!", {
+          description: `${presentCount}/${totalStudents} students present (${attendancePercentage}%)${unmarkedCount > 0 ? ` • ${unmarkedCount} not marked` : ''}`,
+          duration: 4000,
+        })
         
       } else {
         throw new Error(saveResponse.error || 'Failed to save attendance')
@@ -233,7 +234,9 @@ export function AttendancePageProduction({
           details: error
         })
       } else {
-        alert(`❌ Failed to save attendance:\n${errorMessage}`)
+        toast.error('Failed to save attendance', {
+          description: errorMessage
+        })
       }
     }
   }
@@ -330,12 +333,16 @@ export function AttendancePageProduction({
                   <span className="text-xs text-muted-foreground">⌘K</span>
                 </div>
                 
-                {/* Calendar */}
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 border rounded-md text-sm"
+                {/* Beautiful Calendar Picker */}
+                <DatePicker
+                  date={new Date(selectedDate)}
+                  onDateChange={(date) => {
+                    if (date) {
+                      setSelectedDate(date.toISOString().split('T')[0])
+                    }
+                  }}
+                  placeholder="Select date"
+                  className="w-auto"
                 />
               </div>
 
