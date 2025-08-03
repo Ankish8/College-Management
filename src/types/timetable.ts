@@ -9,6 +9,9 @@ export interface CalendarEvent {
   end: Date
   color?: string
   className?: string
+  editable?: boolean
+  startEditable?: boolean
+  durationEditable?: boolean
   extendedProps?: {
     timetableEntryId: string
     batchId: string
@@ -24,6 +27,10 @@ export interface CalendarEvent {
     entryType: EntryType
     notes?: string
     credits: number
+    isPastDate?: boolean
+    editable?: boolean
+    startEditable?: boolean
+    durationEditable?: boolean
     specialization?: {
       name: string
       shortName: string

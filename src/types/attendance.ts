@@ -123,6 +123,15 @@ export interface AttendanceComponentProps {
   onLoadingChange?: (loading: boolean) => void
   batchSelector?: React.ReactNode
   subjectSelector?: React.ReactNode
+  hasSelection?: boolean
+  availableBatches?: any[]
+  availableSubjects?: any[]
+  subjects?: any[]
+  department?: {
+    id: string
+    name: string
+    shortName: string
+  }
 }
 
 // Hook return types

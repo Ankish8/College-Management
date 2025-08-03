@@ -59,10 +59,17 @@ export function useStudents(filters?: {
   active?: boolean 
 }): UseStudentsReturn {
   const [students, setStudents] = useState<AttendanceStudent[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
   const fetchStudents = useCallback(async () => {
+    if (!filters || !filters.batchId || !filters.subjectId) {
+      setStudents([])
+      setIsLoading(false)
+      setError(null)
+      return
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -104,11 +111,16 @@ export function useStudents(filters?: {
  */
 export function useSessions(courseId: string): UseSessionsReturn {
   const [sessions, setSessions] = useState<AttendanceSession[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
   const fetchSessions = useCallback(async () => {
-    if (!courseId) return
+    if (!courseId) {
+      setSessions([])
+      setIsLoading(false)
+      setError(null)
+      return
+    }
 
     try {
       setIsLoading(true)
@@ -151,11 +163,16 @@ export function useSessions(courseId: string): UseSessionsReturn {
  */
 export function useCourse(courseId: string): UseCourseReturn {
   const [course, setCourse] = useState<AttendanceCourse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
   const fetchCourse = useCallback(async () => {
-    if (!courseId) return
+    if (!courseId) {
+      setCourse(null)
+      setIsLoading(false)
+      setError(null)
+      return
+    }
 
     try {
       setIsLoading(true)
@@ -198,11 +215,16 @@ export function useCourse(courseId: string): UseCourseReturn {
  */
 export function useAttendance(courseId: string, selectedDate: string): UseAttendanceReturn {
   const [attendanceData, setAttendanceData] = useState<Record<string, Record<string, AttendanceStatus>>>({})
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
   const fetchAttendance = useCallback(async () => {
-    if (!courseId || !selectedDate) return
+    if (!courseId || !selectedDate) {
+      setAttendanceData({})
+      setIsLoading(false)
+      setError(null)
+      return
+    }
 
     try {
       setIsLoading(true)

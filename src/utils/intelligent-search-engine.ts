@@ -304,7 +304,9 @@ export class IntelligentSearchEngine {
     const threshold = entities.values[0]
     const operator = entities.comparisons[0]
 
-    const students = this.searchContext.filterStudentsByAttendancePercentage(operator, threshold)
+    // Map operator to allowed values  
+    const allowedOperator = operator === 'not_equal' ? 'equals' : operator as 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'equals'
+    const students = this.searchContext.filterStudentsByAttendancePercentage(allowedOperator, threshold)
 
     if (students.length > 0) {
       results.push({

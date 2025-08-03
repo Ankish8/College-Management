@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Users, Clock, TrendingUp } from 'lucide-react'
+import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3 } from 'lucide-react'
 
 // Custom hooks
 import { 
@@ -35,7 +35,12 @@ export function AttendancePageProduction({
   onError,
   onLoadingChange,
   batchSelector,
-  subjectSelector
+  subjectSelector,
+  hasSelection = false,
+  availableBatches = [],
+  availableSubjects = [],
+  subjects = [],
+  department
 }: AttendanceComponentProps) {
   // State
   const [selectedDate, setSelectedDate] = useState(
@@ -44,31 +49,31 @@ export function AttendancePageProduction({
   const [activeView, setActiveView] = useState<ViewMode>('session')
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('detailed')
 
-  // API hooks
+  // API hooks - conditionally call based on hasSelection
   const { 
     students, 
     isLoading: studentsLoading, 
     error: studentsError, 
     refetch: refetchStudents 
-  } = useStudents({ 
+  } = useStudents(hasSelection ? { 
     batchId,
     subjectId: courseId,
-    active: true 
-  })
+    active: true
+  } : undefined)
 
   const { 
     course, 
     isLoading: courseLoading, 
     error: courseError, 
     refetch: refetchCourse 
-  } = useCourse(courseId)
+  } = useCourse(hasSelection ? courseId : '')
 
   const { 
     sessions, 
     isLoading: sessionsLoading, 
     error: sessionsError, 
     refetch: refetchSessions 
-  } = useSessions(courseId)
+  } = useSessions(hasSelection ? courseId : '')
 
   const { 
     attendanceData, 
@@ -77,7 +82,7 @@ export function AttendancePageProduction({
     markAttendance, 
     bulkMarkAttendance, 
     refetch: refetchAttendance 
-  } = useAttendance(courseId, selectedDate)
+  } = useAttendance(hasSelection ? courseId : '', selectedDate)
 
   // Combined loading and error states
   const isLoading = studentsLoading || courseLoading || sessionsLoading || attendanceLoading
@@ -200,69 +205,16 @@ export function AttendancePageProduction({
     }
   }, [primaryError, onError])
 
-  // Render loading state
-  if (isLoading && !course && !students.length) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-4">
-          <LoadingState message="Loading attendance system..." size="lg" />
-        </div>
-      </div>
-    )
+  // Helper function to determine content state
+  const getContentState = () => {
+    if (!hasSelection) return 'no-selection'
+    if (isLoading && !course && !students.length) return 'loading'
+    if (hasError && !course && !students.length) return 'error'
+    if (!students.length || !sessions.length) return 'no-data'
+    return 'ready'
   }
 
-  // Render error state
-  if (hasError && !course && !students.length) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-4">
-          <ErrorState
-            error={primaryError!}
-            onRetry={handleRetry}
-            variant="page"
-          />
-        </div>
-      </div>
-    )
-  }
-
-  // Render no data state
-  if (!isLoading && (!students.length || !sessions.length)) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-4">
-          <AttendanceHeader
-            course={course}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            overallStats={overallStats}
-            onBulkAction={handleBulkAction}
-            onSaveDay={handleSaveDay}
-            students={students}
-            attendanceData={attendanceData}
-            isLoading={isLoading}
-            error={primaryError}
-            onRetry={handleRetry}
-          />
-          
-          <div className="mt-6">
-            <NoDataState
-              title="No Data Available"
-              description={
-                !students.length 
-                  ? "No students found for this course." 
-                  : "No sessions found for this course."
-              }
-              action={{
-                label: "Retry Loading",
-                onClick: handleRetry
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const contentState = getContentState()
 
   return (
     <div className="min-h-screen bg-background">
@@ -277,45 +229,74 @@ export function AttendancePageProduction({
 
         {/* Main Content Area */}
         <div className="space-y-6">
-          {/* Top Bar: Search, Calendar, Selectors, and Save Button */}
-          <div className="flex items-center justify-between gap-4">
-            {/* Left: Search and Calendar */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
-                <span className="text-sm text-muted-foreground">🔍</span>
-                <input 
-                  placeholder="Search students, quick actions..."
-                  className="bg-transparent border-none outline-none text-sm w-64"
-                />
-                <span className="text-xs text-muted-foreground">⌘K</span>
+          {/* Enhanced Top Bar with Required Selectors */}
+          <div className="space-y-4">
+            {/* Primary Action Bar - Batch and Subject Selection */}
+            <div className="flex items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="flex items-center gap-6">
+                <div className="text-sm font-medium text-foreground">Select Course:</div>
+                {batchSelector && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Batch:</span>
+                    {batchSelector}
+                  </div>
+                )}
+                {subjectSelector && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Subject:</span>
+                    {subjectSelector}
+                  </div>
+                )}
               </div>
-              
-              {/* Calendar next to search */}
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm"
-              />
+              <div className="flex items-center gap-2">
+                {!hasSelection ? (
+                  <div className="text-xs text-muted-foreground px-4 py-2">
+                    Choose batch and subject to begin
+                  </div>
+                ) : (
+                  <Button onClick={handleSaveDay} className="bg-black text-white hover:bg-gray-800">
+                    Save Full Day
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {/* Right: Batch/Subject Selectors and Save Button */}
-            <div className="flex items-center gap-3">
-              {batchSelector && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Batch:</span>
-                  {batchSelector}
+            {/* Secondary Tools Bar */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Search and Calendar */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
+                  <span className="text-sm text-muted-foreground">🔍</span>
+                  <input 
+                    placeholder={hasSelection ? "Search students, quick actions..." : "Select course to enable search"}
+                    className="bg-transparent border-none outline-none text-sm w-64"
+                    disabled={!hasSelection}
+                  />
+                  <span className="text-xs text-muted-foreground">⌘K</span>
                 </div>
-              )}
-              {subjectSelector && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Subject:</span>
-                  {subjectSelector}
+                
+                {/* Calendar */}
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              {/* Right: Stats and Actions */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="text-muted-foreground">
+                  Students: <span className="font-medium text-foreground">
+                    {hasSelection ? students.length : '—'}
+                  </span>
                 </div>
-              )}
-              <Button onClick={handleSaveDay} className="bg-black text-white hover:bg-gray-800">
-                Save Full Day
-              </Button>
+                <div className="text-muted-foreground">
+                  Sessions: <span className="font-medium text-foreground">
+                    {hasSelection ? sessions.length : '—'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -364,7 +345,62 @@ export function AttendancePageProduction({
             </div>
 
             <TabsContent value="session" className="mt-0">
-              {attendanceLoading ? (
+              {contentState === 'no-selection' ? (
+                <div className="p-8 text-center bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                  <div className="mb-4">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <h3 className="text-lg font-medium text-muted-foreground">Ready to Mark Attendance</h3>
+                    <p className="text-sm text-muted-foreground/80 mt-1">
+                      Select a batch and subject above to begin marking attendance
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto text-xs text-muted-foreground/60">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      <span>Quick marking modes</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3 w-3" />
+                      <span>Date navigation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-3 w-3" />
+                      <span>Real-time analytics</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3" />
+                      <span>Session tracking</span>
+                    </div>
+                  </div>
+                </div>
+              ) : contentState === 'loading' ? (
+                <div className="p-6">
+                  <TableLoadingState rows={8} />
+                </div>
+              ) : contentState === 'error' ? (
+                <div className="p-6">
+                  <ErrorState
+                    error={primaryError!}
+                    onRetry={handleRetry}
+                    variant="inline"
+                  />
+                </div>
+              ) : contentState === 'no-data' ? (
+                <div className="p-6">
+                  <NoDataState
+                    title="No Data Available"
+                    description={
+                      !students.length 
+                        ? "No students found for this course." 
+                        : "No sessions found for this course."
+                    }
+                    action={{
+                      label: "Retry Loading",
+                      onClick: handleRetry
+                    }}
+                  />
+                </div>
+              ) : attendanceLoading ? (
                 <div className="p-6">
                   <TableLoadingState rows={students.length} />
                 </div>
@@ -381,14 +417,67 @@ export function AttendancePageProduction({
             </TabsContent>
 
             <TabsContent value="weekly" className="mt-0">
-              <WeeklyAttendanceView
-                students={students}
-                sessions={sessions}
-                selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
-                attendanceData={attendanceData}
-                onAttendanceChange={handleAttendanceChange}
-              />
+              {contentState === 'no-selection' ? (
+                <div className="p-8 text-center bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                  <div className="mb-4">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <h3 className="text-lg font-medium text-muted-foreground">Weekly Attendance View</h3>
+                    <p className="text-sm text-muted-foreground/80 mt-1">
+                      Select a batch and subject to view weekly attendance patterns
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto text-xs text-muted-foreground/60">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>Attendance trends</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3 w-3" />
+                      <span>Weekly overview</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3 w-3" />
+                      <span>Student patterns</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-3 w-3" />
+                      <span>Visual analytics</span>
+                    </div>
+                  </div>
+                </div>
+              ) : contentState === 'loading' ? (
+                <div className="p-6">
+                  <LoadingState message="Loading weekly view..." />
+                </div>
+              ) : contentState === 'error' ? (
+                <div className="p-6">
+                  <ErrorState
+                    error={primaryError!}
+                    onRetry={handleRetry}
+                    variant="inline"
+                  />
+                </div>
+              ) : contentState === 'no-data' ? (
+                <div className="p-6">
+                  <NoDataState
+                    title="No Weekly Data"
+                    description="No attendance data available for weekly view"
+                    action={{
+                      label: "Retry Loading",
+                      onClick: handleRetry
+                    }}
+                  />
+                </div>
+              ) : (
+                <WeeklyAttendanceView
+                  students={students}
+                  sessions={sessions}
+                  selectedDate={selectedDate}
+                  onDateChange={setSelectedDate}
+                  attendanceData={attendanceData}
+                  onAttendanceChange={handleAttendanceChange}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </div>

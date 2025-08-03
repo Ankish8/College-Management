@@ -413,7 +413,7 @@ export class QueryAutocomplete {
   }
 
   private getExampleSuggestions(): AutocompleteSuggestion[] {
-    const examples = [
+    const examples: AutocompleteSuggestion[] = [
       {
         type: 'example',
         label: '@Aarav Patel',
@@ -477,7 +477,7 @@ export class QueryAutocomplete {
         // Add real student name example
         const firstStudent = students[0]
         examples.unshift({
-          type: 'example',
+          type: 'student',
           label: `@${firstStudent.name}`,
           insertText: `@${firstStudent.name}`,
           description: `Find ${firstStudent.name}`,

@@ -926,13 +926,13 @@ export class SmartNLPParser {
     
     // Extract key terms and find synonyms
     const words = doc.terms().out('array')
-    words.forEach(word => {
+    words.forEach((word: any) => {
       const lowerWord = word.toLowerCase()
-      if (synonymMap[lowerWord]) {
-        synonyms[word] = synonymMap[lowerWord]
+      if (synonymMap[lowerWord as keyof typeof synonymMap]) {
+        synonyms[word] = synonymMap[lowerWord as keyof typeof synonymMap]
         
         // Create expanded queries with synonyms
-        synonymMap[lowerWord].forEach(synonym => {
+        synonymMap[lowerWord as keyof typeof synonymMap].forEach(synonym => {
           const expandedQuery = query.replace(new RegExp(word, 'gi'), synonym)
           if (expandedQuery !== query) {
             expanded.push(expandedQuery)

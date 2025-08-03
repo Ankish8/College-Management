@@ -1,4 +1,4 @@
-import type { AttendanceMode } from '@/components/attendance-mode-toggle'
+import type { AttendanceMode } from '@/types/attendance'
 import type { AttendanceStatus } from '@/types/attendance'
 import { format, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 

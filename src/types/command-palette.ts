@@ -17,6 +17,7 @@ export type CommandCategory =
   | 'system'
   | 'student'
   | 'session'
+  | 'suggestion'
 
 export type CommandContext = 
   | 'detailed-mode'

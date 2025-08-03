@@ -41,6 +41,7 @@ export type AIIntent =
   | 'question_who'
   | 'question_what'
   | 'question_when'
+  | 'filter_by_attendance_percentage'
   | 'general_search'
 
 export class LocalAINLPParser {

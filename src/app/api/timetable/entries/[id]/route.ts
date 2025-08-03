@@ -549,7 +549,7 @@ export async function DELETE(
       startDate.setDate(currentDate.getDate() - currentDate.getDay()) // Go to start of week (Sunday)
       console.log(`📅 Week start date: ${startDate.toDateString()} (${startDate.toISOString().split('T')[0]})`)
       
-      const entries = []
+      const entries: any[] = []
       
       // Get the day of week number (0 = Sunday, 1 = Monday, etc.)
       const dayOfWeekMap = {
