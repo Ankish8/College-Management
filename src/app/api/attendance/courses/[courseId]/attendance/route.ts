@@ -167,19 +167,21 @@ export async function GET(
       attendanceSession.attendanceRecords.forEach(record => {
         const studentId = record.student.userId // Use userId as primary identifier
         
-        // Since our AttendanceSession doesn't directly link to timeSlot,
-        // we'll use a strategy where we map the attendance session to time slots
-        // For now, we'll create a sessionId based on the date and assume it maps to the first available time slot
-        // This is a simplification - in a more complete implementation, 
-        // AttendanceSession should include timeSlotId
-        
-        // Strategy: Use the attendance session ID as sessionId
-        // The frontend will need to map this back to time slots
-        const sessionId = attendanceSession.id
-        
-        // Alternative strategy: If there's only one time slot for this subject, use that
+        // Strategy: Create a consistent sessionId that maps to the actual time slots used for this subject
+        // We'll use a combination approach:
+        // 1. If there are timeSlots defined for this subject, use the first one's ID
+        // 2. Otherwise, use a synthetic sessionId based on the attendance session
         const timeSlots = Array.from(timeSlotMap.values())
-        const mappedSessionId = timeSlots.length === 1 ? timeSlots[0].id : sessionId
+        let mappedSessionId: string
+        
+        if (timeSlots.length > 0) {
+          // Use the actual time slot ID for consistency
+          mappedSessionId = timeSlots[0].id
+        } else {
+          // Fallback: Create a synthetic session ID based on the subject and date
+          // This ensures consistency across different calls
+          mappedSessionId = `session-${subjectId}-${date}`
+        }
         
         // Initialize student record if not exists
         if (!attendanceData[studentId]) {
@@ -387,6 +389,16 @@ export async function POST(
       default:
         dbStatus = 'ABSENT'
     }
+
+    console.log('🔴 Processing attendance mark:', {
+      studentId,
+      sessionId,
+      date,
+      status,
+      dbStatus,
+      subjectBatch: subject.batch.id,
+      studentFound: !!student
+    })
 
     // Find or create attendance session for this subject, batch, and date
     const attendanceDate = new Date(date)

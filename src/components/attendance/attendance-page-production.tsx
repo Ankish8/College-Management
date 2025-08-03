@@ -176,11 +176,66 @@ export function AttendancePageProduction({
     }
   }
 
-  // Handle save full day
+  // Handle save attendance
   const handleSaveDay = async () => {
-    // This could trigger a specific API call to finalize the day's attendance
-    // For now, we'll just show a success message
-    console.log('Saving full day attendance for', selectedDate)
+    if (!hasSelection || !courseId || !selectedDate) {
+      console.warn('Cannot save: missing required data', { hasSelection, courseId, selectedDate })
+      alert('❌ Cannot save: Please ensure batch and subject are selected')
+      return
+    }
+
+    try {
+      console.log('💾 Saving attendance for', selectedDate, 'courseId:', courseId)
+      
+      // Import attendanceApi here to avoid circular dependencies
+      const { attendanceApi } = await import('@/services/attendance-api')
+      
+      // Call the proper save endpoint
+      const saveResponse = await attendanceApi.saveAttendance(courseId, selectedDate)
+      
+      if (saveResponse.success && saveResponse.data) {
+        const stats = saveResponse.data.statistics
+        const recordCount = stats.totalStudents
+        const presentCount = stats.presentCount
+        const attendancePercentage = stats.attendancePercentage
+        
+        console.log('✅ Attendance saved successfully:', saveResponse.data)
+        
+        // Refresh data to reflect the saved state
+        await Promise.all([
+          refetchAttendance(),
+          refetchStudents(),
+          refetchSessions()
+        ])
+        
+        // Show detailed success feedback
+        alert(
+          `✅ Attendance Saved Successfully!\n\n` +
+          `📅 Date: ${selectedDate}\n` +
+          `👥 Students: ${recordCount}\n` +
+          `✅ Present: ${presentCount}\n` +
+          `📊 Attendance: ${attendancePercentage}%\n` +
+          `${stats.isComplete ? '✨ All students marked!' : '⚠️ Some students not marked'}`
+        )
+        
+      } else {
+        throw new Error(saveResponse.error || 'Failed to save attendance')
+      }
+      
+    } catch (error) {
+      console.error('Failed to save attendance:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      
+      if (onError) {
+        onError({
+          message: `Failed to save attendance: ${errorMessage}`,
+          code: 'SAVE_ATTENDANCE_ERROR',
+          details: error
+        })
+      } else {
+        alert(`❌ Failed to save attendance:\n${errorMessage}`)
+      }
+    }
   }
 
   // Handle retry
@@ -255,7 +310,7 @@ export function AttendancePageProduction({
                   </div>
                 ) : (
                   <Button onClick={handleSaveDay} className="bg-black text-white hover:bg-gray-800">
-                    Save Full Day
+                    Save
                   </Button>
                 )}
               </div>

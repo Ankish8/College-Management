@@ -212,6 +212,19 @@ class AttendanceApiService {
   }
 
   /**
+   * Save/finalize attendance for a specific date
+   */
+  async saveAttendance(
+    courseId: string,
+    date: string
+  ): Promise<ApiResponse<any>> {
+    return this.fetchApi(`/courses/${courseId}/attendance/save`, {
+      method: 'POST',
+      body: JSON.stringify({ date })
+    })
+  }
+
+  /**
    * Retry wrapper for network resilience
    */
   private async retryRequest<T>(
