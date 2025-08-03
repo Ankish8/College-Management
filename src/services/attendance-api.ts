@@ -269,13 +269,4 @@ class AttendanceApiService {
 // Export singleton instance
 export const attendanceApi = new AttendanceApiService()
 
-// Export types for use in components
-export type {
-  AttendanceStudent,
-  AttendanceRecord,
-  SessionAttendanceRecord,
-  AttendanceCourse,
-  AttendanceSession,
-  ApiResponse,
-  AttendanceStatus
-}
+// Types are already exported via export interface declarations above

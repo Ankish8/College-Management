@@ -4,22 +4,24 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { DayOfWeek, EntryType } from "@prisma/client"
+// String-based types matching the Prisma schema
+const DayOfWeekValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+const EntryTypeValues = ['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM'] as const
 
 const conflictCheckSchema = z.object({
   batchId: z.string().min(1, "Batch is required"),
   facultyId: z.string().min(1, "Faculty is required"),
   timeSlotId: z.string().min(1, "Time slot is required"),
-  dayOfWeek: z.nativeEnum(DayOfWeek),
+  dayOfWeek: z.enum(DayOfWeekValues),
   date: z.string().optional(),
-  entryType: z.nativeEnum(EntryType).default("REGULAR"),
+  entryType: z.enum(EntryTypeValues).default("REGULAR"),
   excludeId: z.string().optional(), // For updates
 })
 
 // Simple conflict check schema for drag and drop
 const simpleConflictCheckSchema = z.object({
   facultyId: z.string(),
-  dayOfWeek: z.nativeEnum(DayOfWeek),
+  dayOfWeek: z.enum(DayOfWeekValues),
   timeSlotName: z.string(),
   excludeEventId: z.string().optional(),
 })
@@ -205,7 +207,7 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
 
     // If no alternatives on the same day, suggest other days
     if (alternatives.length === 0) {
-      const otherDays = Object.values(DayOfWeek).filter(day => day !== data.dayOfWeek)
+      const otherDays = DayOfWeekValues.filter(day => day !== data.dayOfWeek)
       
       for (const day of otherDays.slice(0, 3)) { // Limit to 3 alternative days
         const dayConflicts = await db.timetableEntry.findMany({

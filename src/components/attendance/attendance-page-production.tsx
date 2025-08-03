@@ -33,7 +33,9 @@ export function AttendancePageProduction({
   batchId,
   initialDate,
   onError,
-  onLoadingChange 
+  onLoadingChange,
+  batchSelector,
+  subjectSelector
 }: AttendanceComponentProps) {
   // State
   const [selectedDate, setSelectedDate] = useState(
@@ -264,98 +266,131 @@ export function AttendancePageProduction({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4">
-        <AttendanceHeader
-          course={course}
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          overallStats={overallStats}
-          onBulkAction={handleBulkAction}
-          onSaveDay={handleSaveDay}
-          students={students}
-          attendanceData={attendanceData}
-          isLoading={isLoading}
-          error={primaryError}
-          onRetry={handleRetry}
-        />
+      <div className="container mx-auto p-6">
+        {/* Clean Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Mark Attendance</h1>
+            <p className="text-muted-foreground">Track and manage student attendance across sessions</p>
+          </div>
+        </div>
 
-        <div className="mt-6 space-y-6">
-          {/* View Toggle Tabs */}
-          <Card>
-            <CardContent className="p-4">
-              <Tabs value={activeView} onValueChange={(value) => setActiveView(value as ViewMode)}>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <TabsList className="grid w-full sm:w-auto grid-cols-2">
-                    <TabsTrigger value="session" className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Session View
-                    </TabsTrigger>
-                    <TabsTrigger value="weekly" className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Weekly View
-                    </TabsTrigger>
-                  </TabsList>
+        {/* Main Content Area */}
+        <div className="space-y-6">
+          {/* Top Bar: Search, Calendar, Selectors, and Save Button */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Search and Calendar */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
+                <span className="text-sm text-muted-foreground">🔍</span>
+                <input 
+                  placeholder="Search students, quick actions..."
+                  className="bg-transparent border-none outline-none text-sm w-64"
+                />
+                <span className="text-xs text-muted-foreground">⌘K</span>
+              </div>
+              
+              {/* Calendar next to search */}
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm"
+              />
+            </div>
 
-                  {/* Attendance Mode Toggle - Only show for session view */}
-                  {activeView === 'session' && (
-                    <AttendanceModeToggle
-                      mode={attendanceMode}
-                      onModeChange={setAttendanceMode}
-                    />
-                  )}
+            {/* Right: Batch/Subject Selectors and Save Button */}
+            <div className="flex items-center gap-3">
+              {batchSelector && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Batch:</span>
+                  {batchSelector}
+                </div>
+              )}
+              {subjectSelector && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Subject:</span>
+                  {subjectSelector}
+                </div>
+              )}
+              <Button onClick={handleSaveDay} className="bg-black text-white hover:bg-gray-800">
+                Save Full Day
+              </Button>
+            </div>
+          </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>{students.length} Students</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{sessions.length} Sessions</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      <Badge variant={overallStats.percentage >= 80 ? "default" : "secondary"}>
-                        {overallStats.percentage}% Overall
-                      </Badge>
-                    </div>
+          {/* Simplified Tabs with Clean Styling */}
+          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as ViewMode)}>
+            <div className="flex items-center justify-between mb-4">
+              <TabsList className="bg-gray-100 p-1 rounded-lg">
+                <TabsTrigger 
+                  value="session" 
+                  className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  Session View
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="weekly" 
+                  className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  Weekly View
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Mode Toggle (Detailed/Fast only) - Only show for session view */}
+              {activeView === 'session' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Mode:</span>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <Button
+                      variant={attendanceMode === 'detailed' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setAttendanceMode('detailed')}
+                      className="px-3 py-1 text-xs"
+                    >
+                      Detailed
+                    </Button>
+                    <Button
+                      variant={attendanceMode === 'fast' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setAttendanceMode('fast')}
+                      className="px-3 py-1 text-xs"
+                    >
+                      Fast
+                    </Button>
                   </div>
                 </div>
+              )}
+            </div>
 
-                <div className="mt-6">
-                  <TabsContent value="session" className="mt-0">
-                    {attendanceLoading ? (
-                      <Card>
-                        <CardContent className="p-6">
-                          <TableLoadingState rows={students.length} />
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <AttendanceTable
-                        students={students}
-                        sessions={sessions}
-                        searchTerm=""
-                        attendanceData={attendanceData}
-                        onAttendanceChange={handleAttendanceChange}
-                        attendanceMode={attendanceMode}
-                      />
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="weekly" className="mt-0">
-                    <WeeklyAttendanceView
-                      students={students}
-                      sessions={sessions}
-                      selectedDate={selectedDate}
-                      onDateChange={setSelectedDate}
-                      attendanceData={attendanceData}
-                      onAttendanceChange={handleAttendanceChange}
-                    />
-                  </TabsContent>
+            <TabsContent value="session" className="mt-0">
+              {attendanceLoading ? (
+                <div className="p-6">
+                  <TableLoadingState rows={students.length} />
                 </div>
-              </Tabs>
-            </CardContent>
-          </Card>
+              ) : (
+                <AttendanceTable
+                  students={students}
+                  sessions={sessions}
+                  searchTerm=""
+                  attendanceData={attendanceData}
+                  onAttendanceChange={handleAttendanceChange}
+                  attendanceMode={attendanceMode}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="weekly" className="mt-0">
+              <WeeklyAttendanceView
+                students={students}
+                sessions={sessions}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                attendanceData={attendanceData}
+                onAttendanceChange={handleAttendanceChange}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

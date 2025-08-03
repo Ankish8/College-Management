@@ -14,8 +14,25 @@ import { Calendar } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { DayOfWeek, EntryType } from '@prisma/client'
-import { ConflictInfo } from '@/types/timetable'
+import { DayOfWeek, EntryType, ConflictInfo } from '@/types/timetable'
+
+// Types for day of week and entry type (using strings as per schema)
+const DayOfWeekValues = {
+  MONDAY: 'MONDAY' as const,
+  TUESDAY: 'TUESDAY' as const, 
+  WEDNESDAY: 'WEDNESDAY' as const,
+  THURSDAY: 'THURSDAY' as const,
+  FRIDAY: 'FRIDAY' as const,
+  SATURDAY: 'SATURDAY' as const,
+  SUNDAY: 'SUNDAY' as const
+}
+
+const EntryTypeValues = {
+  REGULAR: 'REGULAR' as const,
+  MAKEUP: 'MAKEUP' as const,
+  EXTRA: 'EXTRA' as const,
+  EXAM: 'EXAM' as const
+} as const
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { SubjectFacultySelector } from './subject-faculty-selector'
@@ -27,9 +44,9 @@ const createTimetableEntrySchema = z.object({
   subjectId: z.string().min(1, "Subject is required"),
   facultyId: z.string().min(1, "Faculty is required"),
   timeSlotId: z.string().min(1, "Time slot is required"),
-  dayOfWeek: z.nativeEnum(DayOfWeek),
+  dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']),
   date: z.string().optional(),
-  entryType: z.nativeEnum(EntryType).default("REGULAR"),
+  entryType: z.enum(['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM']).default("REGULAR"),
   notes: z.string().optional(),
   // Recurrence configuration
   isRecurring: z.boolean().default(false),
@@ -481,7 +498,7 @@ export function CreateTimetableEntryModal({
                           <SelectValue placeholder="Select day" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as DayOfWeek[]).map((day) => (
+                          {(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const).map((day) => (
                             <SelectItem key={day} value={day}>
                               {day.charAt(0) + day.slice(1).toLowerCase()}
                             </SelectItem>
@@ -507,7 +524,7 @@ export function CreateTimetableEntryModal({
                           <SelectValue placeholder="Select entry type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(['REGULAR', 'MAKEUP', 'EXTRA', 'SPECIAL'] as EntryType[]).map((type) => (
+                          {(['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM'] as const).map((type) => (
                             <SelectItem key={type} value={type}>
                               {type.charAt(0) + type.slice(1).toLowerCase()}
                             </SelectItem>

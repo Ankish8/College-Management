@@ -339,6 +339,7 @@ export function TraditionalTimetableView({
   // Draggable Event Component
   const DraggableEvent = ({ event }: { event: CalendarEvent }) => {
     const isSampleEvent = event.id === "1" || event.id === "2" || event.id === "3" || event.id.length < 10
+    const isPastDate = event.extendedProps?.isPastDate || false
     
     const {
       attributes,
@@ -348,6 +349,7 @@ export function TraditionalTimetableView({
       isDragging,
     } = useDraggable({
       id: event.id,
+      disabled: isPastDate || isSampleEvent, // Disable dragging for past dates and sample events
     })
 
     const style = {
@@ -363,13 +365,20 @@ export function TraditionalTimetableView({
           "p-3 h-full transition-all hover:shadow-md rounded-lg group relative",
           "bg-muted/50 border border-border hover:bg-muted/70",
           isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
+          isPastDate && "bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed",
           isDragging && "opacity-50 z-50"
         )}
         onClick={() => handleEventClick(event)}
-        title={isSampleEvent ? "Sample data - you can drag but changes won't save" : "Drag to move this class"}
+        title={
+          isPastDate 
+            ? "Past class - cannot be modified" 
+            : isSampleEvent 
+              ? "Sample data - you can drag but changes won't save" 
+              : "Drag to move this class"
+        }
       >
-        {/* Delete button - only show for real events, not sample data */}
-        {!isSampleEvent && onEventDelete && (
+        {/* Delete button - only show for real events, not sample data, and not past dates */}
+        {!isSampleEvent && !isPastDate && onEventDelete && (
           <Button
             variant="ghost"
             size="sm"
@@ -386,11 +395,21 @@ export function TraditionalTimetableView({
           </Button>
         )}
         
-        <div className="space-y-1" {...listeners} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
+        <div 
+          className="space-y-1" 
+          {...(isPastDate ? {} : listeners)} 
+          style={{ 
+            cursor: isPastDate 
+              ? 'not-allowed' 
+              : isDragging 
+                ? 'grabbing' 
+                : 'grab' 
+          }}
+        >
           <div className="flex items-center gap-1">
             <GripVertical className={cn(
               "h-3 w-3 flex-shrink-0",
-              isSampleEvent ? "text-orange-500" : "text-muted-foreground"
+              isSampleEvent ? "text-orange-500" : isPastDate ? "text-gray-400" : "text-muted-foreground"
             )} />
             <div className="font-semibold text-sm line-clamp-1">
               {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}

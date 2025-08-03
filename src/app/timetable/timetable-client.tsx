@@ -80,12 +80,22 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       console.log(`📍 Date-specific event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
     }
 
+    // Check if this is a past date to apply different styling
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const eventDateOnly = new Date(eventDate)
+    eventDateOnly.setHours(0, 0, 0, 0)
+    const isPastDate = eventDateOnly < today
+    
     events.push({
       id: eventId,
-      title: `${entry.subject.name} - ${entry.faculty.name}`,
+      title: `${entry.subject.name} - ${entry.faculty.name}${isPastDate ? ' (Past)' : ''}`,
       start,
       end,
-      className: `bg-blue-500 text-white`,
+      className: isPastDate ? `bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed` : `bg-blue-500 text-white`,
+      editable: !isPastDate, // Disable drag/drop for past events
+      startEditable: !isPastDate, // Disable time editing for past events
+      durationEditable: !isPastDate, // Disable duration editing for past events
       extendedProps: {
         timetableEntryId: entry.id,
         batchId: entry.batchId,
@@ -100,7 +110,8 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         dayOfWeek: entry.dayOfWeek,
         entryType: entry.entryType,
         credits: entry.subject.credits,
-        notes: entry.notes
+        notes: entry.notes,
+        isPastDate: isPastDate
       }
     })
   } else {
@@ -131,12 +142,22 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         console.log(`🔄 Recurring WEDNESDAY event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
       }
 
+      // Check if this is a past date to apply different styling
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const eventDateOnly = new Date(eventDate)
+      eventDateOnly.setHours(0, 0, 0, 0)
+      const isPastDate = eventDateOnly < today
+      
       events.push({
         id: eventId,
-        title: `${entry.subject.name} - ${entry.faculty.name}`,
+        title: `${entry.subject.name} - ${entry.faculty.name}${isPastDate ? ' (Past)' : ''}`,
         start,
         end,
-        className: `bg-blue-500 text-white`,
+        className: isPastDate ? `bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed` : `bg-blue-500 text-white`,
+        editable: !isPastDate, // Disable drag/drop for past events
+        startEditable: !isPastDate, // Disable time editing for past events
+        durationEditable: !isPastDate, // Disable duration editing for past events
         extendedProps: {
           timetableEntryId: entry.id,
           batchId: entry.batchId,
@@ -151,7 +172,8 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
           dayOfWeek: entry.dayOfWeek,
           entryType: entry.entryType,
           credits: entry.subject.credits,
-          notes: entry.notes
+          notes: entry.notes,
+          isPastDate: isPastDate
         }
       })
     }
@@ -489,10 +511,22 @@ export default function TimetableClient() {
   }, [subjectsData])
 
   const handleEventClick = (event: CalendarEvent) => {
+    // Check if this is a past event
+    if (event.extendedProps?.isPastDate) {
+      toast.info('📅 This is a past class. Historical records cannot be modified.')
+      return
+    }
+    
     toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
   }
 
   const handleEventEdit = (event: CalendarEvent) => {
+    // Check if this is a past event
+    if (event.extendedProps?.isPastDate) {
+      toast.info('📅 Past classes cannot be edited.')
+      return
+    }
+    
     toast.info(`Edit: ${event.extendedProps?.subjectName}`)
   }
 
@@ -581,6 +615,13 @@ export default function TimetableClient() {
       // Check if this is a sample event (sample events have simple numeric IDs)
       if (eventId === "1" || eventId === "2" || eventId === "3" || eventId.length < 10) {
         toast.info('📋 Nice! Drag and drop is working. This is sample data, so changes won\'t save. Create real classes to persist changes.')
+        return
+      }
+      
+      // Find the event to check if it's a past event
+      const event = events.find(e => e.id === eventId)
+      if (event?.extendedProps?.isPastDate) {
+        toast.error('📅 Past classes cannot be moved.')
         return
       }
       
@@ -679,6 +720,17 @@ export default function TimetableClient() {
     // Find the event
     const event = events.find(e => e.id === eventId)
     if (!event) return
+
+    // Check if the event is in the past
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Start of today
+    const eventDate = new Date(event.start)
+    eventDate.setHours(0, 0, 0, 0)
+    
+    if (eventDate < today) {
+      toast.error('⏰ Cannot delete timetable entries for past dates. Past classes cannot be modified.')
+      return
+    }
 
     // If user has chosen to skip confirmation, delete directly
     if (skipDeleteConfirmation) {

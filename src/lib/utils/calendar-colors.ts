@@ -26,7 +26,7 @@ const ENTRY_TYPE_COLORS: { [key in EntryType]: string } = {
   REGULAR: 'bg-blue-500',
   MAKEUP: 'bg-orange-500',
   EXTRA: 'bg-green-500',
-  SPECIAL: 'bg-purple-500'
+  EXAM: 'bg-purple-500'
 }
 
 // Text color variants for contrast

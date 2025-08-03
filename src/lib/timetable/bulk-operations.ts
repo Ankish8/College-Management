@@ -1,4 +1,10 @@
-import { DayOfWeek, EntryType, BulkOperationType, OperationStatus, LogLevel } from '@prisma/client'
+// Define types for string-based enums in the database
+export type BulkOperationType = 'TIMETABLE_BULK_CREATE' | 'TIMETABLE_CLONE' | 'TIMETABLE_RESCHEDULE' | 'FACULTY_REPLACE' | 'BATCH_ASSIGN' | 'TEMPLATE_APPLY'
+export type OperationStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+export type LogLevel = 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS'
+// String-based types matching the Prisma schema
+type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+type EntryType = 'REGULAR' | 'MAKEUP' | 'EXTRA' | 'EXAM'
 import { db } from '@/lib/db'
 import { detectEventConflicts, type EventConflict } from '@/lib/utils/conflict-detection'
 import type { CalendarEvent } from '@/types/timetable'
@@ -99,8 +105,8 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
     // Create BulkOperation record for tracking
     bulkOperation = await db.bulkOperation.create({
       data: {
-        type: BulkOperationType.CLONE_TIMETABLE,
-        status: OperationStatus.RUNNING,
+        type: 'TIMETABLE_CLONE',
+        status: 'IN_PROGRESS',
         userId,
         parameters: JSON.stringify({
           sourceBatchId,
@@ -120,7 +126,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Starting timetable clone from batch ${sourceBatchId} to ${targetBatchId}`,
         details: JSON.stringify({ sourceBatchId, targetBatchId, options })
       }
@@ -171,7 +177,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.WARN,
+          level: 'WARNING',
           message: 'No timetable entries found in source batch for the specified criteria'
         }
       })
@@ -179,7 +185,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.COMPLETED,
+          status: 'COMPLETED',
           progress: 100,
           completedAt: new Date(),
           affectedCount: 0,
@@ -334,7 +340,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
           await db.operationLog.create({
             data: {
               operationId,
-              level: LogLevel.ERROR,
+              level: 'ERROR',
               message: errorMessage,
               details: JSON.stringify({ entryId: entry.id, error: entryError })
             }
@@ -347,7 +353,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
     await db.bulkOperation.update({
       where: { id: operationId },
       data: {
-        status: OperationStatus.COMPLETED,
+        status: 'COMPLETED',
         progress: 100,
         completedAt: new Date(),
         affectedCount: sourceEntries.length,
@@ -365,7 +371,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Clone operation completed: ${successful} successful, ${failed} failed`,
         details: JSON.stringify({ successful, failed, errors, warnings })
       }
@@ -390,7 +396,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.FAILED,
+          status: 'FAILED',
           completedAt: new Date(),
           errorLog: errorMessage
         }
@@ -399,7 +405,7 @@ export async function cloneTimetable(options: TimetableCloneOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.ERROR,
+          level: 'ERROR',
           message: `Clone operation failed: ${errorMessage}`,
           details: JSON.stringify({ error })
         }
@@ -432,8 +438,8 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
     // Create BulkOperation record for tracking
     bulkOperation = await db.bulkOperation.create({
       data: {
-        type: BulkOperationType.FACULTY_REPLACE,
-        status: OperationStatus.RUNNING,
+        type: 'FACULTY_REPLACE',
+        status: 'IN_PROGRESS',
         userId,
         parameters: JSON.stringify({
           currentFacultyId,
@@ -453,7 +459,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Starting faculty replacement from ${currentFacultyId} to ${newFacultyId}`,
         details: JSON.stringify({ currentFacultyId, newFacultyId, options })
       }
@@ -510,7 +516,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.WARN,
+          level: 'WARNING',
           message: 'No timetable entries found for the specified criteria'
         }
       })
@@ -518,7 +524,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.COMPLETED,
+          status: 'COMPLETED',
           progress: 100,
           completedAt: new Date(),
           affectedCount: 0,
@@ -656,7 +662,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
           await db.operationLog.create({
             data: {
               operationId,
-              level: LogLevel.ERROR,
+              level: 'ERROR',
               message: errorMessage,
               details: JSON.stringify({ entryId: entry.id, error: entryError })
             }
@@ -684,7 +690,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
     await db.bulkOperation.update({
       where: { id: operationId },
       data: {
-        status: OperationStatus.COMPLETED,
+        status: 'COMPLETED',
         progress: 100,
         completedAt: new Date(),
         affectedCount: affectedEntries.length,
@@ -702,7 +708,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Faculty replacement completed: ${successful} successful, ${failed} failed`,
         details: JSON.stringify({ successful, failed, errors, warnings })
       }
@@ -727,7 +733,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.FAILED,
+          status: 'FAILED',
           completedAt: new Date(),
           errorLog: errorMessage
         }
@@ -736,7 +742,7 @@ export async function replaceFaculty(options: FacultyReplaceOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.ERROR,
+          level: 'ERROR',
           message: `Faculty replacement failed: ${errorMessage}`,
           details: JSON.stringify({ error })
         }
@@ -769,8 +775,8 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
     // Create BulkOperation record for tracking
     bulkOperation = await db.bulkOperation.create({
       data: {
-        type: BulkOperationType.BULK_RESCHEDULE,
-        status: OperationStatus.RUNNING,
+        type: 'TIMETABLE_RESCHEDULE',
+        status: 'IN_PROGRESS',
         userId,
         parameters: JSON.stringify({
           sourceStartDate,
@@ -792,7 +798,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Starting bulk reschedule from ${sourceStartDate} to ${targetStartDate}`,
         details: JSON.stringify({ options })
       }
@@ -849,7 +855,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.WARN,
+          level: 'WARNING',
           message: 'No timetable entries found in source date range'
         }
       })
@@ -857,7 +863,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.COMPLETED,
+          status: 'COMPLETED',
           progress: 100,
           completedAt: new Date(),
           affectedCount: 0,
@@ -1087,7 +1093,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
           await db.operationLog.create({
             data: {
               operationId,
-              level: LogLevel.ERROR,
+              level: 'ERROR',
               message: errorMessage,
               details: JSON.stringify({ entryId: entry.id, error: entryError })
             }
@@ -1100,7 +1106,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
     await db.bulkOperation.update({
       where: { id: operationId },
       data: {
-        status: OperationStatus.COMPLETED,
+        status: 'COMPLETED',
         progress: 100,
         completedAt: new Date(),
         affectedCount: sourceEntries.length,
@@ -1119,7 +1125,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
     await db.operationLog.create({
       data: {
         operationId,
-        level: LogLevel.INFO,
+        level: 'INFO',
         message: `Bulk reschedule completed: ${successful} successful, ${failed} failed`,
         details: JSON.stringify({ successful, failed, errors, warnings })
       }
@@ -1144,7 +1150,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
       await db.bulkOperation.update({
         where: { id: operationId },
         data: {
-          status: OperationStatus.FAILED,
+          status: 'FAILED',
           completedAt: new Date(),
           errorLog: errorMessage
         }
@@ -1153,7 +1159,7 @@ export async function bulkReschedule(options: BulkRescheduleOptions, userId: str
       await db.operationLog.create({
         data: {
           operationId,
-          level: LogLevel.ERROR,
+          level: 'ERROR',
           message: `Bulk reschedule failed: ${errorMessage}`,
           details: JSON.stringify({ error })
         }
@@ -1304,11 +1310,20 @@ export async function validateBulkOperation(options: BulkOperationOptions): Prom
             start: entry.date || new Date(),
             end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
             extendedProps: {
+              timetableEntryId: entry.id,
               batchId: entry.batchId,
-              facultyId: entry.facultyId,
-              subjectId: entry.subjectId,
               batchName: entry.batch.name,
-              facultyName: entry.faculty.name || 'Unknown'
+              subjectId: entry.subjectId,
+              subjectName: entry.subject.name,
+              subjectCode: entry.subject.code,
+              facultyId: entry.facultyId,
+              facultyName: entry.faculty.name || 'Unknown',
+              timeSlotId: entry.timeSlotId,
+              timeSlotName: entry.timeSlot.name,
+              dayOfWeek: entry.dayOfWeek as DayOfWeek,
+              entryType: entry.entryType as EntryType,
+              notes: entry.notes || undefined,
+              credits: entry.subject.credits
             }
           })),
           // Simulated cloned events
@@ -1318,11 +1333,20 @@ export async function validateBulkOperation(options: BulkOperationOptions): Prom
             start: entry.date || new Date(),
             end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
             extendedProps: {
-              batchId: options.targetData!.batchId,
-              facultyId: entry.facultyId,
-              subjectId: entry.subjectId,
+              timetableEntryId: `clone_${entry.id}`,
+              batchId: options.targetData!.batchId!,
               batchName: targetBatch.name,
-              facultyName: entry.faculty.name || 'Unknown'
+              subjectId: entry.subjectId,
+              subjectName: entry.subject.name,
+              subjectCode: entry.subject.code,
+              facultyId: entry.facultyId,
+              facultyName: entry.faculty.name || 'Unknown',
+              timeSlotId: entry.timeSlotId,
+              timeSlotName: entry.timeSlot.name,
+              dayOfWeek: entry.dayOfWeek as DayOfWeek,
+              entryType: entry.entryType as EntryType,
+              notes: entry.notes || undefined,
+              credits: entry.subject.credits
             }
           }))
         ]
@@ -1765,11 +1789,20 @@ async function generateClonePreview(options: BulkOperationOptions, userId: strin
     start: entry.date || new Date(),
     end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
     extendedProps: {
-      batchId: options.targetData!.batchId,
-      facultyId: entry.facultyId,
-      subjectId: entry.subjectId,
+      timetableEntryId: `proposed_${entry.id}`,
+      batchId: options.targetData!.batchId!,
       batchName: entry.batch.name,
-      facultyName: entry.faculty.name || 'Unknown'
+      subjectId: entry.subjectId,
+      subjectName: entry.subject.name,
+      subjectCode: entry.subject.code,
+      facultyId: entry.facultyId,
+      facultyName: entry.faculty.name || 'Unknown',
+      timeSlotId: entry.timeSlotId,
+      timeSlotName: entry.timeSlot.name,
+      dayOfWeek: entry.dayOfWeek as DayOfWeek,
+      entryType: entry.entryType as EntryType,
+      notes: entry.notes || undefined,
+      credits: entry.subject.credits
     }
   }))
 
@@ -1780,11 +1813,20 @@ async function generateClonePreview(options: BulkOperationOptions, userId: strin
     start: entry.date || new Date(),
     end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
     extendedProps: {
+      timetableEntryId: entry.id,
       batchId: entry.batchId,
-      facultyId: entry.facultyId,
-      subjectId: entry.subjectId,
       batchName: entry.batch.name,
-      facultyName: entry.faculty.name || 'Unknown'
+      subjectId: entry.subjectId,
+      subjectName: entry.subject.name,
+      subjectCode: entry.subject.code,
+      facultyId: entry.facultyId,
+      facultyName: entry.faculty.name || 'Unknown',
+      timeSlotId: entry.timeSlotId,
+      timeSlotName: entry.timeSlot.name,
+      dayOfWeek: entry.dayOfWeek as DayOfWeek,
+      entryType: entry.entryType as EntryType,
+      notes: entry.notes || undefined,
+      credits: entry.subject.credits
     }
   }))
 
@@ -1866,11 +1908,20 @@ async function generateFacultyReplacePreview(options: BulkOperationOptions, user
     start: entry.date || new Date(),
     end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
     extendedProps: {
+      timetableEntryId: `updated_${entry.id}`,
       batchId: entry.batchId,
-      facultyId: options.targetData!.facultyId,
-      subjectId: entry.subjectId,
       batchName: entry.batch.name,
-      facultyName: newFaculty?.name || 'New Faculty'
+      subjectId: entry.subjectId,
+      subjectName: entry.subject.name,
+      subjectCode: entry.subject.code,
+      facultyId: options.targetData!.facultyId!,
+      facultyName: newFaculty?.name || 'New Faculty',
+      timeSlotId: entry.timeSlotId,
+      timeSlotName: entry.timeSlot.name,
+      dayOfWeek: entry.dayOfWeek as DayOfWeek,
+      entryType: entry.entryType as EntryType,
+      notes: entry.notes || undefined,
+      credits: entry.subject.credits
     }
   }))
 
@@ -1894,11 +1945,20 @@ async function generateFacultyReplacePreview(options: BulkOperationOptions, user
     start: entry.date || new Date(),
     end: new Date((entry.date || new Date()).getTime() + entry.timeSlot.duration * 60000),
     extendedProps: {
+      timetableEntryId: entry.id,
       batchId: entry.batchId,
-      facultyId: entry.facultyId,
-      subjectId: entry.subjectId,
       batchName: entry.batch.name,
-      facultyName: entry.faculty.name || 'Unknown'
+      subjectId: entry.subjectId,
+      subjectName: entry.subject.name,
+      subjectCode: entry.subject.code,
+      facultyId: entry.facultyId,
+      facultyName: entry.faculty.name || 'Unknown',
+      timeSlotId: entry.timeSlotId,
+      timeSlotName: entry.timeSlot.name,
+      dayOfWeek: entry.dayOfWeek as DayOfWeek,
+      entryType: entry.entryType as EntryType,
+      notes: entry.notes || undefined,
+      credits: entry.subject.credits
     }
   }))
 
@@ -1906,7 +1966,7 @@ async function generateFacultyReplacePreview(options: BulkOperationOptions, user
   const conflictResult = detectEventConflicts(allEvents)
 
   const facultyWorkload: { [key: string]: number } = {}
-  facultyWorkload[options.targetData!.facultyId] = updatedEvents.length + existingEvents.length
+  facultyWorkload[options.targetData!.facultyId!] = updatedEvents.length + existingEvents.length
 
   return {
     visualization: {
@@ -1968,11 +2028,20 @@ async function generateReschedulePreview(options: BulkOperationOptions, userId: 
       start: newDate,
       end: new Date(newDate.getTime() + entry.timeSlot.duration * 60000),
       extendedProps: {
+        timetableEntryId: `rescheduled_${entry.id}`,
         batchId: entry.batchId,
-        facultyId: entry.facultyId,
-        subjectId: entry.subjectId,
         batchName: entry.batch.name,
-        facultyName: entry.faculty.name || 'Unknown'
+        subjectId: entry.subjectId,
+        subjectName: entry.subject.name,
+        subjectCode: entry.subject.code,
+        facultyId: entry.facultyId,
+        facultyName: entry.faculty.name || 'Unknown',
+        timeSlotId: entry.timeSlotId,
+        timeSlotName: entry.timeSlot.name,
+        dayOfWeek: entry.dayOfWeek as DayOfWeek,
+        entryType: entry.entryType as EntryType,
+        notes: entry.notes || undefined,
+        credits: entry.subject.credits
       }
     }
   })
@@ -2043,7 +2112,7 @@ export async function getOperationHistory(limit: number = 10, userId?: string): 
       // Parse parameters to extract summary information
       let summary = `${op.type.replace('_', ' ').toLowerCase()} operation`
       try {
-        const params = JSON.parse(op.parameters)
+        const params = JSON.parse(op.parameters as string)
         switch (op.type) {
           case 'CLONE_TIMETABLE':
             summary = `Cloned timetable entries to target batch`
@@ -2073,8 +2142,8 @@ export async function getOperationHistory(limit: number = 10, userId?: string): 
         successCount: op.successCount,
         failedCount: op.failedCount,
         progress: op.progress,
-        parameters: op.parameters ? JSON.parse(op.parameters) : undefined,
-        results: op.results ? JSON.parse(op.results) : undefined
+        parameters: op.parameters ? JSON.parse(op.parameters as string) : undefined,
+        results: op.results ? JSON.parse(op.results as string) : undefined
       }
     })
   } catch (error) {

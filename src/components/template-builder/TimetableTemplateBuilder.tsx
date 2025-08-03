@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Save, FileOpen, Eye, Plus, Trash2, Copy, Download, Upload } from 'lucide-react'
+import { Save, File, Eye, Plus, Trash2, Copy, Download, Upload } from 'lucide-react'
 
 interface TimetableTemplate {
   id: string
@@ -358,7 +358,7 @@ export default function TimetableTemplateBuilder({
           <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <FileOpen className="w-4 h-4 mr-2" />
+                <File className="w-4 h-4 mr-2" />
                 Load
               </Button>
             </DialogTrigger>

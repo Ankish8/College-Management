@@ -9,7 +9,17 @@
     "lint": "next lint",
     "db:seed": "tsx src/lib/seed.ts",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset && npm run db:seed"
+    "db:reset": "prisma migrate reset && npm run db:seed",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:comprehensive": "node run-comprehensive-tests.js",
+    "test:admin": "playwright test tests/admin/",
+    "test:faculty": "playwright test tests/faculty/",
+    "test:student": "playwright test tests/student/",
+    "test:auth": "playwright test tests/auth/",
+    "test:e2e": "playwright test tests/comprehensive-e2e.spec.ts",
+    "test:report": "playwright show-report"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -79,11 +89,13 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "playwright": "^1.54.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"

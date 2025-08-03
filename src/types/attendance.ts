@@ -121,6 +121,8 @@ export interface AttendanceComponentProps {
   initialDate?: string
   onError?: (error: ApiError) => void
   onLoadingChange?: (loading: boolean) => void
+  batchSelector?: React.ReactNode
+  subjectSelector?: React.ReactNode
 }
 
 // Hook return types

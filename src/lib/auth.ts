@@ -1,6 +1,8 @@
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { NextAuthOptions } from "next-auth"
-import type { Role, UserStatus } from "@prisma/client"
+// Define types for string-based enums in the database
+export type Role = 'ADMIN' | 'FACULTY' | 'STUDENT'
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 import { db } from "@/lib/db"
 
 export const authOptions: NextAuthOptions = {

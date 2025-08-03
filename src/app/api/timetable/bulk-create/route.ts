@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/utils/permissions"
 import { z } from "zod"
-import { DayOfWeek, EntryType } from "@prisma/client"
+// String-based types matching the Prisma schema
+const DayOfWeekValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+const EntryTypeValues = ['REGULAR', 'MAKEUP', 'EXTRA', 'EXAM'] as const
 
 const bulkCreateSchema = z.object({
   entries: z.array(z.object({
@@ -12,9 +14,9 @@ const bulkCreateSchema = z.object({
     subjectId: z.string().min(1, "Subject is required"),
     facultyId: z.string().min(1, "Faculty is required"),
     timeSlotId: z.string().min(1, "Time slot is required"),
-    dayOfWeek: z.nativeEnum(DayOfWeek),
+    dayOfWeek: z.enum(DayOfWeekValues),
     date: z.string().optional(),
-    entryType: z.nativeEnum(EntryType).default("REGULAR"),
+    entryType: z.enum(EntryTypeValues).default("REGULAR"),
     notes: z.string().optional(),
   })).min(1, "At least one entry is required").max(100, "Maximum 100 entries allowed"),
   validateOnly: z.boolean().default(false), // For validation-only mode

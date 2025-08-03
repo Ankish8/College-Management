@@ -30,7 +30,7 @@ const ENTRY_TYPE_OPTIONS: { value: EntryType; label: string }[] = [
   { value: 'REGULAR', label: 'Regular' },
   { value: 'MAKEUP', label: 'Makeup' },
   { value: 'EXTRA', label: 'Extra' },
-  { value: 'SPECIAL', label: 'Special' }
+  { value: 'EXAM', label: 'Exam' }
 ]
 
 export function CalendarFilters({

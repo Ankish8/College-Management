@@ -122,65 +122,98 @@ export function AttendancePageContent({
 
   return (
     <CommandPaletteProvider>
-      <div className="space-y-4">
-        {/* Batch Selector - PRIMARY SELECTION */}
-        <div className="flex items-center gap-4">
-          <label className="text-sm font-medium">Select Batch:</label>
-          <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-            <SelectTrigger className="w-80">
-              <SelectValue placeholder="Choose a batch" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableBatches.map((batch) => (
-                <SelectItem key={batch.id} value={batch.id}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{batch.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {batch.program.shortName}
-                      {batch.specialization && ` - ${batch.specialization.shortName}`}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Subject Selector - FILTERED BY BATCH */}
-        {selectedBatch && (
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium">Select Subject:</label>
-            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger className="w-80">
-                <SelectValue placeholder="Choose a subject" />
+      {/* Attendance Interface - ONLY WHEN BOTH SELECTED */}
+      {selectedBatch && selectedSubject ? (
+        <AttendancePageProduction 
+          courseId={selectedSubject}
+          batchId={selectedBatch}
+          onError={handleError}
+          onLoadingChange={handleLoadingChange}
+          // Pass selectors as props for inline display
+          batchSelector={
+            <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Choose batch" />
               </SelectTrigger>
               <SelectContent>
-                {availableSubjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{subject.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {subject.code} • {subject.credits} credits
-                        {subject.faculty.primary && ` • ${subject.faculty.primary.name}`}
-                      </span>
-                    </div>
+                {availableBatches.map((batch) => (
+                  <SelectItem key={batch.id} value={batch.id}>
+                    <span className="font-medium">{batch.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          }
+          subjectSelector={
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Choose subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableSubjects.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.id}>
+                    <span className="font-medium">{subject.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
+      ) : (
+        // Initial selection screen
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="space-y-6 text-center">
+            <h3 className="text-lg font-medium">Select Batch and Subject</h3>
+            
+            {/* Batch Selector */}
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Choose Batch:</label>
+              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select a batch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableBatches.map((batch) => (
+                    <SelectItem key={batch.id} value={batch.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{batch.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {batch.program.shortName}
+                          {batch.specialization && ` - ${batch.specialization.shortName}`}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {/* Attendance Interface - ONLY WHEN BOTH SELECTED */}
-        {selectedBatch && selectedSubject && (
-          <AttendancePageProduction 
-            courseId={selectedSubject}
-            batchId={selectedBatch}
-            onError={handleError}
-            onLoadingChange={handleLoadingChange}
-          />
-        )}
-      </div>
+            {/* Subject Selector */}
+            {selectedBatch && (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Choose Subject:</label>
+                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                  <SelectTrigger className="w-80">
+                    <SelectValue placeholder="Select a subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{subject.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {subject.code} • {subject.credits} credits
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </CommandPaletteProvider>
   )
 }

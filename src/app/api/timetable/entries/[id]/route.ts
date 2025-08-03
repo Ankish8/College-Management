@@ -501,6 +501,37 @@ export async function DELETE(
       )
     }
 
+    // Check if trying to delete a past date
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Start of today
+    
+    if (specificDate) {
+      const dateToCheck = new Date(specificDate)
+      dateToCheck.setHours(0, 0, 0, 0)
+      
+      if (dateToCheck < today) {
+        console.log(`❌ Attempted to delete past date: ${specificDate}`)
+        return NextResponse.json(
+          { error: "Cannot delete timetable entries for past dates" },
+          { status: 400 }
+        )
+      }
+    }
+    
+    // For date-specific entries, check if the entry date is in the past
+    if (existingEntry.date) {
+      const entryDate = new Date(existingEntry.date)
+      entryDate.setHours(0, 0, 0, 0)
+      
+      if (entryDate < today) {
+        console.log(`❌ Attempted to delete past date-specific entry: ${entryDate.toDateString()}`)
+        return NextResponse.json(
+          { error: "Cannot delete timetable entries for past dates" },
+          { status: 400 }
+        )
+      }
+    }
+
     // If this is a recurring entry (date = null) and user wants to delete a specific occurrence
     if (!existingEntry.date && specificDate) {
       console.log(`🔍 Processing date-specific deletion for entry ${id}, date: ${specificDate}`)

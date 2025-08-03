@@ -1,4 +1,6 @@
-import { DayOfWeek, EntryType } from '@prisma/client'
+// String-based types matching the Prisma schema
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+export type EntryType = 'REGULAR' | 'MAKEUP' | 'EXTRA' | 'EXAM'
 
 export interface CalendarEvent {
   id: string
@@ -121,8 +123,7 @@ export interface CreateTimetableEntryData {
 
 export type CalendarView = 'day' | 'week' | 'month' | 'year'
 
-// Re-export from Prisma for consistency
-export { DayOfWeek, EntryType } from '@prisma/client'
+// Types are defined above in this file
 
 export interface CalendarEventColors {
   subject: { [key: string]: string }

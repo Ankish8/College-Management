@@ -11,17 +11,19 @@ import type {
   AttendanceRecord,
   AttendanceDispute,
   User,
-  Role,
-  UserStatus,
-  ProgramType,
-  SemType,
-  ExamType,
-  SubjectType,
-  DayOfWeek,
-  EntryType,
-  AttendanceStatus,
-  DisputeStatus,
 } from "@prisma/client"
+
+import type { Role, UserStatus } from "@/lib/auth"
+
+// Define missing enum types that should exist in Prisma but don't
+export type ProgramType = 'UNDERGRADUATE' | 'POSTGRADUATE' | 'DIPLOMA' | 'CERTIFICATE'
+export type SemType = 'ODD' | 'EVEN'
+export type ExamType = 'THEORY' | 'PRACTICAL' | 'JURY' | 'PROJECT' | 'VIVA'
+export type SubjectType = 'CORE' | 'ELECTIVE' | 'OPEN_ELECTIVE' | 'SKILL_ENHANCEMENT'
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+export type EntryType = 'REGULAR' | 'MAKEUP' | 'EXTRA' | 'EXAM'
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'
+export type DisputeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW'
 
 // Extended types with relations
 export interface BatchWithRelations extends Batch {
@@ -152,28 +154,4 @@ export interface AttendanceStats {
   percentage: number
 }
 
-// Export all Prisma types
-export type {
-  University,
-  Department,
-  Program,
-  Batch,
-  Student,
-  TimeSlot,
-  Subject,
-  TimetableEntry,
-  AttendanceSession,
-  AttendanceRecord,
-  AttendanceDispute,
-  User,
-  Role,
-  UserStatus,
-  ProgramType,
-  SemType,
-  ExamType,
-  SubjectType,
-  DayOfWeek,
-  EntryType,
-  AttendanceStatus,
-  DisputeStatus,
-}
+// All types are exported via their individual declarations above

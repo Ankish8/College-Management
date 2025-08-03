@@ -90,7 +90,10 @@ export default async function TimetableSettingsPage() {
 
             <TimetableSettingsForm 
               department={user.department}
-              settings={settings}
+              settings={{
+                ...settings,
+                schedulingMode: settings.schedulingMode as "MODULE_BASED" | "WEEKLY_RECURRING"
+              }}
             />
           </div>
         </div>

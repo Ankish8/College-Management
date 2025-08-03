@@ -88,7 +88,10 @@ export default async function DepartmentSettingsPage() {
 
             <DepartmentSettingsForm 
               department={user.department}
-              settings={settings}
+              settings={{
+                ...settings,
+                schedulingMode: settings.schedulingMode as "MODULE_BASED" | "WEEKLY_RECURRING"
+              }}
             />
           </div>
         </div>

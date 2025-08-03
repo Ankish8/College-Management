@@ -108,25 +108,25 @@ export class AdvancedSearchEngine extends FuzzySearchEngine {
 
     switch (field) {
       case 'student':
-        return this.filterByStudent(operator, value)
+        return this.filterByStudent(operator, value as string)
       
       case 'email':
-        return this.filterByEmail(operator, value)
+        return this.filterByEmail(operator, value as string)
       
       case 'session':
-        return this.filterBySession(operator, value)
+        return this.filterBySession(operator, value as string)
       
       case 'status':
-        return this.filterByStatus(operator, value)
+        return this.filterByStatus(operator, value as string)
       
       case 'attendance':
-        return this.filterByAttendance(operator, value)
+        return this.filterByAttendance(operator, value as string)
       
       case 'date':
-        return this.filterByDate(operator, value)
+        return this.filterByDate(operator, value as string)
       
       case 'time':
-        return this.filterByTime(operator, value)
+        return this.filterByTime(operator, value as string)
       
       default:
         throw new Error(`Unknown field: ${field}`)

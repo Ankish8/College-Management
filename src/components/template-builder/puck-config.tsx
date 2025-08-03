@@ -299,7 +299,8 @@ export const puckConfig: Config = {
         position: { day: 0, timeSlot: 0 },
         span: { rows: 1, cols: 1 }
       },
-      render: ({ subjectName, subjectCode, facultyName, credits, color, span }: SubjectBlockProps) => {
+      render: (props: any) => {
+        const { subjectName, subjectCode, facultyName, credits, color, span } = props as SubjectBlockProps;
         const colorClasses = {
           blue: 'border-blue-400 bg-blue-100 text-blue-800',
           green: 'border-green-400 bg-green-100 text-green-800',
@@ -370,7 +371,9 @@ export const puckConfig: Config = {
         maxCapacity: 30,
         currentStrength: 25
       },
-      render: ({ batchName, program, semester, specialization, maxCapacity, currentStrength }: BatchAssignmentProps) => (
+      render: (props: any) => {
+        const { batchName, program, semester, specialization, maxCapacity, currentStrength } = props as BatchAssignmentProps;
+        return (
         <div className="batch-assignment p-3 rounded-lg border-2 border-green-300 bg-green-50">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-green-600" />
@@ -382,7 +385,8 @@ export const puckConfig: Config = {
             <div>Capacity: {currentStrength}/{maxCapacity}</div>
           </div>
         </div>
-      )
+        );
+      }
     },
 
     // Break Period Component
@@ -424,7 +428,9 @@ export const puckConfig: Config = {
         type: "lunch",
         isRecurring: true
       },
-      render: ({ name, startTime, endTime, type, isRecurring }: BreakPeriodProps) => (
+      render: (props: any) => {
+        const { name, startTime, endTime, type, isRecurring } = props as BreakPeriodProps;
+        return (
         <div className="break-period p-3 rounded-lg border-2 border-orange-300 bg-orange-50">
           <div className="flex items-center gap-2 mb-1">
             <Coffee className="h-4 w-4 text-orange-600" />
@@ -436,7 +442,8 @@ export const puckConfig: Config = {
             <div>{isRecurring ? 'Daily recurring' : 'One-time only'}</div>
           </div>
         </div>
-      )
+        );
+      }
     },
 
     // Subject Allotment Components
@@ -504,7 +511,8 @@ export const puckConfig: Config = {
         priority: "medium",
         isDraggable: true
       },
-      render: ({ subjectName, subjectCode, credits, examType, subjectType, batchName, priority, isDraggable }: SubjectCardProps) => {
+      render: (props: any) => {
+        const { subjectName, subjectCode, credits, examType, subjectType, batchName, priority, isDraggable } = props as SubjectCardProps;
         const priorityColors = {
           high: 'border-red-300 bg-red-50 text-red-800',
           medium: 'border-yellow-300 bg-yellow-50 text-yellow-800',
@@ -601,7 +609,8 @@ export const puckConfig: Config = {
         assignedSubjects: [],
         isDropZone: true
       },
-      render: ({ facultyName, employeeId, currentCredits, maxCredits, teachingCredits, nonTeachingCredits, workloadStatus, isDropZone }: FacultyColumnProps) => {
+      render: (props: any) => {
+        const { facultyName, employeeId, currentCredits, maxCredits, teachingCredits, nonTeachingCredits, workloadStatus, isDropZone } = props as FacultyColumnProps;
         const statusColors = {
           underutilized: 'border-yellow-300 bg-yellow-50',
           balanced: 'border-green-300 bg-green-50',
@@ -720,7 +729,8 @@ export const puckConfig: Config = {
         status: "balanced",
         showBreakdown: true
       },
-      render: ({ totalCredits, maxCredits, teachingCredits, nonTeachingCredits, status, showBreakdown }: WorkloadIndicatorProps) => {
+      render: (props: any) => {
+        const { totalCredits, maxCredits, teachingCredits, nonTeachingCredits, status, showBreakdown } = props as WorkloadIndicatorProps;
         const utilization = (totalCredits / maxCredits) * 100
 
         return (
@@ -844,7 +854,9 @@ export const puckConfig: Config = {
         totalCredits: 360,
         averageWorkload: 24
       },
-      render: ({ totalFaculty, totalSubjects, unassignedSubjects, overloadedFaculty, balancedFaculty, underutilizedFaculty, totalCredits, averageWorkload }: AllotmentSummaryProps) => (
+      render: (props: any) => {
+        const { totalFaculty, totalSubjects, unassignedSubjects, overloadedFaculty, balancedFaculty, underutilizedFaculty, totalCredits, averageWorkload } = props as AllotmentSummaryProps;
+        return (
         <div className="allotment-summary p-4 rounded-lg border bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -888,7 +900,8 @@ export const puckConfig: Config = {
             </div>
           </div>
         </div>
-      )
+        );
+      }
     }
   }
 }

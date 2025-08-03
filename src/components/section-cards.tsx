@@ -10,7 +10,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Calendar,
-  Settings
+  Settings,
+  Construction
 } from "lucide-react"
 import Link from "next/link"
 import { db } from "@/lib/db"
@@ -80,7 +81,25 @@ export async function SectionCards() {
   ]
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="relative space-y-3 p-4">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 bg-background/95 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-4 animate-pulse">
+            <Construction className="h-8 w-8 text-muted-foreground animate-bounce" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">Dashboard Coming Soon</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            We're working on an amazing dashboard experience for you. Stay tuned!
+          </p>
+          <div className="flex items-center justify-center gap-1 mt-4">
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+        </div>
+      </div>
+
       {/* Ultra Compact Metrics Bar */}
       <div className="flex items-center gap-6 bg-muted/30 rounded-lg p-3">
         <div className="flex items-center gap-2">
