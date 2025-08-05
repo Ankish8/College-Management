@@ -77,21 +77,31 @@ export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCard
             setMaxCredits(workload.maxCredits)
             setWorkloadPercentage(workload.creditPercentage)
           } else {
-            // Fallback to simple calculation if API fails
-            const simpleTotal = [
+            // Fallback to simple calculation if API fails (teaching subjects only)
+            const teachingSubjects = [
               ...faculty.primarySubjects,
               ...faculty.coFacultySubjects
-            ].reduce((sum, subject) => sum + subject.credits, 0)
+            ].filter(subject => {
+              const subjectName = subject.name.toLowerCase();
+              return !subjectName.includes('internship') && 
+                     !subjectName.includes('field research project');
+            });
+            const simpleTotal = teachingSubjects.reduce((sum, subject) => sum + subject.credits, 0)
             setTotalCredits(simpleTotal)
             setWorkloadPercentage(Math.round((simpleTotal / 30) * 100))
           }
         } catch (error) {
           console.error("Error fetching workload:", error)
-          // Fallback to simple calculation
-          const simpleTotal = [
+          // Fallback to simple calculation (teaching subjects only)
+          const teachingSubjects = [
             ...faculty.primarySubjects,
             ...faculty.coFacultySubjects
-          ].reduce((sum, subject) => sum + subject.credits, 0)
+          ].filter(subject => {
+            const subjectName = subject.name.toLowerCase();
+            return !subjectName.includes('internship') && 
+                   !subjectName.includes('field research project');
+          });
+          const simpleTotal = teachingSubjects.reduce((sum, subject) => sum + subject.credits, 0)
           setTotalCredits(simpleTotal)
           setWorkloadPercentage(Math.round((simpleTotal / 30) * 100))
         }

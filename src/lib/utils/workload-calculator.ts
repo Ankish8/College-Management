@@ -38,6 +38,7 @@ export async function calculateFacultyWorkload(
         where: { isActive: true },
         select: {
           id: true,
+          name: true,
           credits: true,
           totalHours: true,
         }
@@ -46,6 +47,7 @@ export async function calculateFacultyWorkload(
         where: { isActive: true },
         select: {
           id: true,
+          name: true,
           credits: true,
           totalHours: true,
         }
@@ -63,13 +65,26 @@ export async function calculateFacultyWorkload(
   const coFacultyWeight = await getCoFacultyWeight(departmentId)
   const maxHours = maxCredits * creditRatio
 
-  // Calculate workload with different weights for primary vs co-faculty
-  const primaryCredits = faculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0)
-  const primaryHours = faculty.primarySubjects.reduce((sum, s) => sum + s.totalHours, 0)
+  // Filter teaching subjects (exclude non-teaching like internships, projects)
+  const teachingPrimarySubjects = faculty.primarySubjects.filter(subject => {
+    const subjectName = subject.name.toLowerCase();
+    return !subjectName.includes('internship') && 
+           !subjectName.includes('field research project');
+  });
+
+  const teachingCoFacultySubjects = faculty.coFacultySubjects.filter(subject => {
+    const subjectName = subject.name.toLowerCase();
+    return !subjectName.includes('internship') && 
+           !subjectName.includes('field research project');
+  });
+
+  // Calculate workload with different weights for primary vs co-faculty (teaching subjects only)
+  const primaryCredits = teachingPrimarySubjects.reduce((sum, s) => sum + s.credits, 0)
+  const primaryHours = teachingPrimarySubjects.reduce((sum, s) => sum + s.totalHours, 0)
   
   // Co-faculty weight is configurable (default 50%)
-  const coFacultyCredits = faculty.coFacultySubjects.reduce((sum, s) => sum + (s.credits * coFacultyWeight), 0)
-  const coFacultyHours = faculty.coFacultySubjects.reduce((sum, s) => sum + (s.totalHours * coFacultyWeight), 0)
+  const coFacultyCredits = teachingCoFacultySubjects.reduce((sum, s) => sum + (s.credits * coFacultyWeight), 0)
+  const coFacultyHours = teachingCoFacultySubjects.reduce((sum, s) => sum + (s.totalHours * coFacultyWeight), 0)
 
   const totalCredits = primaryCredits + coFacultyCredits
   const totalHours = primaryHours + coFacultyHours
@@ -100,8 +115,8 @@ export async function calculateFacultyWorkload(
     creditPercentage,
     hourPercentage,
     workloadLevel,
-    primarySubjects: faculty.primarySubjects,
-    coFacultySubjects: faculty.coFacultySubjects
+    primarySubjects: teachingPrimarySubjects,
+    coFacultySubjects: teachingCoFacultySubjects
   }
 }
 

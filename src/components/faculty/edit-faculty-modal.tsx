@@ -161,9 +161,7 @@ export function EditFacultyModal({
           <DialogDescription>
             Update faculty member details. Subject assignments are managed in the Subjects section.
             {totalSubjects > 0 && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                Currently assigned to {totalSubjects} subject{totalSubjects > 1 ? 's' : ''}.
-              </div>
+              ` Currently assigned to ${totalSubjects} subject${totalSubjects > 1 ? 's' : ''}.`
             )}
           </DialogDescription>
         </DialogHeader>
