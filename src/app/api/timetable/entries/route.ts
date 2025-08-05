@@ -23,14 +23,31 @@ const timetableFilterSchema = z.object({
 
 const createTimetableEntrySchema = z.object({
   batchId: z.string().min(1, "Batch is required"),
-  subjectId: z.string().min(1, "Subject is required"), 
-  facultyId: z.string().min(1, "Faculty is required"),
+  subjectId: z.string().optional(), // Optional for custom events
+  facultyId: z.string().optional(), // Optional for custom events
   timeSlotId: z.string().min(1, "Time slot is required"),
   dayOfWeek: z.enum(DayOfWeekValues),
   date: z.string().optional(), // ISO date string for specific date entries
   entryType: z.enum(EntryTypeValues).default("REGULAR"),
   notes: z.string().optional(),
-})
+  // Custom event fields
+  customEventTitle: z.string().optional(),
+  customEventColor: z.string().optional(),
+  isCustomEvent: z.boolean().optional(),
+}).refine(
+  (data) => {
+    // Either it's a custom event with title, or it's a regular event with subject and faculty
+    if (data.isCustomEvent) {
+      return data.customEventTitle && data.customEventTitle.trim().length > 0
+    } else {
+      return data.subjectId && data.facultyId
+    }
+  },
+  {
+    message: "Either provide subject and faculty for regular classes, or title for custom events",
+    path: ["subjectId"]
+  }
+)
 
 // Conflict detection function
 async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, excludeId?: string) {
@@ -50,14 +67,21 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     whereClause.NOT = { id: excludeId }
   }
 
+  // Build OR conditions dynamically based on what fields are present
+  const orConditions = [
+    { batchId: data.batchId }, // Always check batch conflicts
+  ]
+  
+  // Only check faculty conflicts if faculty is assigned
+  if (data.facultyId) {
+    orConditions.push({ facultyId: data.facultyId })
+  }
+
   // Single optimized query to check both batch and faculty conflicts
   const allConflicts = await db.timetableEntry.findMany({
     where: {
       ...whereClause,
-      OR: [
-        { batchId: data.batchId },  // Batch conflicts
-        { facultyId: data.facultyId }, // Faculty conflicts
-      ]
+      OR: orConditions
     },
     include: {
       subject: { select: { name: true } },
@@ -74,7 +98,7 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
 
   // Separate conflicts by type
   const batchConflicts = allConflicts.filter(entry => entry.batchId === data.batchId);
-  const facultyConflicts = allConflicts.filter(entry => entry.facultyId === data.facultyId);
+  const facultyConflicts = data.facultyId ? allConflicts.filter(entry => entry.facultyId === data.facultyId) : [];
 
   if (batchConflicts.length > 0) {
     conflicts.push({
@@ -323,28 +347,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate subject exists and belongs to the batch
-    const subject = await db.subject.findUnique({
-      where: { id: validatedData.subjectId },
-    })
+    // Validate subject and faculty for regular classes only
+    if (!validatedData.isCustomEvent) {
+      // Validate subject exists and belongs to the batch
+      const subject = await db.subject.findUnique({
+        where: { id: validatedData.subjectId },
+      })
 
-    if (!subject || subject.batchId !== validatedData.batchId) {
-      return NextResponse.json(
-        { error: "Subject not found or does not belong to this batch" },
-        { status: 400 }
-      )
-    }
+      if (!subject || subject.batchId !== validatedData.batchId) {
+        return NextResponse.json(
+          { error: "Subject not found or does not belong to this batch" },
+          { status: 400 }
+        )
+      }
 
-    // Validate faculty exists
-    const faculty = await db.user.findUnique({
-      where: { id: validatedData.facultyId },
-    })
+      // Validate faculty exists
+      const faculty = await db.user.findUnique({
+        where: { id: validatedData.facultyId },
+      })
 
-    if (!faculty || faculty.role !== "FACULTY") {
-      return NextResponse.json(
-        { error: "Faculty not found or is not a faculty member" },
-        { status: 400 }
-      )
+      if (!faculty || faculty.role !== "FACULTY") {
+        return NextResponse.json(
+          { error: "Faculty not found or is not a faculty member" },
+          { status: 400 }
+        )
+      }
+    } else if (validatedData.facultyId) {
+      // For custom events, validate faculty only if provided
+      const faculty = await db.user.findUnique({
+        where: { id: validatedData.facultyId },
+      })
+
+      if (!faculty || faculty.role !== "FACULTY") {
+        return NextResponse.json(
+          { error: "Faculty not found or is not a faculty member" },
+          { status: 400 }
+        )
+      }
     }
 
     // Validate time slot exists
@@ -376,13 +415,16 @@ export async function POST(request: NextRequest) {
     const entry = await db.timetableEntry.create({
       data: {
         batchId: validatedData.batchId,
-        subjectId: validatedData.subjectId,
-        facultyId: validatedData.facultyId,
+        subjectId: validatedData.subjectId || null,
+        facultyId: validatedData.facultyId || null,
         timeSlotId: validatedData.timeSlotId,
         dayOfWeek: validatedData.dayOfWeek,
         date: validatedData.date ? new Date(validatedData.date) : null,
         entryType: validatedData.entryType,
         notes: validatedData.notes,
+        // Custom event fields
+        customEventTitle: validatedData.customEventTitle || null,
+        customEventColor: validatedData.customEventColor || null,
       },
       include: {
         batch: {

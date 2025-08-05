@@ -113,14 +113,15 @@ async function seedDatabase() {
       console.log("✅ Program created")
     }
 
-    // Create Time Slots (9:45 to 3:15 with 1 hour break)
+    // Create Time Slots (based on Excel timetable structure)
     const timeSlotData = [
-      { name: "09:45-10:35", startTime: "09:45", endTime: "10:35", duration: 50, sortOrder: 1 },
-      { name: "10:35-11:25", startTime: "10:35", endTime: "11:25", duration: 50, sortOrder: 2 },
-      { name: "11:45-12:35", startTime: "11:45", endTime: "12:35", duration: 50, sortOrder: 3 }, // 20 min break
-      { name: "12:35-13:25", startTime: "12:35", endTime: "13:25", duration: 50, sortOrder: 4 },
-      // 1 hour lunch break (13:25 - 14:25)
-      { name: "14:25-15:15", startTime: "14:25", endTime: "15:15", duration: 50, sortOrder: 5 },
+      { name: "09:30-10:30", startTime: "09:30", endTime: "10:30", duration: 60, sortOrder: 1 },
+      { name: "10:30-11:30", startTime: "10:30", endTime: "11:30", duration: 60, sortOrder: 2 },
+      { name: "11:30-12:30", startTime: "11:30", endTime: "12:30", duration: 60, sortOrder: 3 },
+      // Lunch break (12:30 - 13:30)
+      { name: "13:30-14:30", startTime: "13:30", endTime: "14:30", duration: 60, sortOrder: 4 },
+      { name: "14:30-15:30", startTime: "14:30", endTime: "15:30", duration: 60, sortOrder: 5 },
+      { name: "15:30-16:30", startTime: "15:30", endTime: "16:30", duration: 60, sortOrder: 6 },
     ]
 
     const timeSlots = []

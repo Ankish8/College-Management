@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { X, Clock, BookOpen, Star, History, Ban, Loader2 } from 'lucide-react'
+import { X, Clock, BookOpen, Star, History, Ban, Loader2, CalendarDays, User, Palette } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { autoSaveManager } from '@/lib/utils/auto-save'
 
@@ -13,10 +15,13 @@ interface QuickCreatePopupProps {
   isOpen: boolean
   onClose: () => void
   onCreateEvent: (data: {
-    subjectId: string
-    facultyId: string
+    subjectId?: string
+    facultyId?: string
     date: Date
     timeSlot: string
+    customEventTitle?: string
+    customEventColor?: string
+    isCustomEvent?: boolean
   }) => void
   position: { x: number; y: number }
   date: Date
@@ -64,7 +69,23 @@ export function QuickCreatePopup({
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
   const [filteredSubjects, setFilteredSubjects] = useState<FilteredSubject[]>([])
   const [showUnavailable, setShowUnavailable] = useState(false)
+  const [isCustomEvent, setIsCustomEvent] = useState(false)
+  const [customEventTitle, setCustomEventTitle] = useState('')
+  const [customEventColor, setCustomEventColor] = useState('#3b82f6')
+  const [customEventFaculty, setCustomEventFaculty] = useState('')
   const popupRef = useRef<HTMLDivElement>(null)
+
+  // Predefined color options for custom events
+  const colorOptions = [
+    { value: '#3b82f6', label: 'Blue', class: 'bg-blue-500' },
+    { value: '#10b981', label: 'Green', class: 'bg-green-500' },
+    { value: '#f59e0b', label: 'Orange', class: 'bg-orange-500' },
+    { value: '#ef4444', label: 'Red', class: 'bg-red-500' },
+    { value: '#8b5cf6', label: 'Purple', class: 'bg-purple-500' },
+    { value: '#06b6d4', label: 'Cyan', class: 'bg-cyan-500' },
+    { value: '#84cc16', label: 'Lime', class: 'bg-lime-500' },
+    { value: '#f97316', label: 'Orange', class: 'bg-orange-600' },
+  ]
 
   // Check conflicts for all subjects when popup opens
   useEffect(() => {
@@ -213,6 +234,42 @@ export function QuickCreatePopup({
     onClose()
   }, [onCreateEvent, date, timeSlot, onClose])
 
+  // Handle custom event creation
+  const handleCustomEventCreate = React.useCallback(() => {
+    if (!customEventTitle.trim()) {
+      console.error('Cannot create custom event: Title is required')
+      return
+    }
+    
+    onCreateEvent({
+      date,
+      timeSlot,
+      customEventTitle: customEventTitle.trim(),
+      customEventColor,
+      facultyId: customEventFaculty || undefined,
+      isCustomEvent: true
+    })
+    
+    // Reset form
+    setCustomEventTitle('')
+    setCustomEventColor('#3b82f6')
+    setCustomEventFaculty('')
+    setIsCustomEvent(false)
+    
+    onClose()
+  }, [onCreateEvent, date, timeSlot, customEventTitle, customEventColor, customEventFaculty, onClose])
+
+  // Reset form when switching modes or popup opens
+  useEffect(() => {
+    if (isOpen) {
+      setHighlightedIndex(0)
+      setCustomEventTitle('')
+      setCustomEventColor('#3b82f6')
+      setCustomEventFaculty('')
+      setIsCustomEvent(false)
+    }
+  }, [isOpen])
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -248,12 +305,6 @@ export function QuickCreatePopup({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, sortedSubjects.available, highlightedIndex, onClose, handleSubjectSelect])
 
-  // Reset selection when popup opens
-  useEffect(() => {
-    if (isOpen) {
-      setHighlightedIndex(0)
-    }
-  }, [isOpen])
 
 
   // Close on outside click
@@ -311,6 +362,82 @@ export function QuickCreatePopup({
           </CardHeader>
           
           <CardContent className="space-y-4">
+            {/* Mode Toggle */}
+            <div className="flex gap-2 border rounded-lg p-1 bg-muted/50">
+              <Button
+                variant={!isCustomEvent ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setIsCustomEvent(false)}
+                className="flex-1 h-8 text-xs"
+              >
+                <BookOpen className="h-3 w-3 mr-1" />
+                Subject
+              </Button>
+              <Button
+                variant={isCustomEvent ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setIsCustomEvent(true)}
+                className="flex-1 h-8 text-xs"
+              >
+                <CalendarDays className="h-3 w-3 mr-1" />
+                Custom Event
+              </Button>
+            </div>
+
+            {isCustomEvent ? (
+              /* Custom Event Form */
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium">Event Title</Label>
+                  <Input
+                    value={customEventTitle}
+                    onChange={(e) => setCustomEventTitle(e.target.value)}
+                    placeholder="e.g., Orientation, Field Research Project..."
+                    className="mt-1"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Color</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => setCustomEventColor(color.value)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all",
+                          color.class,
+                          customEventColor === color.value
+                            ? "border-gray-900 ring-2 ring-gray-300"
+                            : "border-gray-300 hover:border-gray-400"
+                        )}
+                        title={color.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Faculty (Optional)</Label>
+                  <Input
+                    value={customEventFaculty}
+                    onChange={(e) => setCustomEventFaculty(e.target.value)}
+                    placeholder="Enter faculty name (optional)"
+                    className="mt-1"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleCustomEventCreate}
+                  disabled={!customEventTitle.trim()}
+                  className="w-full"
+                >
+                  Create Custom Event
+                </Button>
+              </div>
+            ) : (
+              /* Subject Selection */
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -454,6 +581,7 @@ export function QuickCreatePopup({
                   )}
                 </div>
               </div>
+            )}
           </CardContent>
         </Card>
       </div>

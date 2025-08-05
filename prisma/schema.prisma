@@ -182,22 +182,25 @@ model Subject {
 }
 
 model TimetableEntry {
-  id         String    @id @default(cuid())
-  batchId    String
-  subjectId  String
-  facultyId  String
-  timeSlotId String
-  dayOfWeek  String
-  date       DateTime?
-  entryType  String    @default("REGULAR")
-  isActive   Boolean   @default(true)
-  notes      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  timeSlot   TimeSlot  @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
-  faculty    User      @relation(fields: [facultyId], references: [id], onDelete: Cascade)
-  subject    Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  batch      Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  batchId          String
+  subjectId        String?
+  facultyId        String?
+  timeSlotId       String
+  dayOfWeek        String
+  date             DateTime?
+  entryType        String    @default("REGULAR")
+  isActive         Boolean   @default(true)
+  notes            String?
+  // Custom event fields
+  customEventTitle String?
+  customEventColor String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  timeSlot         TimeSlot  @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  faculty          User?     @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  subject          Subject?  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  batch            Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   @@unique([batchId, timeSlotId, dayOfWeek, date])
   @@index([batchId])

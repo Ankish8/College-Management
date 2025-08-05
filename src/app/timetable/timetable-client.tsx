@@ -75,8 +75,14 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
 
     const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
     
+    // Check if this is a custom event or regular subject
+    const isCustomEvent = entry.customEventTitle
+    const eventTitle = isCustomEvent 
+      ? entry.customEventTitle 
+      : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
+
     // Debug logging for date-specific entries
-    if (entry.subject.name === 'Design Ethics' || (entry.dayOfWeek === 'WEDNESDAY' && entry.subject.name === 'Thesis Project')) {
+    if (entry.subject?.name === 'Design Ethics' || (entry.dayOfWeek === 'WEDNESDAY' && entry.subject?.name === 'Thesis Project')) {
       console.log(`📍 Date-specific event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
     }
 
@@ -87,12 +93,33 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
     eventDateOnly.setHours(0, 0, 0, 0)
     const isPastDate = eventDateOnly < today
     
+    // Determine event styling
+    let eventClassName = ''
+    let eventStyle = {}
+    
+    if (isPastDate) {
+      eventClassName = 'bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed'
+    } else if (isCustomEvent && entry.customEventColor) {
+      // Use custom color for custom events
+      eventStyle = {
+        backgroundColor: entry.customEventColor,
+        borderColor: entry.customEventColor,
+        color: '#ffffff'
+      }
+      eventClassName = 'text-white'
+    } else {
+      eventClassName = 'bg-blue-500 text-white'
+    }
+    
     events.push({
       id: eventId,
-      title: `${entry.subject.name} - ${entry.faculty.name}${isPastDate ? ' (Past)' : ''}`,
+      title: `${eventTitle}${isPastDate ? ' (Past)' : ''}`,
       start,
       end,
-      className: isPastDate ? `bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed` : `bg-blue-500 text-white`,
+      className: eventClassName,
+      backgroundColor: eventStyle.backgroundColor,
+      borderColor: eventStyle.borderColor,
+      textColor: eventStyle.color,
       editable: !isPastDate, // Disable drag/drop for past events
       startEditable: !isPastDate, // Disable time editing for past events
       durationEditable: !isPastDate, // Disable duration editing for past events
@@ -101,17 +128,20 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         batchId: entry.batchId,
         batchName: entry.batch.name,
         subjectId: entry.subjectId,
-        subjectName: entry.subject.name,
-        subjectCode: entry.subject.code,
+        subjectName: entry.subject?.name,
+        subjectCode: entry.subject?.code,
         facultyId: entry.facultyId,
-        facultyName: entry.faculty.name,
+        facultyName: entry.faculty?.name,
         timeSlotId: entry.timeSlotId,
         timeSlotName: entry.timeSlot.name,
         dayOfWeek: entry.dayOfWeek,
         entryType: entry.entryType,
-        credits: entry.subject.credits,
+        credits: entry.subject?.credits,
         notes: entry.notes,
-        isPastDate: isPastDate
+        isPastDate: isPastDate,
+        isCustomEvent: isCustomEvent,
+        customEventTitle: entry.customEventTitle,
+        customEventColor: entry.customEventColor
       }
     })
   } else {
@@ -137,8 +167,14 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
 
       const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
       
+      // Check if this is a custom event or regular subject
+      const isCustomEvent = entry.customEventTitle
+      const eventTitle = isCustomEvent 
+        ? entry.customEventTitle 
+        : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
+
       // Debug logging for recurring entries on Wednesday (to debug Thesis Project issue)
-      if (entry.dayOfWeek === 'WEDNESDAY' && entry.subject.name === 'Thesis Project') {
+      if (entry.dayOfWeek === 'WEDNESDAY' && entry.subject?.name === 'Thesis Project') {
         console.log(`🔄 Recurring WEDNESDAY event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
       }
 
@@ -149,12 +185,33 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       eventDateOnly.setHours(0, 0, 0, 0)
       const isPastDate = eventDateOnly < today
       
+      // Determine event styling
+      let eventClassName = ''
+      let eventStyle = {}
+      
+      if (isPastDate) {
+        eventClassName = 'bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed'
+      } else if (isCustomEvent && entry.customEventColor) {
+        // Use custom color for custom events
+        eventStyle = {
+          backgroundColor: entry.customEventColor,
+          borderColor: entry.customEventColor,
+          color: '#ffffff'
+        }
+        eventClassName = 'text-white'
+      } else {
+        eventClassName = 'bg-blue-500 text-white'
+      }
+      
       events.push({
         id: eventId,
-        title: `${entry.subject.name} - ${entry.faculty.name}${isPastDate ? ' (Past)' : ''}`,
+        title: `${eventTitle}${isPastDate ? ' (Past)' : ''}`,
         start,
         end,
-        className: isPastDate ? `bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed` : `bg-blue-500 text-white`,
+        className: eventClassName,
+        backgroundColor: eventStyle.backgroundColor,
+        borderColor: eventStyle.borderColor,
+        textColor: eventStyle.color,
         editable: !isPastDate, // Disable drag/drop for past events
         startEditable: !isPastDate, // Disable time editing for past events
         durationEditable: !isPastDate, // Disable duration editing for past events
@@ -163,17 +220,20 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
           batchId: entry.batchId,
           batchName: entry.batch.name,
           subjectId: entry.subjectId,
-          subjectName: entry.subject.name,
-          subjectCode: entry.subject.code,
+          subjectName: entry.subject?.name,
+          subjectCode: entry.subject?.code,
           facultyId: entry.facultyId,
-          facultyName: entry.faculty.name,
+          facultyName: entry.faculty?.name,
           timeSlotId: entry.timeSlotId,
           timeSlotName: entry.timeSlot.name,
           dayOfWeek: entry.dayOfWeek,
           entryType: entry.entryType,
-          credits: entry.subject.credits,
+          credits: entry.subject?.credits,
           notes: entry.notes,
-          isPastDate: isPastDate
+          isPastDate: isPastDate,
+          isCustomEvent: isCustomEvent,
+          customEventTitle: entry.customEventTitle,
+          customEventColor: entry.customEventColor
         }
       })
     }
