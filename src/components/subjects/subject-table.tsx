@@ -42,6 +42,9 @@ interface Subject {
       name: string
       shortName: string
     }
+    _count: {
+      students: number
+    }
   }
   primaryFaculty: {
     name: string

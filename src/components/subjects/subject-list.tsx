@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { useSession } from "next-auth/react"
 import { canCreateSubject, isAdmin } from "@/lib/utils/permissions"
-import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X } from "lucide-react"
+import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X, ChevronDown } from "lucide-react"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import type { ViewMode } from "@/types/preferences"
 import Link from "next/link"
@@ -18,6 +18,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -58,6 +65,9 @@ interface Subject {
       name: string
       shortName: string
     }
+    _count: {
+      students: number
+    }
   }
   primaryFaculty: {
     name: string
@@ -72,7 +82,7 @@ interface Subject {
   }
 }
 
-type FilterType = "all" | "theory" | "practical" | "core" | "elective"
+type FilterType = "all" | "theory" | "practical" | "jury" | "core" | "elective"
 
 interface SubjectFilters {
   examType: FilterType
@@ -101,6 +111,7 @@ export const SubjectList = memo(function SubjectList() {
   const { preferences, updateViewMode } = useUserPreferences()
   const canCreate = canCreateSubject(session?.user as any)
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedBatch, setSelectedBatch] = useState<string>("all")
   const [filters, setFilters] = useState<SubjectFilters>({
     examType: "all",
     subjectType: [],
@@ -174,11 +185,18 @@ export const SubjectList = memo(function SubjectList() {
   const filteredSubjects = useMemo(() => {
     let filtered = subjects
 
+    // Apply batch dropdown filter first
+    if (selectedBatch !== "all") {
+      filtered = filtered.filter(subject => subject.batch.name === selectedBatch)
+    }
+
     // Apply exam type filter
     if (filters.examType === "theory") {
       filtered = filtered.filter(subject => subject.examType === "THEORY")
     } else if (filters.examType === "practical") {
-      filtered = filtered.filter(subject => ["PRACTICAL", "JURY", "PROJECT"].includes(subject.examType))
+      filtered = filtered.filter(subject => subject.examType === "PRACTICAL")
+    } else if (filters.examType === "jury") {
+      filtered = filtered.filter(subject => ["JURY", "PROJECT"].includes(subject.examType))
     } else if (filters.examType === "core") {
       filtered = filtered.filter(subject => subject.subjectType === "CORE")
     } else if (filters.examType === "elective") {
@@ -247,7 +265,7 @@ export const SubjectList = memo(function SubjectList() {
     }
 
     return filtered
-  }, [subjects, filters, searchQuery])
+  }, [subjects, filters, searchQuery, selectedBatch])
 
   const handleSubjectCreated = useCallback((newSubject: Subject) => {
     refetchSubjects() // Refresh data from server
@@ -421,7 +439,24 @@ export const SubjectList = memo(function SubjectList() {
 
       {/* Filters and Controls */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center space-x-4">
+          {/* Batch Filter Dropdown */}
+          <div className="flex-none" style={{ width: '178px' }}>
+            <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="All Batches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Batches</SelectItem>
+                {uniqueBatches.map(batch => (
+                  <SelectItem key={batch} value={batch}>
+                    <span className="truncate">{batch}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -479,7 +514,13 @@ export const SubjectList = memo(function SubjectList() {
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="practical" id="examtype-practical" />
                         <Label htmlFor="examtype-practical" className="font-normal cursor-pointer text-sm">
-                          Practical/Jury
+                          Practical
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="jury" id="examtype-jury" />
+                        <Label htmlFor="examtype-jury" className="font-normal cursor-pointer text-sm">
+                          Jury
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
