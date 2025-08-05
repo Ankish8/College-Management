@@ -4,7 +4,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isAdmin } from "@/lib/utils/permissions"
 import { db } from "@/lib/db"
-import { DepartmentSettingsForm } from "@/components/settings/department-settings-form"
+import dynamic from "next/dynamic"
+
+const DepartmentSettingsForm = dynamic(() => import("@/components/settings/department-settings-form").then(mod => ({ default: mod.DepartmentSettingsForm })))
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"

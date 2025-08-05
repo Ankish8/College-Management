@@ -66,7 +66,7 @@ interface AttendancePageContentProps {
     id: string
     name: string
     shortName: string
-  }
+  } | null
 }
 
 // Helper function to get day of week from date

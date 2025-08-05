@@ -4,7 +4,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isAdmin } from "@/lib/utils/permissions"
 import { db } from "@/lib/db"
-import { TimetableSettingsForm } from "@/components/settings/timetable-settings-form"
+import dynamic from "next/dynamic"
+
+const TimetableSettingsForm = dynamic(() => import("@/components/settings/timetable-settings-form").then(mod => ({ default: mod.TimetableSettingsForm })))
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"

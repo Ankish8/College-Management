@@ -23,8 +23,11 @@ import {
   Filter
 } from 'lucide-react'
 import { FullCalendar } from '@/components/ui/full-calendar'
-import { CreateTimetableEntryModal } from '@/components/timetable/create-timetable-entry-modal'
-import { ConflictResolutionModal } from '@/components/timetable/conflict-resolution-modal'
+import dynamic from 'next/dynamic'
+
+const CreateTimetableEntryModal = dynamic(() => import('@/components/timetable/create-timetable-entry-modal').then(mod => ({ default: mod.CreateTimetableEntryModal })))
+
+const ConflictResolutionModal = dynamic(() => import('@/components/timetable/conflict-resolution-modal').then(mod => ({ default: mod.ConflictResolutionModal })))
 import { AlternativeSuggestions } from '@/components/timetable/alternative-suggestions'
 import { AutoResolveWizard } from '@/components/timetable/auto-resolve-wizard'
 import { CalendarFilters } from '@/components/timetable/calendar-filters'

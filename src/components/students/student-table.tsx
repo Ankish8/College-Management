@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo, useCallback, useMemo } from "react"
 import { MoreHorizontal, Mail, Phone, Eye, Edit, Trash2, UserCheck, UserX, GraduationCap, Settings, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +33,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { StudentDetailPanel } from "./student-detail-panel"
-import { EditStudentModal } from "./edit-student-modal"
+import dynamic from "next/dynamic"
+
+const EditStudentModal = dynamic(() => import("./edit-student-modal").then(mod => ({ default: mod.EditStudentModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
 import { useToast } from "@/hooks/use-toast"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { useSorting } from "@/hooks/useSorting"
@@ -90,7 +95,7 @@ interface ColumnVisibility {
   attendance: boolean
 }
 
-export function StudentTable({ students, onUpdate, onDelete, loading }: StudentTableProps) {
+export const StudentTable = memo(function StudentTable({ students, onUpdate, onDelete, loading }: StudentTableProps) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deletingStudent, setDeletingStudent] = useState<Student | null>(null)
@@ -544,4 +549,4 @@ export function StudentTable({ students, onUpdate, onDelete, loading }: StudentT
       </AlertDialog>
     </>
   )
-}
+})

@@ -50,18 +50,31 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     whereClause.NOT = { id: excludeId }
   }
 
-  // Check batch conflicts (same batch, same time)
-  const batchConflicts = await db.timetableEntry.findMany({
+  // Single optimized query to check both batch and faculty conflicts
+  const allConflicts = await db.timetableEntry.findMany({
     where: {
       ...whereClause,
-      batchId: data.batchId,
+      OR: [
+        { batchId: data.batchId },  // Batch conflicts
+        { facultyId: data.facultyId }, // Faculty conflicts
+      ]
     },
     include: {
       subject: { select: { name: true } },
       faculty: { select: { name: true } },
+      batch: { 
+        select: { 
+          name: true,
+          specialization: { select: { name: true } }
+        } 
+      },
       timeSlot: { select: { name: true } },
     }
   })
+
+  // Separate conflicts by type
+  const batchConflicts = allConflicts.filter(entry => entry.batchId === data.batchId);
+  const facultyConflicts = allConflicts.filter(entry => entry.facultyId === data.facultyId);
 
   if (batchConflicts.length > 0) {
     conflicts.push({
@@ -70,24 +83,6 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
       details: batchConflicts,
     })
   }
-
-  // Check faculty conflicts (same faculty, same time)
-  const facultyConflicts = await db.timetableEntry.findMany({
-    where: {
-      ...whereClause,
-      facultyId: data.facultyId,
-    },
-    include: {
-      batch: { 
-        select: { 
-          name: true,
-          specialization: { select: { name: true } }
-        } 
-      },
-      subject: { select: { name: true } },
-      timeSlot: { select: { name: true } },
-    }
-  })
 
   if (facultyConflicts.length > 0) {
     conflicts.push({

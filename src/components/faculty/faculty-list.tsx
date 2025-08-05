@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Search, Grid, List, Filter, RefreshCw, Users, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,12 @@ import { FacultyCard } from "./faculty-card"
 import { FacultyTable } from "./faculty-table"
 import { AddFacultyModal } from "./add-faculty-modal"
 import { EditFacultyModal } from "./edit-faculty-modal"
-import { FacultyReplacementModal } from "./faculty-replacement-modal"
+import dynamic from "next/dynamic"
+
+const FacultyReplacementModal = dynamic(() => import("./faculty-replacement-modal").then(mod => ({ default: mod.FacultyReplacementModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
 import { useToast } from "@/hooks/use-toast"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { ViewMode } from "@/types/preferences"
@@ -47,7 +52,7 @@ type FilterType = "all" | "active" | "inactive"
 
 const ITEMS_PER_PAGE = 12
 
-export function FacultyList() {
+export const FacultyList = memo(function FacultyList() {
   const router = useRouter()
   const [faculty, setFaculty] = useState<Faculty[]>([])
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([])
@@ -528,4 +533,4 @@ export function FacultyList() {
       />
     </div>
   )
-}
+})

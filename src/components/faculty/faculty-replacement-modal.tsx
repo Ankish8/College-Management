@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -125,7 +125,7 @@ interface FacultyReplacementModalProps {
   onReplacementComplete: () => void
 }
 
-export function FacultyReplacementModal({ 
+export const FacultyReplacementModal = memo(function FacultyReplacementModal({ 
   open, 
   onOpenChange, 
   onReplacementComplete 
@@ -153,14 +153,7 @@ export function FacultyReplacementModal({
   const [lastDataRefresh, setLastDataRefresh] = useState<Date>(new Date())
   const [dataStale, setDataStale] = useState(false)
 
-  // Load faculty data when modal opens
-  useEffect(() => {
-    if (open && facultyData.length === 0) {
-      loadFacultyData()
-    }
-  }, [open])
-
-  const loadFacultyData = async () => {
+  const loadFacultyData = useCallback(async () => {
     setLoadingFaculty(true)
     try {
       const response = await fetch('/api/faculty')
@@ -230,7 +223,14 @@ export function FacultyReplacementModal({
     } finally {
       setLoadingFaculty(false)
     }
-  }
+  }, [selectedCurrentFaculty, selectedNewFaculty, currentStep, toast])
+
+  // Load faculty data when modal opens
+  useEffect(() => {
+    if (open && facultyData.length === 0) {
+      loadFacultyData()
+    }
+  }, [open, loadFacultyData])
 
   // Check for data staleness (warn if data is older than 5 minutes)
   useEffect(() => {
@@ -1279,4 +1279,4 @@ export function FacultyReplacementModal({
       </DialogContent>
     </Dialog>
   )
-}
+})

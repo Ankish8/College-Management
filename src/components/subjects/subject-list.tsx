@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { useSession } from "next-auth/react"
 import { canCreateSubject, isAdmin } from "@/lib/utils/permissions"
 import { Plus, Search, Grid, List, Filter, Settings, RefreshCw, BookOpen, Trophy, Clock, Award, Calendar, X } from "lucide-react"
@@ -24,9 +24,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent } from "@/components/ui/card"
 import { SubjectCard } from "./subject-card"
 import { SubjectTable } from "./subject-table"
-import { AddSubjectModal } from "./add-subject-modal"
-import { EditSubjectModal } from "./edit-subject-modal"
+import dynamic from "next/dynamic"
+
+const AddSubjectModal = dynamic(() => import("./add-subject-modal").then(mod => ({ default: mod.AddSubjectModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
+
+const EditSubjectModal = dynamic(() => import("./edit-subject-modal").then(mod => ({ default: mod.EditSubjectModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
 import { useToast } from "@/hooks/use-toast"
+import { useQuery } from "@tanstack/react-query"
 
 interface Subject {
   id: string
@@ -75,27 +85,22 @@ interface SubjectFilters {
   hasClasses: "all" | "active" | "inactive"
 }
 
-export function SubjectList() {
+// API fetch function with better error handling
+const fetchSubjectsData = async (): Promise<Subject[]> => {
+  const response = await fetch("/api/subjects", {
+    credentials: 'include'
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: Failed to fetch subjects`)
+  }
+  return response.json()
+}
+
+export const SubjectList = memo(function SubjectList() {
   const { data: session, status } = useSession()
-  const [subjects, setSubjects] = useState<Subject[]>([])
-  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([])
-  const [loading, setLoading] = useState(true)
   const { preferences, updateViewMode } = useUserPreferences()
   const canCreate = canCreateSubject(session?.user as any)
   const [searchQuery, setSearchQuery] = useState("")
-
-  // Get current view mode from preferences, fallback to "cards"
-  const viewMode: ViewMode = preferences?.viewModes?.subjects || "cards"
-
-  // Handler to update view mode
-  const handleViewModeChange = async (newViewMode: ViewMode) => {
-    try {
-      await updateViewMode("subjects", newViewMode)
-    } catch (error) {
-      console.error("Failed to update view mode:", error)
-      // Could add toast here if needed
-    }
-  }
   const [filters, setFilters] = useState<SubjectFilters>({
     examType: "all",
     subjectType: [],
@@ -111,35 +116,50 @@ export function SubjectList() {
   const [showFilterSheet, setShowFilterSheet] = useState(false)
   const { toast } = useToast()
 
-  const fetchSubjects = async () => {
+  // Get current view mode from preferences, fallback to "cards"
+  const viewMode: ViewMode = preferences?.viewModes?.subjects || "cards"
+
+  // Handler to update view mode
+  const handleViewModeChange = useCallback(async (newViewMode: ViewMode) => {
     try {
-      setLoading(true)
-      const response = await fetch("/api/subjects", {
-        credentials: 'include'
-      })
-      if (!response.ok) throw new Error("Failed to fetch subjects")
-      
-      const data = await response.json()
-      setSubjects(data)
-      setFilteredSubjects(data)
+      await updateViewMode("subjects", newViewMode)
     } catch (error) {
-      console.error("Error fetching subjects:", error)
+      console.error("Failed to update view mode:", error)
+    }
+  }, [updateViewMode])
+
+  // Use React Query for subjects with proper caching and deduplication
+  const { data: subjects = [], isLoading: loading, refetch: refetchSubjects, error } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: fetchSubjectsData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchOnReconnect: false, // Prevent refetch on reconnect
+    retry: (failureCount, error) => {
+      // Don't retry on 401 errors
+      if (error instanceof Error && error.message.includes('401')) {
+        return false
+      }
+      return failureCount < 1 // Reduce retry attempts
+    },
+    enabled: status === "authenticated",
+    // Add network mode to prevent excessive requests
+    networkMode: 'online'
+  })
+
+  // Handle query errors
+  useEffect(() => {
+    if (error) {
+      console.error('Subject query error:', error)
       toast({
         title: "Error",
-        description: "Failed to fetch subjects",
+        description: "Failed to load subjects",
         variant: "destructive",
       })
-    } finally {
-      setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchSubjects()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status])
+  }, [error, toast])
 
   // Remove focus listener to reduce unnecessary API calls
   // useEffect(() => {
@@ -150,7 +170,8 @@ export function SubjectList() {
   //   return () => window.removeEventListener('focus', handleFocus)
   // }, [])
 
-  useEffect(() => {
+  // Memoize filtered subjects to prevent unnecessary recalculations
+  const filteredSubjects = useMemo(() => {
     let filtered = subjects
 
     // Apply exam type filter
@@ -225,37 +246,33 @@ export function SubjectList() {
       )
     }
 
-    setFilteredSubjects(filtered)
+    return filtered
   }, [subjects, filters, searchQuery])
 
-  const handleSubjectCreated = (newSubject: Subject) => {
-    setSubjects(prev => [newSubject, ...prev])
+  const handleSubjectCreated = useCallback((newSubject: Subject) => {
+    refetchSubjects() // Refresh data from server
     setIsAddModalOpen(false)
     toast({
       title: "Success",
       description: "Subject created successfully",
     })
-  }
+  }, [refetchSubjects, toast])
 
-  const handleSubjectUpdated = (updatedSubject: Subject) => {
-    setSubjects(prev => 
-      prev.map(subject => 
-        subject.id === updatedSubject.id ? updatedSubject : subject
-      )
-    )
+  const handleSubjectUpdated = useCallback((updatedSubject: Subject) => {
+    refetchSubjects() // Refresh data from server
     toast({
       title: "Success",
       description: "Subject updated successfully",
     })
-  }
+  }, [refetchSubjects, toast])
 
-  const handleSubjectDeleted = (subjectId: string) => {
-    setSubjects(prev => prev.filter(subject => subject.id !== subjectId))
+  const handleSubjectDeleted = useCallback((subjectId: string) => {
+    refetchSubjects() // Refresh data from server
     toast({
       title: "Success",
       description: "Subject deleted successfully",
     })
-  }
+  }, [refetchSubjects, toast])
 
   const handleEdit = (subject: Subject) => {
     setEditingSubject(subject)
@@ -346,7 +363,7 @@ export function SubjectList() {
           <Button 
             variant="outline" 
             size="icon"
-            onClick={fetchSubjects}
+            onClick={() => refetchSubjects()}
             title="Refresh"
             disabled={loading}
           >
@@ -933,4 +950,4 @@ export function SubjectList() {
       />
     </div>
   )
-}
+})

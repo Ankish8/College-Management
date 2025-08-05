@@ -132,7 +132,7 @@ export interface AttendanceComponentProps {
     id: string
     name: string
     shortName: string
-  }
+  } | null
 }
 
 // Hook return types

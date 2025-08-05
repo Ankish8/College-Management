@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo, useCallback, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -161,7 +161,7 @@ const createRecurringEntries = async (data: CreateTimetableEntryFormData) => {
   return response.json()
 }
 
-export function CreateTimetableEntryModal({
+export const CreateTimetableEntryModal = memo(function CreateTimetableEntryModal({
   isOpen,
   onClose,
   defaultDate,
@@ -671,4 +671,4 @@ export function CreateTimetableEntryModal({
       </DialogContent>
     </Dialog>
   )
-}
+})

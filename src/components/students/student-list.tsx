@@ -18,8 +18,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentTable } from "./student-table"
-import { AddStudentModal } from "./add-student-modal"
-import { BulkUploadModal } from "./bulk-upload-modal"
+import dynamic from "next/dynamic"
+
+const AddStudentModal = dynamic(() => import("./add-student-modal").then(mod => ({ default: mod.AddStudentModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
+
+const BulkUploadModal = dynamic(() => import("./bulk-upload-modal").then(mod => ({ default: mod.BulkUploadModal })), {
+  loading: () => <div className="flex items-center justify-center p-4">Loading...</div>,
+  ssr: false
+})
 import { HorizontalStudentFilter } from "./horizontal-student-filter"
 import { useToast } from "@/hooks/use-toast"
 import { useQuery } from "@tanstack/react-query"

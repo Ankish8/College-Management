@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     // Search Students (Admin and Faculty can see all students, Students can see batch-mates)
     if ((!types || types.includes("student")) && (isAdmin(user) || isFaculty(user))) {
-      const studentResults = await searchStudents(query, departmentId, limit)
+      const studentResults = await searchStudents(query, departmentId || null, limit)
       const transformedStudents = studentResults.map(transformStudentToSearchResult)
       searchResults.push(...transformedStudents)
       if (transformedStudents.length > 0) {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Search Faculty (Admin can see all, Faculty can see colleagues)
     if ((!types || types.includes("faculty")) && (isAdmin(user) || isFaculty(user))) {
-      const facultyResults = await searchFaculty(query, departmentId, limit)
+      const facultyResults = await searchFaculty(query, departmentId || null, limit)
       const transformedFaculty = facultyResults.map(transformFacultyToSearchResult)
       searchResults.push(...transformedFaculty)
       if (transformedFaculty.length > 0) {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     // Search Subjects (All roles can search subjects)
     if (!types || types.includes("subject")) {
-      const subjectResults = await searchSubjects(query, departmentId, userRole, limit)
+      const subjectResults = await searchSubjects(query, departmentId || null, userRole, limit)
       const transformedSubjects = subjectResults.map(transformSubjectToSearchResult)
       searchResults.push(...transformedSubjects)
       if (transformedSubjects.length > 0) {
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     // Search Batches (Admin and Faculty can see all)
     if ((!types || types.includes("batch")) && (isAdmin(user) || isFaculty(user))) {
-      const batchResults = await searchBatches(query, departmentId, limit)
+      const batchResults = await searchBatches(query, departmentId || null, limit)
       const transformedBatches = batchResults.map(transformBatchToSearchResult)
       searchResults.push(...transformedBatches)
       if (transformedBatches.length > 0) {

@@ -45,18 +45,15 @@ export default async function AttendancePage() {
   })
 
   // Handle admin users who may not have a department
-  let subjectWhereClause = {
+  let subjectWhereClause: any = {
     isActive: true,
   };
 
   if (userWithDepartment?.department) {
     // Regular users - filter by their department
-    subjectWhereClause = {
-      ...subjectWhereClause,
-      batch: {
-        program: {
-          departmentId: userWithDepartment.department.id
-        }
+    subjectWhereClause.batch = {
+      program: {
+        departmentId: userWithDepartment.department.id
       }
     };
   } else if (user.role === 'ADMIN') {

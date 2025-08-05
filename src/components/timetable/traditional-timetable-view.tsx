@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback, memo } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
@@ -81,7 +81,7 @@ const WEEKDAYS = [
   { key: 'FRIDAY', label: 'Friday', short: 'Fri' },
 ]
 
-export function TraditionalTimetableView({
+export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   date,
   events,
   batchId,
@@ -758,4 +758,4 @@ export function TraditionalTimetableView({
 
     </DndContext>
   )
-}
+})

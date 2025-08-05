@@ -469,13 +469,17 @@ export default function TimetableClient() {
     queryKey: ['subjects-for-creation', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return []
-      const response = await fetch(`/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty`)
-      if (!response.ok) throw new Error('Failed to fetch subjects')
+      const response = await fetch(`/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty`, {
+        credentials: 'include'
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch subjects`)
       const data = await response.json()
       return data
     },
     enabled: !!selectedBatchId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 
   // Track subjects query state for debugging if needed

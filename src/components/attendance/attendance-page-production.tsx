@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { AttendanceHeader } from '@/components/attendance/attendance-header'
 import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'
@@ -30,7 +30,7 @@ import type {
   ViewMode 
 } from '@/types/attendance'
 
-export function AttendancePageProduction({ 
+export const AttendancePageProduction = memo(function AttendancePageProduction({ 
   courseId, 
   batchId,
   initialDate,
@@ -136,7 +136,7 @@ export function AttendancePageProduction({
   }, [students, sessions, attendanceData])
 
   // Handle attendance change
-  const handleAttendanceChange = async (
+  const handleAttendanceChange = useCallback(async (
     studentId: string, 
     sessionId: string, 
     status: AttendanceStatus
@@ -167,10 +167,10 @@ export function AttendancePageProduction({
         })
       }
     }
-  }
+  }, [markAttendance, onError])
 
   // Handle bulk actions
-  const handleBulkAction = async (action: 'present' | 'absent') => {
+  const handleBulkAction = useCallback(async (action: 'present' | 'absent') => {
     if (!students.length || !sessions.length) return
 
     try {
@@ -192,10 +192,10 @@ export function AttendancePageProduction({
         })
       }
     }
-  }
+  }, [students, sessions, bulkMarkAttendance, onError])
 
   // Handle save attendance
-  const handleSaveDay = async () => {
+  const handleSaveDay = useCallback(async () => {
     if (!hasSelection || !courseId || !selectedDate) {
       console.warn('Cannot save: missing required data', { hasSelection, courseId, selectedDate })
       toast.error('Cannot save attendance', {
@@ -255,15 +255,15 @@ export function AttendancePageProduction({
         })
       }
     }
-  }
+  }, [hasSelection, courseId, selectedDate, refetchAttendance, refetchStudents, refetchSessions, onError])
 
   // Handle retry
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     refetchStudents()
     refetchCourse()
     refetchSessions()
     refetchAttendance()
-  }
+  }, [refetchStudents, refetchCourse, refetchSessions, refetchAttendance])
 
   // Add event listeners for command palette actions
   useEffect(() => {
@@ -331,13 +331,13 @@ export function AttendancePageProduction({
   }, [primaryError, onError])
 
   // Helper function to determine content state
-  const getContentState = () => {
+  const getContentState = useCallback(() => {
     if (!hasSelection) return 'no-selection'
     if (isLoading && !course && !students.length) return 'loading'
     if (hasError && !course && !students.length) return 'error'
     if (!students.length || !sessions.length) return 'no-data'
     return 'ready'
-  }
+  }, [hasSelection, isLoading, course, students.length, hasError, sessions.length])
 
   const contentState = getContentState()
 
@@ -610,4 +610,4 @@ export function AttendancePageProduction({
       </div>
     </div>
   )
-}
+})

@@ -86,10 +86,10 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        // Include attendance statistics
-        attendanceRecords: {
+        // Use aggregation for attendance statistics (much faster)
+        _count: {
           select: {
-            status: true,
+            attendanceRecords: true
           }
         }
       },
@@ -99,22 +99,46 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    // Calculate attendance percentage for each student
-    const studentsWithAttendance = students.map(student => {
-      const totalRecords = student.attendanceRecords.length
-      const presentRecords = student.attendanceRecords.filter(
-        record => record.status === "PRESENT" || record.status === "LATE"
-      ).length
-      
-      const attendancePercentage = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0
+    // Get attendance statistics for all students in a single query
+    const studentIds = students.map(s => s.id);
+    const attendanceStats = await db.attendanceRecord.groupBy({
+      by: ['studentId'],
+      where: {
+        studentId: { in: studentIds }
+      },
+      _count: {
+        status: true
+      }
+    });
 
-      const { attendanceRecords, ...studentData } = student
+    // Get present/late counts separately for now (Prisma limitation)
+    const presentStats = await db.attendanceRecord.groupBy({
+      by: ['studentId'],
+      where: {
+        studentId: { in: studentIds },
+        status: { in: ["PRESENT", "LATE"] }
+      },
+      _count: {
+        status: true
+      }
+    });
+
+    // Create lookup maps for O(1) access
+    const presentCountMap = new Map(presentStats.map(stat => [stat.studentId, stat._count.status]));
+    const totalCountMap = new Map(attendanceStats.map(stat => [stat.studentId, stat._count.status]));
+
+    // Calculate attendance percentage efficiently
+    const studentsWithAttendance = students.map(student => {
+      const totalRecords = totalCountMap.get(student.id) || 0;
+      const presentRecords = presentCountMap.get(student.id) || 0;
+      const attendancePercentage = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0;
+
       return {
-        ...studentData,
+        ...student,
         attendancePercentage,
         totalAttendanceRecords: totalRecords,
-      }
-    })
+      };
+    });
 
     const response = NextResponse.json(studentsWithAttendance)
     

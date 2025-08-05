@@ -11,6 +11,7 @@ const createProgramSchema = z.object({
   programType: z.enum(["UNDERGRADUATE", "POSTGRADUATE", "DIPLOMA"]),
   duration: z.number().min(1).max(6),
   totalSems: z.number().min(2).max(12),
+  departmentId: z.string().optional(), // Allow admin users to specify department
 })
 
 export async function GET() {
@@ -90,10 +91,9 @@ export async function POST(request: NextRequest) {
     let departmentId = user?.department?.id;
     
     if (!departmentId && user?.role === "ADMIN") {
-      // For admin users, require departmentId in request body
-      const { departmentId: requestDepartmentId } = validatedData;
-      if (requestDepartmentId) {
-        departmentId = requestDepartmentId;
+      // For admin users, check if departmentId is provided in request body
+      if (validatedData.departmentId) {
+        departmentId = validatedData.departmentId;
       } else {
         // If no departments exist, return appropriate error
         const departmentCount = await db.department.count();

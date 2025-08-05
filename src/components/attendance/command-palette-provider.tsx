@@ -91,8 +91,6 @@ export function CommandPaletteProvider({ children, initialContext = {}, actions,
         isOpen={isOpen} 
         onClose={closePalette} 
         context={context}
-        searchContext={searchContext}
-        actions={actions}
       />
     </CommandPaletteContext.Provider>
   )

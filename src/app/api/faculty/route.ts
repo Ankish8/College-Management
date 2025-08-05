@@ -19,7 +19,7 @@ export async function GET() {
     })
 
     // Admin users can see all faculty, others need department association
-    let whereClause = {
+    let whereClause: any = {
       role: "FACULTY" as const,
     };
 
@@ -30,10 +30,7 @@ export async function GET() {
           { status: 400 }
         )
       }
-      whereClause = {
-        ...whereClause,
-        departmentId: user.departmentId
-      };
+      whereClause.departmentId = user.departmentId;
     }
 
     const faculty = await db.user.findMany({

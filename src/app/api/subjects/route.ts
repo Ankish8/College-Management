@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check faculty workload limit using centralized function
-    const maxCredits = await getMaxFacultyCredits(user.department.id)
+    const maxCredits = await getMaxFacultyCredits(departmentId!)
     const currentCredits = primaryFaculty.primarySubjects.reduce((sum, s) => sum + s.credits, 0) +
                           primaryFaculty.coFacultySubjects.reduce((sum, s) => sum + s.credits, 0)
     
