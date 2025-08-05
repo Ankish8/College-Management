@@ -88,6 +88,15 @@ export function useUserPreferences(): UseUserPreferencesResult {
       })
 
       if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("User not found for preferences, using defaults")
+          // Set default preferences if user not found
+          setPreferences({
+            viewModes: DEFAULT_PREFERENCES,
+            updatedAt: new Date(),
+          })
+          return
+        }
         throw new Error(`Failed to update preferences: ${response.status}`)
       }
 
@@ -137,6 +146,15 @@ export function useUserPreferences(): UseUserPreferencesResult {
       })
 
       if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("User not found for preferences, using defaults")
+          // Set default preferences if user not found
+          setPreferences({
+            viewModes: DEFAULT_PREFERENCES,
+            updatedAt: new Date(),
+          })
+          return
+        }
         throw new Error(`Failed to update view mode: ${response.status}`)
       }
 

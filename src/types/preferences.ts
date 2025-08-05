@@ -39,10 +39,10 @@ export interface UseUserPreferencesResult {
   refresh: () => Promise<void>
 }
 
-// Default preferences
+// Default preferences - ALWAYS TABLE VIEW
 export const DEFAULT_PREFERENCES: ViewModes = {
-  batches: "cards",
-  students: "cards", 
-  faculty: "cards",
-  subjects: "cards",
+  batches: "table",
+  students: "table", 
+  faculty: "table",
+  subjects: "table",
 }

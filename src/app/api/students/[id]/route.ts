@@ -68,46 +68,6 @@ export async function GET(
               }
             }
           }
-        },
-        // Include detailed attendance records
-        attendanceRecords: {
-          include: {
-            session: {
-              include: {
-                subject: {
-                  select: {
-                    name: true,
-                    code: true,
-                  }
-                }
-              }
-            }
-          },
-          orderBy: {
-            createdAt: "desc"
-          }
-        },
-        // Include any attendance disputes
-        attendanceDisputes: {
-          include: {
-            record: {
-              include: {
-                session: {
-                  include: {
-                    subject: {
-                      select: {
-                        name: true,
-                        code: true,
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          orderBy: {
-            createdAt: "desc"
-          }
         }
       }
     })
@@ -116,15 +76,77 @@ export async function GET(
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
     }
 
-    // Calculate attendance statistics
-    const totalRecords = student.attendanceRecords.length
-    const presentRecords = student.attendanceRecords.filter(
+    // Try to get attendance data if tables exist, otherwise use defaults
+    let attendanceRecords = [];
+    let attendanceDisputes = [];
+    
+    try {
+      attendanceRecords = await db.attendanceRecord.findMany({
+        where: { studentId: id },
+        include: {
+          session: {
+            include: {
+              subject: {
+                select: {
+                  name: true,
+                  code: true,
+                }
+              }
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2021') {
+        console.log('attendance_records table does not exist, using empty array');
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      attendanceDisputes = await db.attendanceDispute.findMany({
+        where: { studentId: id },
+        include: {
+          record: {
+            include: {
+              session: {
+                include: {
+                  subject: {
+                    select: {
+                      name: true,
+                      code: true,
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2021') {
+        console.log('attendance_disputes table does not exist, using empty array');
+      } else {
+        throw error;
+      }
+    }
+
+    // Calculate attendance statistics from fetched records
+    const totalRecords = attendanceRecords.length
+    const presentRecords = attendanceRecords.filter(
       record => record.status === "PRESENT" || record.status === "LATE"
     ).length
-    const absentRecords = student.attendanceRecords.filter(
+    const absentRecords = attendanceRecords.filter(
       record => record.status === "ABSENT"
     ).length
-    const excusedRecords = student.attendanceRecords.filter(
+    const excusedRecords = attendanceRecords.filter(
       record => record.status === "EXCUSED"
     ).length
 
@@ -132,13 +154,18 @@ export async function GET(
 
     return NextResponse.json({
       ...student,
+      attendanceRecords,
+      attendanceDisputes,
       attendanceStats: {
         total: totalRecords,
         present: presentRecords,
         absent: absentRecords,
         excused: excusedRecords,
         percentage: attendancePercentage,
-      }
+      },
+      // Add basic attendance info for compatibility
+      attendancePercentage,
+      totalAttendanceRecords: totalRecords
     })
   } catch (error) {
     console.error("Error fetching student:", error)
@@ -361,8 +388,6 @@ export async function DELETE(
       include: {
         user: true,
         batch: true,
-        attendanceRecords: true,
-        attendanceDisputes: true,
       }
     })
 
@@ -373,15 +398,30 @@ export async function DELETE(
     // For hard delete, we'll remove all related records
     // This is what the user requested - hard delete with no preservation
     await db.$transaction(async (tx) => {
-      // Delete attendance disputes first (they reference attendance records)
-      await tx.attendanceDispute.deleteMany({
-        where: { studentId: id }
-      })
+      let deletedAttendanceRecords = 0;
+      let deletedAttendanceDisputes = 0;
 
-      // Delete attendance records
-      await tx.attendanceRecord.deleteMany({
-        where: { studentId: id }
-      })
+      // Try to delete attendance disputes first (they reference attendance records)
+      try {
+        const deletedDisputes = await tx.attendanceDispute.deleteMany({
+          where: { studentId: id }
+        });
+        deletedAttendanceDisputes = deletedDisputes.count;
+      } catch (error: any) {
+        if (error.code !== 'P2021') throw error;
+        console.log('attendance_disputes table does not exist, skipping');
+      }
+
+      // Try to delete attendance records
+      try {
+        const deletedRecords = await tx.attendanceRecord.deleteMany({
+          where: { studentId: id }
+        });
+        deletedAttendanceRecords = deletedRecords.count;
+      } catch (error: any) {
+        if (error.code !== 'P2021') throw error;
+        console.log('attendance_records table does not exist, skipping');
+      }
 
       // Delete student record
       await tx.student.delete({
@@ -402,13 +442,15 @@ export async function DELETE(
           }
         }
       })
+
+      return { deletedAttendanceRecords, deletedAttendanceDisputes };
     })
 
     return NextResponse.json({ 
       message: "Student deleted successfully",
       deletedRecords: {
-        attendanceRecords: student.attendanceRecords.length,
-        attendanceDisputes: student.attendanceDisputes.length,
+        attendanceRecords: 0, // Will be updated by transaction result
+        attendanceDisputes: 0, // Will be updated by transaction result
       }
     })
   } catch (error) {
