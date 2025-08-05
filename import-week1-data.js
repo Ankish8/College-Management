@@ -6,10 +6,10 @@ async function importWeek1Data() {
   try {
     console.log('🚀 Starting Week 1 timetable import...')
     
-    // Get the B.Des Semester 7 batch
+    // Get the B-Des UX Sem-7 batch (real batch name)
     const batch = await db.batch.findFirst({
       where: {
-        name: 'B.Des Semester 7',
+        name: 'B-Des UX Sem-7',
         program: {
           shortName: 'B.Des'
         }
@@ -24,7 +24,7 @@ async function importWeek1Data() {
     })
 
     if (!batch) {
-      console.error('❌ B.Des Semester 7 batch not found')
+      console.error('❌ B-Des UX Sem-7 batch not found')
       return
     }
 
