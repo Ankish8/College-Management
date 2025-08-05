@@ -121,6 +121,7 @@ export interface AttendanceComponentProps {
   initialDate?: string
   onError?: (error: ApiError) => void
   onLoadingChange?: (loading: boolean) => void
+  dateSelector?: React.ReactNode
   batchSelector?: React.ReactNode
   subjectSelector?: React.ReactNode
   hasSelection?: boolean

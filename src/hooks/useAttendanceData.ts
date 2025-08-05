@@ -233,7 +233,23 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
       const response = await attendanceApi.getAttendanceByDate(courseId, selectedDate)
       
       if (response.success && response.data) {
-        setAttendanceData(response.data)
+        // Calculate full-day status for each student if not already present
+        const dataWithFullDay = { ...response.data }
+        
+        Object.keys(dataWithFullDay).forEach(studentId => {
+          const studentData = dataWithFullDay[studentId]
+          const sessionIds = Object.keys(studentData).filter(id => id !== 'full-day')
+          
+          // Only calculate if full-day is not already set
+          if (!studentData['full-day'] && sessionIds.length > 0) {
+            dataWithFullDay[studentId] = {
+              ...studentData,
+              'full-day': calculateFullDayStatus(studentData, sessionIds)
+            }
+          }
+        })
+        
+        setAttendanceData(dataWithFullDay)
       } else {
         setError({
           message: response.error || 'Failed to fetch attendance data',
@@ -250,12 +266,58 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
     }
   }, [courseId, selectedDate])
 
+  // Helper function to calculate full-day status from individual sessions
+  const calculateFullDayStatus = (studentAttendance: Record<string, AttendanceStatus>, sessions: string[]): AttendanceStatus => {
+    if (!sessions.length) return 'absent'
+    
+    const sessionStatuses = sessions
+      .map(sessionId => studentAttendance[sessionId])
+      .filter(status => status !== undefined)
+    
+    if (sessionStatuses.length === 0) return 'absent'
+    
+    // If all sessions are present, full day is present
+    if (sessionStatuses.every(status => status === 'present')) return 'present'
+    
+    // If any session is medical, full day is medical
+    if (sessionStatuses.some(status => status === 'medical')) return 'medical'
+    
+    // Otherwise, full day is absent
+    return 'absent'
+  }
+
   const markAttendance = useCallback(async (
     studentId: string, 
     sessionId: string, 
     status: AttendanceStatus
   ) => {
     try {
+      // Special handling for full-day marking
+      if (sessionId === 'full-day') {
+        const response = await attendanceApi.markAttendanceWithRetry(
+          courseId, 
+          studentId, 
+          sessionId, 
+          selectedDate, 
+          status
+        )
+        
+        if (response.success) {
+          // Update full-day status directly
+          setAttendanceData(prev => ({
+            ...prev,
+            [studentId]: {
+              ...prev[studentId],
+              'full-day': status
+            }
+          }))
+        } else {
+          throw new Error(response.error || 'Failed to mark full-day attendance')
+        }
+        return
+      }
+
+      // Regular session marking
       const response = await attendanceApi.markAttendanceWithRetry(
         courseId, 
         studentId, 
@@ -265,14 +327,27 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
       )
       
       if (response.success) {
-        // Optimistically update local state
-        setAttendanceData(prev => ({
-          ...prev,
-          [studentId]: {
+        // Update session status and recalculate full-day status
+        setAttendanceData(prev => {
+          const updatedStudentData = {
             ...prev[studentId],
             [sessionId]: status
           }
-        }))
+          
+          // Get all session IDs (excluding 'full-day')
+          const allSessionIds = Object.keys(updatedStudentData).filter(id => id !== 'full-day')
+          
+          // Calculate new full-day status
+          const fullDayStatus = calculateFullDayStatus(updatedStudentData, allSessionIds)
+          
+          return {
+            ...prev,
+            [studentId]: {
+              ...updatedStudentData,
+              'full-day': fullDayStatus
+            }
+          }
+        })
       } else {
         throw new Error(response.error || 'Failed to mark attendance')
       }
@@ -305,15 +380,29 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
       const response = await attendanceApi.bulkMarkAttendance(courseId, recordsWithDate)
       
       if (response.success) {
-        // Optimistically update local state
+        // Optimistically update local state with full-day calculations
         setAttendanceData(prev => {
           const updated = { ...prev }
+          const affectedStudents = new Set<string>()
+          
           records.forEach(({ studentId, sessionId, status }) => {
             if (!updated[studentId]) {
               updated[studentId] = {}
             }
             updated[studentId][sessionId] = status
+            affectedStudents.add(studentId)
           })
+          
+          // Recalculate full-day status for affected students
+          affectedStudents.forEach(studentId => {
+            const studentData = updated[studentId]
+            const sessionIds = Object.keys(studentData).filter(id => id !== 'full-day')
+            
+            if (sessionIds.length > 0) {
+              updated[studentId]['full-day'] = calculateFullDayStatus(studentData, sessionIds)
+            }
+          })
+          
           return updated
         })
       } else {

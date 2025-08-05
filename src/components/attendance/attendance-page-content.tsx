@@ -1,10 +1,12 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { AttendancePageProduction } from '@/components/attendance/attendance-page-production'
 import { CommandPaletteProvider } from '@/components/attendance/command-palette-provider'
+import { createCommandActions } from '@/utils/command-actions'
 
 interface Subject {
   id: string
@@ -34,6 +36,12 @@ interface Subject {
       email: string
     } | null
   }
+  timetableEntries: Array<{
+    id: string
+    dayOfWeek: string
+    timeSlotId: string
+    isActive: boolean
+  }>
   attendanceSessionsCount: number
 }
 
@@ -61,16 +69,40 @@ interface AttendancePageContentProps {
   }
 }
 
+// Helper function to get day of week from date
+const getDayOfWeekFromDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
+}
+
+// Helper function to filter subjects by selected date
+const filterSubjectsByDate = (subjects: Subject[], selectedDate: string): Subject[] => {
+  const dayOfWeek = getDayOfWeekFromDate(selectedDate)
+  
+  return subjects.filter(subject => 
+    subject.timetableEntries && subject.timetableEntries.some(entry => 
+      entry.isActive && entry.dayOfWeek === dayOfWeek
+    )
+  )
+}
+
 export function AttendancePageContent({ 
   subjects, 
   currentUser, 
   department 
 }: AttendancePageContentProps) {
-  console.log('🔵 Current user for attendance:', currentUser)
-  const [selectedBatch, setSelectedBatch] = useState<string>('')
-  const [selectedSubject, setSelectedSubject] = useState<string>('')
+  const searchParams = useSearchParams()
+  
+  // Get initial values from URL parameters if available
+  const initialBatch = searchParams.get('batch') || ''
+  const initialSubject = searchParams.get('subject') || ''
+  const initialDate = searchParams.get('date') || new Date().toISOString().split('T')[0]
+  
+  const [selectedBatch, setSelectedBatch] = useState<string>(initialBatch)
+  const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject)
+  const [selectedDate, setSelectedDate] = useState<string>(initialDate)
 
-  // Get unique batches from subjects
+  // Get unique batches from all subjects (don't filter by date for batches)
   const availableBatches = React.useMemo(() => {
     const batchMap = new Map<string, Batch>()
     subjects.forEach(subject => {
@@ -81,33 +113,42 @@ export function AttendancePageContent({
     return Array.from(batchMap.values()).sort((a, b) => a.semester - b.semester)
   }, [subjects])
 
-  // Filter subjects by selected batch
+  // Filter subjects by selected batch AND selected date
   const availableSubjects = React.useMemo(() => {
     if (!selectedBatch) return []
-    return subjects.filter(subject => subject.batch.id === selectedBatch)
-  }, [subjects, selectedBatch])
+    const batchSubjects = subjects.filter(subject => subject.batch.id === selectedBatch)
+    return filterSubjectsByDate(batchSubjects, selectedDate)
+  }, [subjects, selectedBatch, selectedDate])
 
-  // Auto-select first batch if none selected
+  // Reset selections when date changes (but not if we have URL parameters)
   useEffect(() => {
-    if (!selectedBatch && availableBatches.length > 0) {
+    // Only reset if we don't have URL parameters
+    if (!initialBatch && !initialSubject) {
+      setSelectedBatch('')
+      setSelectedSubject('')
+    }
+  }, [selectedDate, initialBatch, initialSubject])
+
+  // Auto-select first batch if none selected (but not if we have URL parameters)
+  useEffect(() => {
+    if (!selectedBatch && availableBatches.length > 0 && !initialBatch) {
       setSelectedBatch(availableBatches[0].id)
     }
-  }, [availableBatches, selectedBatch])
+  }, [availableBatches, selectedBatch, initialBatch])
 
-  // Auto-select first subject when batch changes
+  // Auto-select first subject when batch changes (but not if we have URL parameters)
   useEffect(() => {
-    if (selectedBatch) {
-      const batchSubjects = subjects.filter(s => s.batch.id === selectedBatch)
-      if (batchSubjects.length > 0) {
-        setSelectedSubject(batchSubjects[0].id)
-      }
+    if (selectedBatch && availableSubjects.length > 0 && !initialSubject) {
+      setSelectedSubject(availableSubjects[0].id)
     }
-  }, [selectedBatch, subjects])
+  }, [selectedBatch, availableSubjects, initialSubject])
 
-  // Reset subject when batch changes
+  // Reset subject when batch changes (but not if we have URL parameters)
   useEffect(() => {
-    setSelectedSubject('')
-  }, [selectedBatch])
+    if (!initialSubject) {
+      setSelectedSubject('')
+    }
+  }, [selectedBatch, initialSubject])
 
   const handleError = (error: { message: string; code?: string; details?: any }) => {
     console.error('Attendance Error:', error)
@@ -120,16 +161,64 @@ export function AttendancePageContent({
     console.log('Attendance loading state:', loading)
   }
 
+  // Create search context data for command palette
+  const searchContextData = React.useMemo(() => {
+    if (!selectedBatch || !selectedSubject) return undefined
+    
+    return {
+      students: [], // Will be populated by the attendance page
+      sessions: [],
+      attendanceData: {},
+      selectedDate,
+      currentMode: 'fast'
+    }
+  }, [selectedBatch, selectedSubject, selectedDate])
+
+  // Create command actions for the command palette
+  const commandActions = React.useMemo(() => {
+    return createCommandActions(
+      setSelectedDate,
+      () => {}, // setAttendanceMode - will be handled by events
+      () => {}, // handleBulkAction - will be handled by events
+      () => ({ present: 0, total: 0, percentage: 0 }), // calculateOverallStats
+      (studentId: string) => {
+        // Focus student callback - dispatch event
+        window.dispatchEvent(new CustomEvent('focusStudent', { 
+          detail: { studentId }
+        }))
+      },
+      (status) => {
+        // Filter students callback
+        console.log('Filter by attendance status:', status)
+      }
+    )
+  }, [setSelectedDate])
+
   return (
-    <CommandPaletteProvider>
+    <CommandPaletteProvider 
+      searchContextData={searchContextData}
+      actions={commandActions}
+    >
       {/* Always show the main attendance interface */}
       <AttendancePageProduction 
         courseId={selectedSubject}
         batchId={selectedBatch}
+        initialDate={selectedDate}
         onError={handleError}
         onLoadingChange={handleLoadingChange}
         hasSelection={!!(selectedBatch && selectedSubject)}
         // Enhanced selectors with better styling and information
+        dateSelector={
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Date:</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-2 border rounded-md text-sm"
+            />
+          </div>
+        }
         batchSelector={
           <Select value={selectedBatch} onValueChange={setSelectedBatch}>
             <SelectTrigger className="w-56 h-10">
@@ -138,13 +227,10 @@ export function AttendancePageContent({
             <SelectContent>
               {availableBatches.map((batch) => (
                 <SelectItem key={batch.id} value={batch.id}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{batch.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {batch.program.shortName}
-                      {batch.specialization && ` - ${batch.specialization.shortName}`}
-                    </span>
-                  </div>
+                  <span className="font-medium">
+                    {batch.name} • {batch.program.shortName}
+                    {batch.specialization && ` - ${batch.specialization.shortName}`}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -153,7 +239,13 @@ export function AttendancePageContent({
         subjectSelector={
           <Select value={selectedSubject} onValueChange={setSelectedSubject}>
             <SelectTrigger className="w-56 h-10">
-              <SelectValue placeholder="Choose subject" />
+              <SelectValue placeholder="Choose subject">
+                {selectedSubject && (
+                  <span className="font-medium">
+                    {availableSubjects.find(s => s.id === selectedSubject)?.name}
+                  </span>
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {availableSubjects.map((subject) => (

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { AttendanceHeader } from '@/components/attendance/attendance-header'
 import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'
@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3 } from 'lucide-react'
+import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { useCommandPalette } from '@/components/attendance/command-palette-provider'
 
 // Custom hooks
 import { 
@@ -35,6 +36,7 @@ export function AttendancePageProduction({
   initialDate,
   onError,
   onLoadingChange,
+  dateSelector,
   batchSelector,
   subjectSelector,
   hasSelection = false,
@@ -48,7 +50,20 @@ export function AttendancePageProduction({
     initialDate || new Date().toISOString().split('T')[0]
   )
   const [activeView, setActiveView] = useState<ViewMode>('session')
-  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('detailed')
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('fast')
+  const [focusedStudentId, setFocusedStudentId] = useState<string | null>(null)
+  
+  // Command palette for search functionality
+  const { openPalette } = useCommandPalette()
+
+  // Student focusing functionality
+  const focusStudent = useCallback((studentId: string) => {
+    setFocusedStudentId(studentId)
+    // Clear focus after a delay to allow scrolling animation
+    setTimeout(() => setFocusedStudentId(null), 2000)
+  }, [])
+
+  // This will be moved after API hooks are declared
 
   // API hooks - conditionally call based on hasSelection
   const { 
@@ -89,6 +104,8 @@ export function AttendancePageProduction({
   const isLoading = studentsLoading || courseLoading || sessionsLoading || attendanceLoading
   const hasError = studentsError || courseError || sessionsError || attendanceError
   const primaryError = studentsError || courseError || sessionsError || attendanceError
+
+  // Event listeners will be added after all handlers are declared
 
   // Calculate overall stats
   const overallStats = useMemo(() => {
@@ -248,6 +265,57 @@ export function AttendancePageProduction({
     refetchAttendance()
   }
 
+  // Add event listeners for command palette actions
+  useEffect(() => {
+    const handleMarkStudentAttendance = (event: CustomEvent) => {
+      const { studentId, status, date } = event.detail
+      console.log('🎯 Command palette attendance action:', { studentId, status, date })
+      
+      // Find the student and mark attendance for all sessions
+      sessions.forEach(session => {
+        handleAttendanceChange(studentId, session.id, status)
+      })
+      
+      // Focus the student
+      focusStudent(studentId)
+    }
+
+    const handleFocusStudent = (event: CustomEvent) => {
+      const { studentId } = event.detail
+      focusStudent(studentId)
+    }
+
+    const handleBulkAttendanceAction = (event: CustomEvent) => {
+      const { action } = event.detail
+      handleBulkAction(action)
+    }
+
+    const handleDateNavigation = (event: CustomEvent) => {
+      const { date } = event.detail
+      setSelectedDate(date)
+    }
+
+    const handleModeChange = (event: CustomEvent) => {
+      const { mode } = event.detail
+      setAttendanceMode(mode)
+    }
+
+    // Add event listeners
+    window.addEventListener('markStudentAttendance', handleMarkStudentAttendance as EventListener)
+    window.addEventListener('focusStudent', handleFocusStudent as EventListener)
+    window.addEventListener('bulkAttendanceAction', handleBulkAttendanceAction as EventListener)
+    window.addEventListener('navigateToDate', handleDateNavigation as EventListener)
+    window.addEventListener('changeAttendanceMode', handleModeChange as EventListener)
+
+    return () => {
+      window.removeEventListener('markStudentAttendance', handleMarkStudentAttendance as EventListener)
+      window.removeEventListener('focusStudent', handleFocusStudent as EventListener)
+      window.removeEventListener('bulkAttendanceAction', handleBulkAttendanceAction as EventListener)
+      window.removeEventListener('navigateToDate', handleDateNavigation as EventListener)
+      window.removeEventListener('changeAttendanceMode', handleModeChange as EventListener)
+    }
+  }, [sessions, handleAttendanceChange, focusStudent, handleBulkAction])
+
   // Effect to notify parent of loading state changes
   useEffect(() => {
     if (onLoadingChange) {
@@ -288,10 +356,15 @@ export function AttendancePageProduction({
         <div className="space-y-6">
           {/* Enhanced Top Bar with Required Selectors */}
           <div className="space-y-4">
-            {/* Primary Action Bar - Batch and Subject Selection */}
+            {/* Primary Action Bar - Date, Batch and Subject Selection */}
             <div className="flex items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg border">
               <div className="flex items-center gap-6">
                 <div className="text-sm font-medium text-foreground">Select Course:</div>
+                {dateSelector && (
+                  <div className="flex items-center gap-3">
+                    {dateSelector}
+                  </div>
+                )}
                 {batchSelector && (
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium">Batch:</span>
@@ -318,65 +391,57 @@ export function AttendancePageProduction({
               </div>
             </div>
 
-            {/* Secondary Tools Bar */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Left: Search and Calendar */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
-                  <span className="text-sm text-muted-foreground">🔍</span>
-                  <input 
-                    placeholder={hasSelection ? "Search students, quick actions..." : "Select course to enable search"}
-                    className="bg-transparent border-none outline-none text-sm w-64"
-                    disabled={!hasSelection}
-                  />
-                  <span className="text-xs text-muted-foreground">⌘K</span>
-                </div>
-                
-                {/* Clean Date Input */}
-                <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="bg-transparent border-none outline-none text-sm w-auto font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Right: Stats and Actions */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="text-muted-foreground">
-                  Students: <span className="font-medium text-foreground">
-                    {hasSelection ? students.length : '—'}
-                  </span>
-                </div>
-                <div className="text-muted-foreground">
-                  Sessions: <span className="font-medium text-foreground">
-                    {hasSelection ? sessions.length : '—'}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Simplified Tabs with Clean Styling */}
           <Tabs value={activeView} onValueChange={(value) => setActiveView(value as ViewMode)}>
             <div className="flex items-center justify-between mb-4">
-              <TabsList className="bg-gray-100 p-1 rounded-lg">
-                <TabsTrigger 
-                  value="session" 
-                  className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Session View
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="weekly" 
-                  className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Weekly View
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex items-center gap-6">
+                <TabsList className="bg-gray-100 p-1 rounded-lg">
+                  <TabsTrigger 
+                    value="session" 
+                    className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+                    Session View
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="weekly" 
+                    className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+                    Weekly View
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Inline Stats */}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div>
+                    Students: <span className="font-medium text-foreground">
+                      {hasSelection ? students.length : '—'}
+                    </span>
+                  </div>
+                  <div>
+                    Sessions: <span className="font-medium text-foreground">
+                      {hasSelection ? sessions.length : '—'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Search Button */}
+                {hasSelection && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openPalette}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Search className="h-4 w-4" />
+                    Search Students
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                      <span className="text-xs">⌘</span>K
+                    </kbd>
+                  </Button>
+                )}
+              </div>
 
               {/* Mode Toggle (Detailed/Fast only) - Only show for session view */}
               {activeView === 'session' && (
@@ -472,6 +537,7 @@ export function AttendancePageProduction({
                   attendanceData={attendanceData}
                   onAttendanceChange={handleAttendanceChange}
                   attendanceMode={attendanceMode}
+                  focusedStudentId={focusedStudentId}
                 />
               )}
             </TabsContent>

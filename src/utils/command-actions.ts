@@ -50,20 +50,36 @@ export function createCommandActions(
     navigateToToday: () => {
       const todayStr = format(today, 'yyyy-MM-dd')
       setSelectedDate(todayStr)
+      // Dispatch event for command palette integration
+      window.dispatchEvent(new CustomEvent('navigateToDate', { 
+        detail: { date: todayStr }
+      }))
     },
     
     navigateToDate: (date: string) => {
       setSelectedDate(date)
+      // Dispatch event for command palette integration
+      window.dispatchEvent(new CustomEvent('navigateToDate', { 
+        detail: { date }
+      }))
     },
     
     navigateToYesterday: () => {
       const yesterday = subDays(today, 1)
-      setSelectedDate(format(yesterday, 'yyyy-MM-dd'))
+      const dateStr = format(yesterday, 'yyyy-MM-dd')
+      setSelectedDate(dateStr)
+      window.dispatchEvent(new CustomEvent('navigateToDate', { 
+        detail: { date: dateStr }
+      }))
     },
     
     navigateToTomorrow: () => {
       const tomorrow = addDays(today, 1)
-      setSelectedDate(format(tomorrow, 'yyyy-MM-dd'))
+      const dateStr = format(tomorrow, 'yyyy-MM-dd')
+      setSelectedDate(dateStr)
+      window.dispatchEvent(new CustomEvent('navigateToDate', { 
+        detail: { date: dateStr }
+      }))
     },
     
     navigateToLastMonday: () => {
@@ -94,16 +110,28 @@ export function createCommandActions(
     
     setAttendanceMode: (mode: AttendanceMode) => {
       setAttendanceMode(mode)
+      // Dispatch event for command palette integration
+      window.dispatchEvent(new CustomEvent('changeAttendanceMode', { 
+        detail: { mode }
+      }))
     },
     
     markAllStudents: (status: AttendanceStatus) => {
       if (status === 'present' || status === 'absent') {
         handleBulkAction(status)
+        // Dispatch event for command palette integration
+        window.dispatchEvent(new CustomEvent('bulkAttendanceAction', { 
+          detail: { action: status }
+        }))
       }
     },
     
     copyPreviousDay: () => {
       handleBulkAction('copy')
+      // Dispatch event for command palette integration
+      window.dispatchEvent(new CustomEvent('bulkAttendanceAction', { 
+        detail: { action: 'copy' }
+      }))
     },
     
     saveChanges: () => {
@@ -143,6 +171,11 @@ export function createCommandActions(
     },
     
     focusStudent: (studentId: string) => {
+      // Dispatch event for student focusing
+      window.dispatchEvent(new CustomEvent('focusStudent', { 
+        detail: { studentId }
+      }))
+      
       if (focusStudentCallback) {
         focusStudentCallback(studentId)
       }

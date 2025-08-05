@@ -15,6 +15,9 @@ import {
   closestCenter,
   useDraggable,
   useDroppable,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { QuickCreatePopup } from './quick-create-popup'
@@ -109,6 +112,15 @@ export function TraditionalTimetableView({
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
   const [selectedDay, setSelectedDay] = useState<string>('')
+  
+  // Configure drag sensors with movement threshold
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before drag starts
+      },
+    })
+  )
   
   
   // Calculate week dates
@@ -237,8 +249,22 @@ export function TraditionalTimetableView({
   }
 
   const handleEventClick = (event: CalendarEvent) => {
+    // Check if this is a regular click (not part of drag operation)
     if (onEventClick) {
       onEventClick(event)
+    }
+    
+    // Add direct navigation to attendance marking
+    const subjectId = event.extendedProps?.subjectId
+    const batchId = event.extendedProps?.batchId
+    
+    if (subjectId && batchId) {
+      // Navigate to attendance page with pre-selected batch and subject in same tab
+      const today = new Date().toISOString().split('T')[0]
+      const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+      
+      // Navigate in same page for native feel
+      window.location.href = attendanceUrl
     }
   }
 
@@ -525,6 +551,7 @@ export function TraditionalTimetableView({
 
   return (
     <DndContext 
+      sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}

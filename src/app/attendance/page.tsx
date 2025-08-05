@@ -48,6 +48,8 @@ export default async function AttendancePage() {
   }
 
   // Fetch subjects that the user can mark attendance for
+  // Note: We'll filter by date dynamically on the client side
+  
   const subjects = await db.subject.findMany({
     where: {
       isActive: true,
@@ -55,14 +57,9 @@ export default async function AttendancePage() {
         program: {
           departmentId: userWithDepartment.department.id
         }
-      },
-      // If user is faculty, only show subjects they're assigned to
-      ...(user.role === 'FACULTY' ? {
-        OR: [
-          { primaryFacultyId: user.id },
-          { coFacultyId: user.id }
-        ]
-      } : {})
+      }
+      // Faculty can mark attendance for all subjects in their department
+      // No restriction to only subjects they teach
     },
     include: {
       batch: {
@@ -93,6 +90,17 @@ export default async function AttendancePage() {
           email: true,
         }
       },
+      timetableEntries: {
+        where: {
+          isActive: true,
+        },
+        select: {
+          id: true,
+          dayOfWeek: true,
+          timeSlotId: true,
+          isActive: true,
+        }
+      },
       _count: {
         select: {
           attendanceSessions: true,
@@ -104,6 +112,7 @@ export default async function AttendancePage() {
       { name: 'asc' }
     ]
   })
+
 
   // Transform subjects for the attendance interface
   const transformedSubjects = subjects.map(subject => ({
@@ -122,6 +131,7 @@ export default async function AttendancePage() {
       primary: subject.primaryFaculty,
       co: subject.coFaculty,
     },
+    timetableEntries: subject.timetableEntries,
     attendanceSessionsCount: subject._count.attendanceSessions,
   }))
 
