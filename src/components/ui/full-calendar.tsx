@@ -199,8 +199,9 @@ export function FullCalendar({
     return {
       ...event,
       className: cn(
-        'bg-muted/50 border border-border text-foreground',
+        // Don't override backgroundColor/borderColor - let the individual events control their colors
         'rounded-lg',
+        event.className, // Preserve the original event className
         event.id === viewState.selectedEvent?.id && 'ring-2 ring-primary',
         conflictStyling && [
           conflictStyling.border,

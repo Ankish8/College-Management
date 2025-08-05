@@ -76,11 +76,11 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
     const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
     
     // Check if this is a custom event or regular subject
-    const isCustomEvent = entry.customEventTitle
+    const isCustomEvent = !!entry.customEventTitle
     const eventTitle = isCustomEvent 
       ? entry.customEventTitle 
       : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
-
+    
     // Debug logging for date-specific entries
     if (entry.subject?.name === 'Design Ethics' || (entry.dayOfWeek === 'WEDNESDAY' && entry.subject?.name === 'Thesis Project')) {
       console.log(`📍 Date-specific event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
@@ -91,38 +91,55 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
     today.setHours(0, 0, 0, 0)
     const eventDateOnly = new Date(eventDate)
     eventDateOnly.setHours(0, 0, 0, 0)
-    const isPastDate = eventDateOnly < today
+    
+    // For academic planning, don't gray out recent dates in the same academic year
+    // Only gray out dates that are significantly in the past (more than 30 days ago)
+    const daysDifference = Math.floor((today.getTime() - eventDateOnly.getTime()) / (1000 * 60 * 60 * 24))
+    const isPastDate = daysDifference > 30
     
     // Determine event styling
     let eventClassName = ''
-    let eventStyle = {}
+    let backgroundColor = undefined
+    let borderColor = undefined
+    let textColor = undefined
     
     if (isPastDate) {
       eventClassName = 'bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed'
+      backgroundColor = '#9ca3af'
+      borderColor = '#9ca3af'
+      textColor = '#6b7280'
     } else if (isCustomEvent && entry.customEventColor) {
-      // Use custom color for custom events
-      eventStyle = {
-        backgroundColor: entry.customEventColor,
-        borderColor: entry.customEventColor,
-        color: '#ffffff'
-      }
-      eventClassName = 'text-white'
+      // EXTREMELY subtle colors for custom events ONLY
+      backgroundColor = '#f8fafc' // Almost white with tiny tint
+      borderColor = '#e2e8f0' // Very light gray border
+      textColor = '#1e293b' // Dark text
+      eventClassName = 'font-medium'
+    } else if (isCustomEvent) {
+      // Default extremely subtle for custom events ONLY
+      backgroundColor = '#f8fafc' // Almost white
+      borderColor = '#e2e8f0' // Very light gray border
+      textColor = '#1e293b' // Dark text
+      eventClassName = 'font-medium'
     } else {
-      eventClassName = 'bg-blue-500 text-white'
+      // Regular subject events - NO special styling, use default
+      backgroundColor = undefined // No background color
+      borderColor = undefined // No border color
+      textColor = undefined // No text color
+      eventClassName = '' // No special class
     }
     
     events.push({
       id: eventId,
-      title: `${eventTitle}${isPastDate ? ' (Past)' : ''}`,
+      title: eventTitle, // Just the clean title, no extra text
       start,
       end,
       className: eventClassName,
-      backgroundColor: eventStyle.backgroundColor,
-      borderColor: eventStyle.borderColor,
-      textColor: eventStyle.color,
-      editable: !isPastDate, // Disable drag/drop for past events
-      startEditable: !isPastDate, // Disable time editing for past events
-      durationEditable: !isPastDate, // Disable duration editing for past events
+      backgroundColor: backgroundColor,
+      borderColor: borderColor,
+      textColor: textColor,
+      editable: !isPastDate,
+      startEditable: !isPastDate,
+      durationEditable: !isPastDate,
       extendedProps: {
         timetableEntryId: entry.id,
         batchId: entry.batchId,
@@ -183,24 +200,41 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       today.setHours(0, 0, 0, 0)
       const eventDateOnly = new Date(eventDate)
       eventDateOnly.setHours(0, 0, 0, 0)
-      const isPastDate = eventDateOnly < today
+      
+      // For academic planning, don't gray out recent dates in the same academic year
+      // Only gray out dates that are significantly in the past (more than 30 days ago)
+      const daysDifference = Math.floor((today.getTime() - eventDateOnly.getTime()) / (1000 * 60 * 60 * 24))
+      const isPastDate = daysDifference > 30
       
       // Determine event styling
       let eventClassName = ''
-      let eventStyle = {}
+      let backgroundColor = undefined
+      let borderColor = undefined
+      let textColor = undefined
       
       if (isPastDate) {
         eventClassName = 'bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed'
+        backgroundColor = '#9ca3af'
+        borderColor = '#9ca3af'
+        textColor = '#6b7280'
       } else if (isCustomEvent && entry.customEventColor) {
-        // Use custom color for custom events
-        eventStyle = {
-          backgroundColor: entry.customEventColor,
-          borderColor: entry.customEventColor,
-          color: '#ffffff'
-        }
-        eventClassName = 'text-white'
+        // EXTREMELY subtle colors for custom events ONLY
+        backgroundColor = '#f8fafc' // Almost white with tiny tint
+        borderColor = '#e2e8f0' // Very light gray border
+        textColor = '#1e293b' // Dark text
+        eventClassName = 'font-medium'
+      } else if (isCustomEvent) {
+        // Default extremely subtle for custom events ONLY
+        backgroundColor = '#f8fafc' // Almost white
+        borderColor = '#e2e8f0' // Very light gray border
+        textColor = '#1e293b' // Dark text
+        eventClassName = 'font-medium'
       } else {
-        eventClassName = 'bg-blue-500 text-white'
+        // Regular subject events - NO special styling, use default
+        backgroundColor = undefined // No background color
+        borderColor = undefined // No border color
+        textColor = undefined // No text color
+        eventClassName = '' // No special class
       }
       
       events.push({
@@ -209,9 +243,9 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         start,
         end,
         className: eventClassName,
-        backgroundColor: eventStyle.backgroundColor,
-        borderColor: eventStyle.borderColor,
-        textColor: eventStyle.color,
+        backgroundColor: backgroundColor,
+        borderColor: borderColor,
+        textColor: textColor,
         editable: !isPastDate, // Disable drag/drop for past events
         startEditable: !isPastDate, // Disable time editing for past events
         durationEditable: !isPastDate, // Disable duration editing for past events
@@ -306,81 +340,26 @@ export default function TimetableClient() {
     refetch 
   } = useQuery({
     queryKey: ['timetable-entries', filters],
-    queryFn: () => fetchTimetableEntries(filters),
+    queryFn: () => {
+      console.log('🔄 Fetching timetable with filters:', filters)
+      return fetchTimetableEntries(filters)
+    },
     enabled: !!session?.user && !!selectedBatchId,
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache data
   })
 
-  // Sample events for testing (will be replaced with real data)
-  const sampleEvents: CalendarEvent[] = [
-    {
-      id: "1",
-      title: "Design Fundamentals - Prof. Smith",
-      start: new Date(2025, 6, 14, 10, 0), // July 14, 2025, 10:00 AM (Monday)
-      end: new Date(2025, 6, 14, 11, 30), // July 14, 2025, 11:30 AM
-      className: "",
-      extendedProps: {
-        timetableEntryId: "1",
-        batchId: "batch1",
-        batchName: "B.Des Semester 5",
-        subjectId: "subject1",
-        subjectName: "Design Fundamentals",
-        subjectCode: "DF101",
-        facultyId: "faculty1",
-        facultyName: "Prof. Smith",
-        timeSlotId: "slot1",
-        timeSlotName: "10:00-11:30",
-        dayOfWeek: "MONDAY" as const,
-        entryType: "REGULAR" as const,
-        credits: 4
-      }
-    },
-    {
-      id: "2",
-      title: "Typography - Prof. Johnson",
-      start: new Date(2025, 6, 15, 11, 30), // July 15, 2025, 11:30 AM (Tuesday)
-      end: new Date(2025, 6, 15, 13, 0), // July 15, 2025, 1:00 PM
-      className: "",
-      extendedProps: {
-        timetableEntryId: "2",
-        batchId: "batch1",
-        batchName: "B.Des Semester 5",
-        subjectId: "subject2",
-        subjectName: "Typography",
-        subjectCode: "TYP201",
-        facultyId: "faculty2",
-        facultyName: "Prof. Johnson",
-        timeSlotId: "slot2",
-        timeSlotName: "11:30-13:00",
-        dayOfWeek: "TUESDAY" as const,
-        entryType: "REGULAR" as const,
-        credits: 3
-      }
-    },
-    {
-      id: "3",
-      title: "Color Theory - Prof. Davis",
-      start: new Date(2025, 6, 16, 14, 30), // July 16, 2025, 2:30 PM (Wednesday)
-      end: new Date(2025, 6, 16, 16, 0), // July 16, 2025, 4:00 PM
-      className: "",
-      extendedProps: {
-        timetableEntryId: "3",
-        batchId: "batch1",
-        batchName: "B.Des Semester 5",
-        subjectId: "subject3",
-        subjectName: "Color Theory",
-        subjectCode: "CT301",
-        facultyId: "faculty3",
-        facultyName: "Prof. Davis",
-        timeSlotId: "slot3",
-        timeSlotName: "14:30-16:00",
-        dayOfWeek: "WEDNESDAY" as const,
-        entryType: "REGULAR" as const,
-        credits: 3
-      }
-    }
-  ]
+  // Debug logging
+  React.useEffect(() => {
+    console.log('📊 Timetable Query State:', {
+      selectedBatchId,
+      isLoading,
+      error: error?.message,
+      dataEntries: timetableData?.entries?.length || 0,
+      enabled: !!session?.user && !!selectedBatchId
+    })
+  }, [selectedBatchId, isLoading, error, timetableData, session])
+
 
   // Format batch display text
   const formatBatchDisplay = React.useCallback((batch: any) => {
@@ -432,94 +411,42 @@ export default function TimetableClient() {
       
       const allEvents: CalendarEvent[] = []
       
-      // Process date-specific entries first (they take priority)
-      const occupiedSlots = new Set<string>()
-      dateSpecificEntries.forEach((entry: any) => {
-        // Only show date-specific entries that fall within the visible week
+      // Process date-specific entries only for the current visible week
+      const visibleDateSpecificEntries = dateSpecificEntries.filter((entry: any) => {
+        if (!entry.date) return false
         const entryDate = new Date(entry.date)
-        if (entryDate >= currentWeekStart && entryDate <= currentWeekEnd) {
-          const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
-          allEvents.push(...entryEvents)
-          
-          // Track occupied slots to avoid conflicts with recurring patterns
-          entryEvents.forEach(event => {
-            const slotKey = `${entry.dayOfWeek}-${entry.timeSlot.name}-${event.start.toDateString()}`
-            occupiedSlots.add(slotKey)
-          })
-        }
+        entryDate.setHours(0, 0, 0, 0)
+        // Only show entries that fall within the current visible week
+        return entryDate >= currentWeekStart && entryDate <= currentWeekEnd
       })
       
-      // Process recurring entries, but skip any that conflict with date-specific entries
-      recurringEntries.forEach((entry: any) => {
+      console.log(`   🎯 Visible date-specific entries for current week: ${visibleDateSpecificEntries.length}`)
+      
+      visibleDateSpecificEntries.forEach((entry: any) => {
         const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
-        
-        // Filter to only show events in the visible week and avoid conflicts
-        const visibleEvents = entryEvents.filter(event => {
-          const eventDate = new Date(event.start)
-          const isInVisibleWeek = eventDate >= currentWeekStart && eventDate <= currentWeekEnd
-          const slotKey = `${entry.dayOfWeek}-${entry.timeSlot.name}-${event.start.toDateString()}`
-          const hasNoConflict = !occupiedSlots.has(slotKey)
-          
-          return isInVisibleWeek && hasNoConflict
+        allEvents.push(...entryEvents)
+      })
+      
+      console.log(`   🎉 Generated ${allEvents.length} calendar events`)
+      if (allEvents.length > 0) {
+        console.log('   📋 First 3 events:')
+        allEvents.slice(0, 3).forEach((event, index) => {
+          console.log(`     ${index + 1}. "${event.title}" on ${event.start.toDateString()} at ${event.start.toTimeString().split(' ')[0]}`)
+          console.log(`        Color: ${event.backgroundColor}, Custom: ${event.extendedProps?.customEventTitle}`)
+          console.log(`        DB Color: ${event.extendedProps?.customEventColor}`)
         })
         
-        allEvents.push(...visibleEvents)
-      })
-      
-      console.log(`   🎉 Generated ${allEvents.length} calendar events for visible week`)
+        // Debug the raw entry data too
+        console.log('   🔍 First raw entry data:')
+        const firstEntry = dateSpecificEntries[0]
+        console.log(`        customEventTitle: ${firstEntry.customEventTitle}`)
+        console.log(`        customEventColor: ${firstEntry.customEventColor}`)
+        console.log(`        subject: ${firstEntry.subject?.name || 'null'}`)
+      }
       return allEvents
     }
     
-    // If no real data, generate sample recurring events for demonstration
-    if (selectedBatchId) {
-      const batchInfo = batchesData?.find((b: any) => b.id === selectedBatchId)
-      if (batchInfo) {
-        const batchName = formatBatchDisplay(batchInfo)
-        // Using sample data for demonstration
-        
-        // Create sample recurring events
-        const sampleTimetableEntries = [
-          {
-            id: "sample-1",
-            dayOfWeek: "MONDAY",
-            timeSlot: { name: "10:15-11:05" },
-            subject: { name: "Design Fundamentals", code: "DF101", credits: 4 },
-            faculty: { name: "Prof. Smith" },
-            batch: { name: batchName },
-            batchId: selectedBatchId,
-            entryType: "REGULAR"
-          },
-          {
-            id: "sample-2", 
-            dayOfWeek: "TUESDAY",
-            timeSlot: { name: "11:15-12:05" },
-            subject: { name: "Typography", code: "TYP201", credits: 3 },
-            faculty: { name: "Prof. Johnson" },
-            batch: { name: batchName },
-            batchId: selectedBatchId,
-            entryType: "REGULAR"
-          },
-          {
-            id: "sample-3",
-            dayOfWeek: "WEDNESDAY", 
-            timeSlot: { name: "14:15-15:05" },
-            subject: { name: "Color Theory", code: "CT301", credits: 3 },
-            faculty: { name: "Prof. Davis" },
-            batch: { name: batchName },
-            batchId: selectedBatchId,
-            entryType: "REGULAR"
-          }
-        ]
-        
-        const allSampleEvents: CalendarEvent[] = []
-        sampleTimetableEntries.forEach(entry => {
-          const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
-          allSampleEvents.push(...entryEvents)
-        })
-        
-        return allSampleEvents
-      }
-    }
+    // No real data found, return empty array
     
     return []
   }, [timetableData, selectedBatchId, batchesData, formatBatchDisplay, selectedDate])
@@ -942,16 +869,9 @@ export default function TimetableClient() {
                 <SelectTrigger className="w-80">
                   <SelectValue placeholder="Select batch...">
                     {selectedBatch ? (
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="font-medium truncate">
-                          {formatBatchDisplay(selectedBatch)}
-                        </span>
-                        {selectedBatch.specialization && (
-                          <Badge variant="secondary" className="text-xs">
-                            {selectedBatch.specialization.name}
-                          </Badge>
-                        )}
-                      </div>
+                      <span className="font-medium truncate">
+                        {formatBatchDisplay(selectedBatch)}
+                      </span>
                     ) : (
                       "Select batch..."
                     )}
@@ -961,16 +881,9 @@ export default function TimetableClient() {
                   {batchesData?.map((batch: any) => (
                     <SelectItem key={batch.id} value={batch.id}>
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {formatBatchDisplay(batch)}
-                          </span>
-                          {batch.specialization && (
-                            <Badge variant="secondary" className="text-xs">
-                              {batch.specialization.name}
-                            </Badge>
-                          )}
-                        </div>
+                        <span className="font-medium">
+                          {formatBatchDisplay(batch)}
+                        </span>
                         <div className="text-xs text-muted-foreground">
                           {batch.program?.name} • {batch.name}
                         </div>
@@ -1035,14 +948,6 @@ export default function TimetableClient() {
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-64 w-full" />
-          </div>
-        ) : events.length === 0 ? (
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground">No timetable entries found.</p>
-            <Button className="mt-4" onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create First Entry
-            </Button>
           </div>
         ) : (
           <FullCalendar

@@ -244,7 +244,24 @@ export async function GET(request: NextRequest) {
     const [entries, totalCount] = await Promise.all([
       db.timetableEntry.findMany({
         where: whereClause,
-        include: {
+        select: {
+          // Include all main fields
+          id: true,
+          batchId: true,
+          subjectId: true,
+          facultyId: true,
+          timeSlotId: true,
+          dayOfWeek: true,
+          date: true,
+          entryType: true,
+          notes: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          // Custom event fields - IMPORTANT!
+          customEventTitle: true,
+          customEventColor: true,
+          // Related data
           batch: {
             select: {
               name: true,
@@ -294,7 +311,8 @@ export async function GET(request: NextRequest) {
     
     entries.forEach((entry, index) => {
       if (index < 10) { // Only log first 10 for brevity
-        console.log(`   ${index + 1}. ${entry.id} ${entry.subject.name} ${entry.date ? entry.date.toISOString().split('T')[0] : 'null'} ${entry.dayOfWeek}`)
+        const title = entry.subject?.name || entry.customEventTitle || 'No title'
+        console.log(`   ${index + 1}. ${entry.id} ${title} ${entry.date ? entry.date.toISOString().split('T')[0] : 'null'} ${entry.dayOfWeek}`)
       }
     })
 

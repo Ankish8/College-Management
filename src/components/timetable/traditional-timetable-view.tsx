@@ -380,6 +380,9 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
 
     const style = {
       transform: CSS.Translate.toString(transform),
+      backgroundColor: event.backgroundColor || undefined,
+      borderColor: event.borderColor || undefined,
+      color: event.textColor || undefined,
     }
 
     return (
@@ -389,7 +392,8 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
         {...attributes}
         className={cn(
           "p-3 h-full transition-all hover:shadow-md rounded-lg group relative",
-          "bg-muted/50 border border-border hover:bg-muted/70",
+          // Don't override backgroundColor/borderColor - let inline styles handle it
+          !event.backgroundColor && "bg-muted/50 border border-border hover:bg-muted/70", // Only use fallback if no custom color
           isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
           isPastDate && "bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed",
           isDragging && "opacity-50 z-50"
@@ -438,13 +442,15 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               isSampleEvent ? "text-orange-500" : isPastDate ? "text-gray-400" : "text-muted-foreground"
             )} />
             <div className="font-semibold text-sm line-clamp-1">
-              {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
+              {event.extendedProps?.customEventTitle || event.extendedProps?.subjectName || event.extendedProps?.subjectCode || event.title}
             </div>
           </div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <User className="h-3 w-3" />
-            <span className="line-clamp-1">{event.extendedProps?.facultyName}</span>
-          </div>
+          {event.extendedProps?.facultyName && (
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <User className="h-3 w-3" />
+              <span className="line-clamp-1">{event.extendedProps?.facultyName}</span>
+            </div>
+          )}
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
             <span>
