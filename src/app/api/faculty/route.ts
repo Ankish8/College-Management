@@ -15,21 +15,29 @@ export async function GET() {
     // Get user's department using email instead of ID (more reliable)
     const user = await db.user.findUnique({
       where: { email: session.user.email! },
-      select: { departmentId: true }
+      select: { departmentId: true, role: true }
     })
 
-    if (!user?.departmentId) {
-      return NextResponse.json(
-        { error: "User department not found" },
-        { status: 400 }
-      )
+    // Admin users can see all faculty, others need department association
+    let whereClause = {
+      role: "FACULTY" as const,
+    };
+
+    if (user?.role !== "ADMIN") {
+      if (!user?.departmentId) {
+        return NextResponse.json(
+          { error: "User department not found" },
+          { status: 400 }
+        )
+      }
+      whereClause = {
+        ...whereClause,
+        departmentId: user.departmentId
+      };
     }
 
     const faculty = await db.user.findMany({
-      where: {
-        role: "FACULTY",
-        departmentId: user.departmentId,
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -131,12 +139,36 @@ export async function POST(request: NextRequest) {
     // Get user's department
     const user = await db.user.findUnique({
       where: { id: (session.user as any).id },
-      select: { departmentId: true }
+      select: { departmentId: true, role: true }
     })
 
-    if (!user?.departmentId) {
+    // For admin users, we need to get department from request body or use first available department
+    let departmentId = user?.departmentId;
+
+    if (user?.role === "ADMIN" && !departmentId) {
+      // Check if departmentId is provided in request body
+      const { departmentId: requestDepartmentId } = body;
+      if (requestDepartmentId) {
+        departmentId = requestDepartmentId;
+      } else {
+        // If no departments exist, return appropriate error
+        const departmentCount = await db.department.count();
+        if (departmentCount === 0) {
+          return NextResponse.json(
+            { error: "No departments found. Please create a department first before adding faculty." },
+            { status: 400 }
+          )
+        }
+        
+        // Use the first available department for admin
+        const firstDepartment = await db.department.findFirst();
+        departmentId = firstDepartment?.id;
+      }
+    }
+
+    if (!departmentId) {
       return NextResponse.json(
-        { error: "User department not found" },
+        { error: "Department assignment required" },
         { status: 400 }
       )
     }
@@ -167,7 +199,7 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         role: "FACULTY",
         status: status || "ACTIVE",
-        departmentId: user.departmentId,
+        departmentId: departmentId,
       },
       select: {
         id: true,

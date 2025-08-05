@@ -37,6 +37,20 @@ export async function GET() {
 
     console.log("User found:", user ? "Yes" : "No", "Department:", user?.department ? "Yes" : "No")
 
+    // Handle admin users who may not have a department
+    if (!user?.department && user?.role === "ADMIN") {
+      // For admin users without department, return default settings
+      const response = {
+        creditHoursRatio: 15,
+        defaultExamTypes: ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"],
+        defaultSubjectTypes: ["CORE", "ELECTIVE"],
+        customExamTypes: [],
+        customSubjectTypes: [],
+      }
+      console.log("Returning default settings for admin user without department")
+      return NextResponse.json(response)
+    }
+
     if (!user?.department) {
       return NextResponse.json(
         { error: "User department not found" },
@@ -110,6 +124,15 @@ export async function PUT(request: NextRequest) {
         }
       }
     })
+
+    // Handle admin users who may not have a department  
+    if (!user?.department && user?.role === "ADMIN") {
+      // For admin users without department, return error since they can't modify settings
+      return NextResponse.json(
+        { error: "No department found. Create a department first to modify settings." },
+        { status: 400 }
+      )
+    }
 
     if (!user?.department) {
       return NextResponse.json(

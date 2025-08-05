@@ -129,15 +129,42 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    if (!user?.department) {
+    // For admin users without department, get department from the batch
+    let departmentId = user?.department?.id;
+    let departmentSettings = user?.department?.settings;
+    
+    if (!departmentId && user?.role === "ADMIN") {
+      // Get department from the selected batch
+      const batch = await db.batch.findUnique({
+        where: { id: validatedData.batchId },
+        include: {
+          program: {
+            include: {
+              department: {
+                include: {
+                  settings: true
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      if (batch?.program?.department) {
+        departmentId = batch.program.department.id;
+        departmentSettings = batch.program.department.settings;
+      }
+    }
+
+    if (!departmentId) {
       return NextResponse.json(
-        { error: "User department not found" },
+        { error: "Department information required for subject creation" },
         { status: 400 }
       )
     }
 
     // Calculate total hours using centralized function
-    const totalHours = await calculateSubjectHours(validatedData.credits, user.department.id)
+    const totalHours = await calculateSubjectHours(validatedData.credits, departmentId)
 
     // Check if subject code already exists
     const existingSubject = await db.subject.findUnique({

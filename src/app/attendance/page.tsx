@@ -7,6 +7,7 @@ import { AttendancePageContent } from "@/components/attendance/attendance-page-c
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import { GraduationCap } from "lucide-react"
 
 /**
  * Main Attendance Page
@@ -43,7 +44,26 @@ export default async function AttendancePage() {
     }
   })
 
-  if (!userWithDepartment?.department) {
+  // Handle admin users who may not have a department
+  let subjectWhereClause = {
+    isActive: true,
+  };
+
+  if (userWithDepartment?.department) {
+    // Regular users - filter by their department
+    subjectWhereClause = {
+      ...subjectWhereClause,
+      batch: {
+        program: {
+          departmentId: userWithDepartment.department.id
+        }
+      }
+    };
+  } else if (user.role === 'ADMIN') {
+    // Admin users can see all subjects across departments
+    // No additional filtering needed
+  } else {
+    // Non-admin users without department - this shouldn't happen
     throw new Error("User department not found")
   }
 
@@ -51,16 +71,7 @@ export default async function AttendancePage() {
   // Note: We'll filter by date dynamically on the client side
   
   const subjects = await db.subject.findMany({
-    where: {
-      isActive: true,
-      batch: {
-        program: {
-          departmentId: userWithDepartment.department.id
-        }
-      }
-      // Faculty can mark attendance for all subjects in their department
-      // No restriction to only subjects they teach
-    },
+    where: subjectWhereClause,
     include: {
       batch: {
         include: {
@@ -142,24 +153,29 @@ export default async function AttendancePage() {
         <SiteHeader />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {subjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-6xl mb-4">📚</div>
-              <h2 className="text-xl font-semibold mb-2">No Subjects Available</h2>
-              <p className="text-muted-foreground max-w-md">
-                {user.role === 'FACULTY' 
-                  ? "You don't have any subjects assigned for attendance marking."
-                  : "No active subjects found in your department."
-                }
-              </p>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Contact your administrator if you believe this is an error.
+            <div className="flex flex-1 items-center justify-center">
+              <div className="flex flex-col items-center text-center space-y-4 max-w-md">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <GraduationCap className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-lg font-medium text-foreground">
+                    {user.role === 'FACULTY' 
+                      ? "No subjects assigned for attendance marking"
+                      : "No active subjects found"
+                    }
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Contact your administrator if you believe this is an error.
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
             <AttendancePageContent 
               subjects={transformedSubjects}
               currentUser={user}
-              department={userWithDepartment.department}
+              department={userWithDepartment?.department || null}
             />
           )}
         </div>

@@ -91,6 +91,7 @@ const data = {
           title: "Manage Timetable",
           url: "/timetable/manage",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "Time Slots",

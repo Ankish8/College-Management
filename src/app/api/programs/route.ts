@@ -86,9 +86,34 @@ export async function POST(request: NextRequest) {
       include: { department: true }
     })
 
-    if (!user?.department) {
+    // Handle admin users who may not have a department
+    let departmentId = user?.department?.id;
+    
+    if (!departmentId && user?.role === "ADMIN") {
+      // For admin users, require departmentId in request body
+      const { departmentId: requestDepartmentId } = validatedData;
+      if (requestDepartmentId) {
+        departmentId = requestDepartmentId;
+      } else {
+        // If no departments exist, return appropriate error
+        const departmentCount = await db.department.count();
+        if (departmentCount === 0) {
+          return NextResponse.json(
+            { error: "No departments found. Please create a department first." },
+            { status: 400 }
+          )
+        }
+        
+        return NextResponse.json(
+          { error: "Department ID is required for program creation." },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (!departmentId) {
       return NextResponse.json(
-        { error: "User department not found" },
+        { error: "Department assignment required" },
         { status: 400 }
       )
     }
@@ -100,7 +125,7 @@ export async function POST(request: NextRequest) {
         programType: validatedData.programType,
         duration: validatedData.duration,
         totalSems: validatedData.totalSems,
-        departmentId: user.department.id,
+        departmentId: departmentId,
         isActive: true,
       },
       include: {

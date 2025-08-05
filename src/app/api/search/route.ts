@@ -45,10 +45,12 @@ export async function GET(request: NextRequest) {
     // Get user's department for scoping results
     const userWithDept = await db.user.findUnique({
       where: { id: user.id },
-      select: { departmentId: true }
+      select: { departmentId: true, role: true }
     })
 
-    if (!userWithDept?.departmentId) {
+    // Admin users can search across all departments
+    const departmentId = userWithDept?.departmentId;
+    if (!departmentId && userWithDept?.role !== "ADMIN") {
       return NextResponse.json({ error: "User department not found" }, { status: 400 })
     }
 
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     // Search Students (Admin and Faculty can see all students, Students can see batch-mates)
     if ((!types || types.includes("student")) && (isAdmin(user) || isFaculty(user))) {
-      const studentResults = await searchStudents(query, userWithDept.departmentId, limit)
+      const studentResults = await searchStudents(query, departmentId, limit)
       const transformedStudents = studentResults.map(transformStudentToSearchResult)
       searchResults.push(...transformedStudents)
       if (transformedStudents.length > 0) {
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Search Faculty (Admin can see all, Faculty can see colleagues)
     if ((!types || types.includes("faculty")) && (isAdmin(user) || isFaculty(user))) {
-      const facultyResults = await searchFaculty(query, userWithDept.departmentId, limit)
+      const facultyResults = await searchFaculty(query, departmentId, limit)
       const transformedFaculty = facultyResults.map(transformFacultyToSearchResult)
       searchResults.push(...transformedFaculty)
       if (transformedFaculty.length > 0) {
@@ -83,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     // Search Subjects (All roles can search subjects)
     if (!types || types.includes("subject")) {
-      const subjectResults = await searchSubjects(query, userWithDept.departmentId, userRole, limit)
+      const subjectResults = await searchSubjects(query, departmentId, userRole, limit)
       const transformedSubjects = subjectResults.map(transformSubjectToSearchResult)
       searchResults.push(...transformedSubjects)
       if (transformedSubjects.length > 0) {
@@ -96,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     // Search Batches (Admin and Faculty can see all)
     if ((!types || types.includes("batch")) && (isAdmin(user) || isFaculty(user))) {
-      const batchResults = await searchBatches(query, userWithDept.departmentId, limit)
+      const batchResults = await searchBatches(query, departmentId, limit)
       const transformedBatches = batchResults.map(transformBatchToSearchResult)
       searchResults.push(...transformedBatches)
       if (transformedBatches.length > 0) {
@@ -137,12 +139,18 @@ export async function GET(request: NextRequest) {
 }
 
 // Search helper functions
-async function searchStudents(query: string, departmentId: string, limit: number): Promise<StudentSearchData[]> {
+async function searchStudents(query: string, departmentId: string | null, limit: number): Promise<StudentSearchData[]> {
+  const whereClause: any = {};
+  
+  if (departmentId) {
+    whereClause.user = {
+      departmentId: departmentId
+    };
+  }
+  
   const results = await db.student.findMany({
     where: {
-      user: {
-        departmentId: departmentId
-      },
+      ...whereClause,
       OR: [
         { studentId: { contains: query } },
         { rollNumber: { contains: query } },
@@ -186,11 +194,18 @@ async function searchStudents(query: string, departmentId: string, limit: number
   return results
 }
 
-async function searchFaculty(query: string, departmentId: string, limit: number): Promise<FacultySearchData[]> {
+async function searchFaculty(query: string, departmentId: string | null, limit: number): Promise<FacultySearchData[]> {
+  const whereClause: any = {
+    role: "FACULTY",
+  };
+  
+  if (departmentId) {
+    whereClause.departmentId = departmentId;
+  }
+  
   const results = await db.user.findMany({
     where: {
-      role: "FACULTY",
-      departmentId: departmentId,
+      ...whereClause,
       OR: [
         { name: { contains: query } },
         { email: { contains: query } },
@@ -228,19 +243,22 @@ async function searchFaculty(query: string, departmentId: string, limit: number)
   return results
 }
 
-async function searchSubjects(query: string, departmentId: string, userRole: string, limit: number): Promise<SubjectSearchData[]> {
-  const whereClause: any = {
-    batch: {
+async function searchSubjects(query: string, departmentId: string | null, userRole: string, limit: number): Promise<SubjectSearchData[]> {
+  const whereClause: any = {};
+  
+  if (departmentId) {
+    whereClause.batch = {
       program: {
         departmentId: departmentId
       }
-    },
-    OR: [
-      { name: { contains: query } },
-      { code: { contains: query } },
-      { primaryFaculty: { name: { contains: query } } },
-    ]
+    };
   }
+  
+  whereClause.OR = [
+    { name: { contains: query } },
+    { code: { contains: query } },
+    { primaryFaculty: { name: { contains: query } } },
+  ]
 
   const results = await db.subject.findMany({
     where: whereClause,
@@ -269,12 +287,18 @@ async function searchSubjects(query: string, departmentId: string, userRole: str
   return results
 }
 
-async function searchBatches(query: string, departmentId: string, limit: number): Promise<BatchSearchData[]> {
+async function searchBatches(query: string, departmentId: string | null, limit: number): Promise<BatchSearchData[]> {
+  const whereClause: any = {};
+  
+  if (departmentId) {
+    whereClause.program = {
+      departmentId: departmentId
+    };
+  }
+  
   const results = await db.batch.findMany({
     where: {
-      program: {
-        departmentId: departmentId
-      },
+      ...whereClause,
       OR: [
         { name: { contains: query } },
         { program: { name: { contains: query } } },
