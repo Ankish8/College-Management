@@ -15,6 +15,14 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Non-hoverable variants for status badges
+        status:
+          "border-transparent bg-primary text-primary-foreground",
+        "status-secondary":
+          "border-transparent bg-secondary text-secondary-foreground",
+        "status-destructive":
+          "border-transparent bg-destructive text-destructive-foreground",
+        "status-outline": "text-foreground",
       },
     },
     defaultVariants: {

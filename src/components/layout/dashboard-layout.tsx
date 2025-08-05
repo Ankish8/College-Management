@@ -78,7 +78,7 @@ export default async function DashboardLayout({
             {session?.user && (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Badge className={getRoleColor((user as any)?.role)}>
+                  <Badge variant="status-outline" className={getRoleColor((user as any)?.role)}>
                     {(user as any)?.role}
                   </Badge>
                   <div className="text-right">

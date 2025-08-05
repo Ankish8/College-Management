@@ -161,7 +161,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                   <div className="space-y-1">
                     <div className="font-medium">{subject.name}</div>
                     <div className="flex items-center gap-2">
-                      <Badge className={`text-xs ${getExamTypeColor(subject.examType)}`}>
+                      <Badge variant="status-outline" className={`text-xs ${getExamTypeColor(subject.examType)}`}>
                         {subject.examType}
                       </Badge>
                     </div>
@@ -169,7 +169,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                 </TableCell>
                 
                 <TableCell>
-                  <Badge variant="outline" className="font-mono">
+                  <Badge variant="status-outline" className="font-mono">
                     {subject.code}
                   </Badge>
                 </TableCell>
@@ -216,7 +216,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                 </TableCell>
                 
                 <TableCell>
-                  <Badge className={`text-xs ${getSubjectTypeColor(subject.subjectType)}`}>
+                  <Badge variant="status-outline" className={`text-xs ${getSubjectTypeColor(subject.subjectType)}`}>
                     {subject.subjectType}
                   </Badge>
                 </TableCell>

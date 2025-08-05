@@ -84,8 +84,16 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
   }
 
   const getTotalCredits = (facultyMember: Faculty) => {
-    return [...facultyMember.primarySubjects, ...facultyMember.coFacultySubjects]
-      .reduce((sum, subject) => sum + subject.credits, 0)
+    // Only count teaching subjects (exclude non-teaching like internships, projects)
+    const teachingSubjects = [...facultyMember.primarySubjects, ...facultyMember.coFacultySubjects]
+      .filter(subject => {
+        const subjectName = subject.name.toLowerCase();
+        // Exclude non-teaching subjects
+        return !subjectName.includes('internship') && 
+               !subjectName.includes('field research project');
+      });
+    
+    return teachingSubjects.reduce((sum, subject) => sum + subject.credits, 0);
   }
 
   const getTotalSubjects = (facultyMember: Faculty) => {
@@ -255,7 +263,7 @@ export function FacultyTable({ faculty, onUpdate, onDelete, onEdit }: FacultyTab
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Badge className={getStatusColor(facultyMember.status)}>
+                  <Badge variant="status-outline" className={getStatusColor(facultyMember.status)}>
                     <span className="hidden sm:inline">{facultyMember.status}</span>
                     <span className="sm:hidden">{facultyMember.status === 'ACTIVE' ? 'A' : 'I'}</span>
                   </Badge>

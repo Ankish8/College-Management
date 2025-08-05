@@ -178,23 +178,23 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
+        return <Badge variant="status-outline" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
       case "INACTIVE":
-        return <Badge variant="secondary">Inactive</Badge>
+        return <Badge variant="status-secondary">Inactive</Badge>
       case "SUSPENDED":
-        return <Badge variant="destructive">Suspended</Badge>
+        return <Badge variant="status-destructive">Suspended</Badge>
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="status-outline">{status}</Badge>
     }
   }
 
   const getAttendanceBadge = (percentage: number) => {
     if (percentage >= 85) {
-      return <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">{percentage}%</Badge>
+      return <Badge variant="status-outline" className="bg-green-100 text-green-700 border-green-200">{percentage}%</Badge>
     } else if (percentage >= 75) {
-      return <Badge variant="default" className="bg-yellow-100 text-yellow-700 border-yellow-200">{percentage}%</Badge>
+      return <Badge variant="status-outline" className="bg-yellow-100 text-yellow-700 border-yellow-200">{percentage}%</Badge>
     } else {
-      return <Badge variant="destructive">{percentage}%</Badge>
+      return <Badge variant="status-destructive">{percentage}%</Badge>
     }
   }
 
@@ -356,7 +356,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
                 {columnVisibility.studentId && (
                   <TableCell>
                     <div className="group flex items-center gap-1">
-                      <Badge variant="outline" className="font-mono">
+                      <Badge variant="status-outline" className="font-mono">
                         {student.studentId}
                       </Badge>
                       <button
@@ -379,7 +379,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
                 {columnVisibility.rollNumber && (
                   <TableCell>
                     <div className="group flex items-center gap-1">
-                      <Badge variant="outline" className="font-mono">
+                      <Badge variant="status-outline" className="font-mono">
                         {student.rollNumber}
                       </Badge>
                       <button

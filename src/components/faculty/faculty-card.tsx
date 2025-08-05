@@ -201,7 +201,7 @@ export function FacultyCard({ faculty, onUpdate, onDelete, onEdit }: FacultyCard
               {faculty.name}
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Badge className={getStatusColor(faculty.status)}>
+              <Badge variant="status-outline" className={getStatusColor(faculty.status)}>
                 {faculty.status}
               </Badge>
               <span className="text-xs text-muted-foreground">

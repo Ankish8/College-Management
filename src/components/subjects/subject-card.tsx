@@ -88,13 +88,13 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
                 {subject.name}
               </CardTitle>
               <div className="flex items-center gap-1">
-                <Badge variant="outline" className="text-xs h-5 font-mono">
+                <Badge variant="status-outline" className="text-xs h-5 font-mono">
                   {subject.code}
                 </Badge>
-                <Badge className={`text-xs h-5 ${getExamTypeColor(subject.examType)}`}>
+                <Badge variant="status-outline" className={`text-xs h-5 ${getExamTypeColor(subject.examType)}`}>
                   {subject.examType}
                 </Badge>
-                <Badge className={`text-xs h-5 ${getSubjectTypeColor(subject.subjectType)}`}>
+                <Badge variant="status-outline" className={`text-xs h-5 ${getSubjectTypeColor(subject.subjectType)}`}>
                   {subject.subjectType}
                 </Badge>
               </div>

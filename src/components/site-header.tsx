@@ -48,7 +48,7 @@ export function SiteHeader() {
         {/* User info */}
         {user && (
           <div className="flex items-center gap-2">
-            <Badge className={getRoleColor((user as any).role)}>
+            <Badge variant="status-outline" className={getRoleColor((user as any).role)}>
               {(user as any).role}
             </Badge>
             <div className="hidden text-right sm:block">

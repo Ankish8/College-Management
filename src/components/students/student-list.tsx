@@ -525,7 +525,7 @@ function StudentListComponent() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <Badge variant={student.user.status === "ACTIVE" ? "default" : "secondary"}>
+                  <Badge variant={student.user.status === "ACTIVE" ? "status" : "status-secondary"}>
                     {student.user.status}
                   </Badge>
                   <span className="text-sm text-muted-foreground">

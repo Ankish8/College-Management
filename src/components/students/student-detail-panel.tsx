@@ -126,13 +126,13 @@ export function StudentDetailPanel({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
+        return <Badge variant="status-outline" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
       case "INACTIVE":
-        return <Badge variant="secondary">Inactive</Badge>
+        return <Badge variant="status-secondary">Inactive</Badge>
       case "SUSPENDED":
-        return <Badge variant="destructive">Suspended</Badge>
+        return <Badge variant="status-destructive">Suspended</Badge>
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="status-outline">{status}</Badge>
     }
   }
 
@@ -247,13 +247,13 @@ export function StudentDetailPanel({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Student ID</label>
-                    <Badge variant="outline" className="font-mono mt-1">
+                    <Badge variant="status-outline" className="font-mono mt-1">
                       {student.studentId}
                     </Badge>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Roll Number</label>
-                    <Badge variant="outline" className="font-mono mt-1">
+                    <Badge variant="status-outline" className="font-mono mt-1">
                       {student.rollNumber}
                     </Badge>
                   </div>
@@ -387,7 +387,7 @@ export function StudentDetailPanel({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                  <Badge variant="outline" className="font-mono text-xs">
+                  <Badge variant="status-outline" className="font-mono text-xs">
                     {student.user.id}
                   </Badge>
                 </div>
