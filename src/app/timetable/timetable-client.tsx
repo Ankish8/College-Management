@@ -27,6 +27,11 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
       searchParams.append(key, String(value))
     }
   })
+  
+  // Ensure we get all entries by setting a high limit for large datasets
+  if (!searchParams.has('limit')) {
+    searchParams.append('limit', '5000')
+  }
 
   // Fetch timetable entries with filters
 
@@ -353,6 +358,8 @@ export default function TimetableClient() {
     enabled: !!session?.user && !!selectedBatchId,
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   })
 
   // Debug logging
@@ -391,71 +398,166 @@ export default function TimetableClient() {
     return parts.join(' • ')
   }, [])
 
-  // Convert entries to calendar events
+  // Convert entries to calendar events - COMPLETELY REWRITTEN
   const events: CalendarEvent[] = React.useMemo(() => {
     
-    // Use real data if available
-    if (timetableData?.entries && timetableData.entries.length > 0) {
-      console.log(`🎯 Processing ${timetableData.entries.length} timetable entries for calendar`)
-      console.log(`📅 Current selected date for event generation: ${selectedDate.toDateString()} (${selectedDate.toISOString().split('T')[0]})`)
-      
-      // Calculate the visible week range for the current calendar view
-      // Use the FullCalendar's actual visible date range
-      const currentWeekStart = new Date(selectedDate)
-      currentWeekStart.setDate(selectedDate.getDate() - selectedDate.getDay()) // Start of week (Sunday)
-      const currentWeekEnd = new Date(currentWeekStart)
-      currentWeekEnd.setDate(currentWeekStart.getDate() + 6) // End of week (Saturday)
-      
-      console.log(`📅 Visible week: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`)
-      
-      // Separate recurring and date-specific entries
-      const recurringEntries = timetableData.entries.filter((entry: any) => !entry.date)
-      const dateSpecificEntries = timetableData.entries.filter((entry: any) => entry.date)
-      
-      console.log(`   📅 Recurring entries: ${recurringEntries.length}`)
-      console.log(`   📍 Date-specific entries: ${dateSpecificEntries.length}`)
-      
-      const allEvents: CalendarEvent[] = []
-      
-      // Process date-specific entries only for the current visible week
-      const visibleDateSpecificEntries = dateSpecificEntries.filter((entry: any) => {
-        if (!entry.date) return false
-        const entryDate = new Date(entry.date)
-        entryDate.setHours(0, 0, 0, 0)
-        // Only show entries that fall within the current visible week
-        return entryDate >= currentWeekStart && entryDate <= currentWeekEnd
-      })
-      
-      console.log(`   🎯 Visible date-specific entries for current week: ${visibleDateSpecificEntries.length}`)
-      
-      visibleDateSpecificEntries.forEach((entry: any) => {
-        const entryEvents = timetableEntryToCalendarEvents(entry, selectedDate)
-        allEvents.push(...entryEvents)
-      })
-      
-      console.log(`   🎉 Generated ${allEvents.length} calendar events`)
-      if (allEvents.length > 0) {
-        console.log('   📋 First 3 events:')
-        allEvents.slice(0, 3).forEach((event, index) => {
-          console.log(`     ${index + 1}. "${event.title}" on ${event.start.toDateString()} at ${event.start.toTimeString().split(' ')[0]}`)
-          console.log(`        Color: ${event.backgroundColor}, Custom: ${event.extendedProps?.customEventTitle}`)
-          console.log(`        DB Color: ${event.extendedProps?.customEventColor}`)
-        })
-        
-        // Debug the raw entry data too
-        console.log('   🔍 First raw entry data:')
-        const firstEntry = dateSpecificEntries[0]
-        console.log(`        customEventTitle: ${firstEntry.customEventTitle}`)
-        console.log(`        customEventColor: ${firstEntry.customEventColor}`)
-        console.log(`        subject: ${firstEntry.subject?.name || 'null'}`)
-      }
-      return allEvents
+    if (!timetableData?.entries || timetableData.entries.length === 0) {
+      return []
     }
     
-    // No real data found, return empty array
+    console.log(`🎯 Processing ${timetableData.entries.length} timetable entries`)
     
-    return []
-  }, [timetableData, selectedBatchId, batchesData, formatBatchDisplay, selectedDate])
+    // Get the current visible week range
+    const currentWeekStart = new Date(selectedDate)
+    currentWeekStart.setDate(selectedDate.getDate() - selectedDate.getDay()) // Start of week (Sunday)
+    const currentWeekEnd = new Date(currentWeekStart)
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6) // End of week (Saturday)
+    
+    console.log(`📅 Filtering events for visible week: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`)
+    
+    const allEvents: CalendarEvent[] = []
+    
+    // Process each entry individually - only show entries that fall in the visible week
+    timetableData.entries.forEach((entry: any) => {
+      if (!entry.date) {
+        // Skip recurring entries for now - we only want date-specific entries
+        return
+      }
+      
+      // Check if this entry's date falls within the current visible week
+      // Use UTC methods to avoid timezone issues
+      const entryDate = new Date(entry.date)
+      entryDate.setUTCHours(0, 0, 0, 0)
+      const weekStart = new Date(currentWeekStart)
+      weekStart.setUTCHours(0, 0, 0, 0)
+      const weekEnd = new Date(currentWeekEnd)
+      weekEnd.setUTCHours(23, 59, 59, 999)
+      
+      if (entryDate < weekStart || entryDate > weekEnd) {
+        // This entry is not in the current visible week, skip it
+        return
+      }
+      
+      // Parse time slot to get start and end times
+      const [startTime, endTime] = entry.timeSlot.name.split('-')
+      const [startHour, startMin] = startTime.split(':').map(Number)
+      const [endHour, endMin] = endTime.split(':').map(Number)
+      
+      // Create event for this specific date only
+      const eventDate = new Date(entry.date)
+      const start = new Date(eventDate)
+      start.setHours(startHour, startMin, 0, 0)
+      
+      const end = new Date(eventDate)
+      end.setHours(endHour, endMin, 0, 0)
+      
+      const eventId = `${entry.id}-${eventDate.toISOString().split('T')[0]}`
+      
+      // Check if this is a custom event or regular subject
+      const isCustomEvent = !!entry.customEventTitle
+      const eventTitle = isCustomEvent 
+        ? entry.customEventTitle 
+        : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
+      
+      // Check if this is a past date
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const eventDateOnly = new Date(eventDate)
+      eventDateOnly.setHours(0, 0, 0, 0)
+      
+      const daysDifference = Math.floor((today.getTime() - eventDateOnly.getTime()) / (1000 * 60 * 60 * 24))
+      const isPastDate = daysDifference > 30
+      
+      // Determine event styling
+      let eventClassName = ''
+      let backgroundColor = undefined
+      let borderColor = undefined
+      let textColor = undefined
+      
+      if (isPastDate) {
+        eventClassName = 'bg-gray-400 text-gray-600 opacity-60 cursor-not-allowed'
+        backgroundColor = '#9ca3af'
+        borderColor = '#9ca3af'
+        textColor = '#6b7280'
+      } else if (isCustomEvent) {
+        // Custom events get subtle styling
+        backgroundColor = '#f8fafc'
+        borderColor = '#e2e8f0'
+        textColor = '#1e293b'
+        eventClassName = 'font-medium'
+      }
+      
+      allEvents.push({
+        id: eventId,
+        title: eventTitle,
+        start,
+        end,
+        className: eventClassName,
+        backgroundColor: backgroundColor,
+        borderColor: borderColor,
+        textColor: textColor,
+        editable: !isPastDate,
+        startEditable: !isPastDate,
+        durationEditable: !isPastDate,
+        extendedProps: {
+          timetableEntryId: entry.id,
+          batchId: entry.batchId,
+          batchName: entry.batch.name,
+          subjectId: entry.subjectId,
+          subjectName: entry.subject?.name,
+          subjectCode: entry.subject?.code,
+          facultyId: entry.facultyId,
+          facultyName: entry.faculty?.name,
+          timeSlotId: entry.timeSlotId,
+          timeSlotName: entry.timeSlot.name,
+          dayOfWeek: entry.dayOfWeek,
+          entryType: entry.entryType,
+          credits: entry.subject?.credits,
+          notes: entry.notes,
+          isPastDate: isPastDate,
+          isCustomEvent: isCustomEvent,
+          customEventTitle: entry.customEventTitle,
+          customEventColor: entry.customEventColor
+        }
+      })
+    })
+    
+    console.log(`✅ Generated ${allEvents.length} calendar events for current week`)
+    
+    // Debug: Show events by date
+    const eventsByDate = allEvents.reduce((acc, event) => {
+      const date = event.start.toISOString().split('T')[0]
+      if (!acc[date]) acc[date] = []
+      acc[date].push(event.title)
+      return acc
+    }, {} as Record<string, string[]>)
+    
+    console.log('📅 Events by date:')
+    Object.entries(eventsByDate).forEach(([date, titles]) => {
+      console.log(`  ${date}: ${titles.length} events`)
+      titles.slice(0, 3).forEach(title => console.log(`    - ${title}`))
+      if (titles.length > 3) console.log(`    ... and ${titles.length - 3} more`)
+    })
+    return allEvents
+    
+  }, [timetableData, selectedDate])
+  
+  // DEBUG: Log what data we're actually getting
+  React.useEffect(() => {
+    if (timetableData?.entries) {
+      const allDates = [...new Set(timetableData.entries.map((entry: any) => 
+        entry.date ? new Date(entry.date).toDateString() : 'NO DATE'
+      ))].sort()
+      
+      console.log('📋 RAW DATA FROM API:')
+      console.log('   Total entries:', timetableData.entries.length)
+      console.log('   Unique dates:', allDates)
+      console.log('   First 5 entries:')
+      timetableData.entries.slice(0, 5).forEach((entry: any, i: number) => {
+        console.log(`     ${i + 1}. ${entry.subject?.name} - ${entry.dayOfWeek} ${entry.date ? new Date(entry.date).toDateString() : 'NO DATE'} at ${entry.timeSlot?.name}`)
+      })
+    }
+  }, [timetableData])
 
   // Fetch real subjects data for quick creation
   const { data: subjectsData, error: subjectsError, isLoading: subjectsLoading } = useQuery({

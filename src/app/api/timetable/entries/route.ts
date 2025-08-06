@@ -18,7 +18,7 @@ const timetableFilterSchema = z.object({
   dayOfWeek: z.enum(DayOfWeekValues).optional(),
   entryType: z.enum(EntryTypeValues).optional(),
   page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(50),
+  limit: z.number().min(1).max(5000).default(50),
 })
 
 const createTimetableEntrySchema = z.object({
@@ -78,9 +78,30 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
   }
 
   // Single optimized query to check both batch and faculty conflicts
+  // Only conflict with recurring entries or different dates
+  let dateFilter = {}
+  if (data.date) {
+    // For date-specific entries, only conflict with recurring entries or different dates
+    dateFilter = {
+      OR: [
+        { date: null }, // Recurring entries always conflict
+        { 
+          AND: [
+            { date: { not: null } }, // Date-specific entries
+            { date: { not: new Date(data.date) } } // But not the same date
+          ]
+        }
+      ]
+    }
+  } else {
+    // For recurring entries, conflict with all entries
+    dateFilter = {}
+  }
+  
   const allConflicts = await db.timetableEntry.findMany({
     where: {
       ...whereClause,
+      ...dateFilter,
       OR: orConditions
     },
     include: {
@@ -96,24 +117,49 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     }
   })
 
-  // Separate conflicts by type
-  const batchConflicts = allConflicts.filter(entry => entry.batchId === data.batchId);
-  const facultyConflicts = data.facultyId ? allConflicts.filter(entry => entry.facultyId === data.facultyId) : [];
-
-  if (batchConflicts.length > 0) {
+  // Check for exact duplicates first
+  const exactDuplicate = allConflicts.find(entry => 
+    entry.batchId === data.batchId && 
+    entry.subjectId === data.subjectId && 
+    entry.facultyId === data.facultyId
+  );
+  
+  // Initialize variables outside the if block
+  let batchConflicts: any[] = []
+  let facultyConflicts: any[] = []
+  
+  if (exactDuplicate) {
     conflicts.push({
-      type: "BATCH_DOUBLE_BOOKING",
-      message: `Batch already has a class at this time`,
-      details: batchConflicts,
+      type: "EXACT_DUPLICATE",
+      message: `This exact class already exists at this time slot. Entry already created.`,
+      details: [exactDuplicate],
     })
-  }
+  } else {
+    // Only check for other conflicts if it's not an exact duplicate
+    batchConflicts = allConflicts.filter(entry => 
+      entry.batchId === data.batchId && 
+      !(entry.subjectId === data.subjectId && entry.facultyId === data.facultyId)
+    );
+    facultyConflicts = data.facultyId ? allConflicts.filter(entry => 
+      entry.facultyId === data.facultyId &&
+      !(entry.batchId === data.batchId && entry.subjectId === data.subjectId)
+    ) : [];
 
-  if (facultyConflicts.length > 0) {
-    conflicts.push({
-      type: "FACULTY_CONFLICT", 
-      message: `Faculty is already teaching another class at this time`,
-      details: facultyConflicts,
-    })
+    if (batchConflicts.length > 0) {
+      conflicts.push({
+        type: "BATCH_DOUBLE_BOOKING",
+        message: `Batch already has a different class at this time`,
+        details: batchConflicts,
+      })
+    }
+
+    if (facultyConflicts.length > 0) {
+      conflicts.push({
+        type: "FACULTY_CONFLICT", 
+        message: `Faculty is already teaching another class at this time`,
+        details: facultyConflicts,
+      })
+    }
   }
 
   // Check for holiday conflicts if specific date is provided
