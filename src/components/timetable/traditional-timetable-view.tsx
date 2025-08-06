@@ -23,6 +23,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { QuickCreatePopup } from './quick-create-popup'
 import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
+import { CustomHolidayMenu } from './custom-holiday-menu'
 import { 
   fetchAttendanceStatus, 
   mergeAttendanceWithEvents, 
@@ -817,12 +818,18 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
                     )}
                   >
                     {hasHoliday ? (
-                      // Holiday cell - subtle display
-                      <div className="h-full p-3 flex items-center justify-center text-center">
-                        <div className="text-red-400 text-xs opacity-60">
-                          Holiday
+                      // Holiday cell - entire cell is clickable
+                      <CustomHolidayMenu
+                        event={holidayEvents[0]}
+                        onClick={() => {}}
+                        className="h-full w-full rounded-lg"
+                      >
+                        <div className="h-full p-3 flex items-center justify-center text-center min-h-[100px] rounded-lg">
+                          <div className="text-red-400 text-xs opacity-60">
+                            Holiday
+                          </div>
                         </div>
-                      </div>
+                      </CustomHolidayMenu>
                     ) : (
                       // Regular time slot
                       <DroppableTimeSlot dayKey={day.key} timeSlot={timeSlot.time} />

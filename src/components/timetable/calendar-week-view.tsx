@@ -18,21 +18,8 @@ import { cn } from '@/lib/utils'
 import { QuickCreatePopup } from './quick-create-popup'
 import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
 import { HolidayEventCard } from './holiday-event-card'
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { 
-  Pencil, 
-  Trash2, 
-  Calendar as CalendarIcon,
-  Info,
-} from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { useRouter } from 'next/navigation'
+import { CustomHolidayMenu } from './custom-holiday-menu'
+import { TestHolidayButton } from './test-holiday-button'
 import { 
   fetchAttendanceStatus, 
   mergeAttendanceWithEvents, 
@@ -93,9 +80,6 @@ export function CalendarWeekView({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [eventsWithAttendance, setEventsWithAttendance] = React.useState<CalendarEvent[]>(events)
   const [isLoadingAttendance, setIsLoadingAttendance] = React.useState(false)
-  
-  const { toast } = useToast()
-  const router = useRouter()
   
   React.useEffect(() => {
     const checkMobile = () => {
@@ -342,6 +326,8 @@ export function CalendarWeekView({
             <p className="text-sm text-muted-foreground">
               {eventsWithAttendance.filter(event => !event.allDay).length} class{eventsWithAttendance.filter(event => !event.allDay).length !== 1 ? 'es' : ''}{eventsWithAttendance.some(event => event.allDay) ? ', ' + eventsWithAttendance.filter(event => event.allDay).length + ' holiday' + (eventsWithAttendance.filter(event => event.allDay).length !== 1 ? 's' : '') : ''} this week
             </p>
+            {/* Test button to verify right-click works */}
+            <TestHolidayButton />
           </div>
           
           {/* Week Stats */}
@@ -418,96 +404,11 @@ export function CalendarWeekView({
                         <div className="space-y-2">
                           <div className="text-xs font-medium text-red-800 mb-2">🎊 Holiday Events</div>
                           {holidayEvents.map((event) => (
-                            <ContextMenu key={event.id}>
-                              <ContextMenuTrigger asChild>
-                                <div 
-                                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
-                                  onClick={() => handleEventClick(event)}
-                                >
-                                  Holiday: {event.title}
-                                </div>
-                              </ContextMenuTrigger>
-                              <ContextMenuContent className="w-56" style={{ zIndex: 99999 }}>
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Holiday Details",
-                                      description: event.title || "Holiday",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Info className="h-4 w-4" />
-                                  View Details
-                                </ContextMenuItem>
-                                
-                                <ContextMenuSeparator />
-                                
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Edit Holiday",
-                                      description: "Edit feature coming soon!",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  Edit Holiday
-                                </ContextMenuItem>
-                                
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Reschedule",
-                                      description: "Reschedule feature coming soon!",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <CalendarIcon className="h-4 w-4" />
-                                  Reschedule
-                                </ContextMenuItem>
-                                
-                                <ContextMenuSeparator />
-                                
-                                <ContextMenuItem 
-                                  onClick={async () => {
-                                    if (!confirm(`Are you sure you want to delete this holiday?`)) {
-                                      return
-                                    }
-                                    
-                                    try {
-                                      const deleteId = event.extendedProps?.holidayId || event.id
-                                      const response = await fetch(`/api/settings/holidays/${deleteId}`, {
-                                        method: 'DELETE',
-                                      })
-                                      
-                                      if (!response.ok) {
-                                        throw new Error('Failed to delete holiday')
-                                      }
-                                      
-                                      toast({
-                                        title: "Holiday Deleted",
-                                        description: `${event.title} has been deleted successfully`,
-                                      })
-                                      
-                                      router.refresh()
-                                    } catch (error) {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to delete holiday. Please try again.",
-                                        variant: "destructive"
-                                      })
-                                    }
-                                  }}
-                                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete Holiday
-                                </ContextMenuItem>
-                              </ContextMenuContent>
-                            </ContextMenu>
+                            <CustomHolidayMenu
+                              key={event.id}
+                              event={event}
+                              onClick={handleEventClick}
+                            />
                           ))}
                         </div>
                       )}
@@ -543,10 +444,10 @@ export function CalendarWeekView({
               })}
             </div>
           ) : (
-            // Desktop: Grid layout
-            <div className="grid relative" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)`, isolation: 'isolate' }}>
-              {/* Header Row */}
-              <div className="sticky top-0 bg-background z-10 grid" style={{ gridTemplateColumns: 'subgrid', gridColumn: '1 / -1' }}>
+            // Desktop: Combined layout
+            <div>
+              {/* Header Row - Using Grid */}
+              <div className="grid sticky top-0 bg-background z-10" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
                 {/* Empty corner cell */}
                 <div className="w-20 border-r border-b bg-muted/50"></div>
                 
@@ -556,9 +457,9 @@ export function CalendarWeekView({
                 ))}
               </div>
 
-              {/* All-Day Events Row */}
+              {/* All-Day Events Row - Using Flexbox instead of Grid */}
               {eventsWithAttendance.some(event => event.allDay) && (
-                <>
+                <div className="flex bg-red-50">
                   {/* All-Day Header */}
                   <div className="w-20 flex-shrink-0 p-3 bg-red-100 border-r border-b text-center border-red-200">
                     <div className="text-xs font-medium text-red-800">
@@ -569,133 +470,68 @@ export function CalendarWeekView({
                     </div>
                   </div>
                   
-                  {/* All-Day Event Cells */}
-                  {displayDays.map((day) => {
-                    const dayHolidays = eventsWithAttendance.filter(event => event.allDay && isSameDay(event.start, day))
-                    
-                    return (
-                      <div 
-                        key={`${day.toISOString()}-allday`} 
-                        className="min-h-[60px] p-2 border-r border-b border-red-200 bg-red-50"
-                      >
-                        {dayHolidays.length > 0 ? (
-                          dayHolidays.map((event) => (
-                            <ContextMenu key={event.id}>
-                              <ContextMenuTrigger asChild>
-                                <div 
-                                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors text-center px-2 py-1 text-xs mb-1"
-                                  onClick={() => handleEventClick(event)}
-                                >
-                                  Holiday: {event.title}
-                                </div>
-                              </ContextMenuTrigger>
-                              <ContextMenuContent className="w-56" style={{ zIndex: 99999 }}>
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Holiday Details",
-                                      description: event.title || "Holiday",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Info className="h-4 w-4" />
-                                  View Details
-                                </ContextMenuItem>
-                                
-                                <ContextMenuSeparator />
-                                
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Edit Holiday",
-                                      description: "Edit feature coming soon!",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  Edit Holiday
-                                </ContextMenuItem>
-                                
-                                <ContextMenuItem 
-                                  onClick={() => {
-                                    toast({
-                                      title: "Reschedule",
-                                      description: "Reschedule feature coming soon!",
-                                    })
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <CalendarIcon className="h-4 w-4" />
-                                  Reschedule
-                                </ContextMenuItem>
-                                
-                                <ContextMenuSeparator />
-                                
-                                <ContextMenuItem 
-                                  onClick={async () => {
-                                    if (!confirm(`Are you sure you want to delete this holiday?`)) {
-                                      return
-                                    }
-                                    
-                                    try {
-                                      const deleteId = event.extendedProps?.holidayId || event.id
-                                      const response = await fetch(`/api/settings/holidays/${deleteId}`, {
-                                        method: 'DELETE',
-                                      })
-                                      
-                                      if (!response.ok) {
-                                        throw new Error('Failed to delete holiday')
-                                      }
-                                      
-                                      toast({
-                                        title: "Holiday Deleted",
-                                        description: `${event.title} has been deleted successfully`,
-                                      })
-                                      
-                                      router.refresh()
-                                    } catch (error) {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to delete holiday. Please try again.",
-                                        variant: "destructive"
-                                      })
-                                    }
-                                  }}
-                                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete Holiday
-                                </ContextMenuItem>
-                              </ContextMenuContent>
-                            </ContextMenu>
-                          ))
-                        ) : (
-                          <div className="h-full opacity-30"></div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </>
+                  {/* All-Day Event Cells - Flex instead of Grid */}
+                  <div className="flex-1 flex">
+                    {displayDays.map((day) => {
+                      const dayHolidays = eventsWithAttendance.filter(event => event.allDay && isSameDay(event.start, day))
+                      
+                      return (
+                        <div 
+                          key={`${day.toISOString()}-allday`} 
+                          className="flex-1 min-h-[60px] p-2 border-r border-b border-red-200 bg-red-50"
+                          onContextMenu={(e) => {
+                            console.log('🟠 All-day cell container right-clicked', {
+                              day: day.toISOString(),
+                              hasHolidays: dayHolidays.length > 0,
+                              target: e.target,
+                              currentTarget: e.currentTarget
+                            })
+                          }}
+                        >
+                          {dayHolidays.length > 0 ? (
+                            <div className="space-y-1"
+                              onContextMenu={(e) => {
+                                console.log('🟣 Holiday wrapper div right-clicked', e)
+                              }}
+                            >
+                              {dayHolidays.map((event) => (
+                                <CustomHolidayMenu
+                                  key={event.id}
+                                  event={event}
+                                  onClick={handleEventClick}
+                                  className="text-center px-2 py-1 text-xs"
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="h-full opacity-30"></div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               )}
 
-              {/* Time Slot Rows */}
-              {timeSlots.map((timeSlot) => (
-                <React.Fragment key={timeSlot.time}>
-                  {/* Time Header */}
-                  <TimeHeader timeSlot={timeSlot} />
-                  
-                  {/* Day Cells */}
-                  {displayDays.map((day) => (
-                    <TimeSlotCell 
-                      key={`${day.toISOString()}-${timeSlot.time}`}
-                      day={day}
-                      timeSlot={timeSlot}
-                    />
-                  ))}
-                </React.Fragment>
-              ))}
+              {/* Time Slots Grid */}
+              <div className="grid" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
+                {/* Time Slot Rows */}
+                {timeSlots.map((timeSlot) => (
+                  <React.Fragment key={timeSlot.time}>
+                    {/* Time Header */}
+                    <TimeHeader timeSlot={timeSlot} />
+                    
+                    {/* Day Cells */}
+                    {displayDays.map((day) => (
+                      <TimeSlotCell 
+                        key={`${day.toISOString()}-${timeSlot.time}`}
+                        day={day}
+                        timeSlot={timeSlot}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           )}
         </ScrollArea>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
       )
     }
 
-    const holiday = await prisma.holiday.findUnique({
+    const holiday = await db.holiday.findUnique({
       where: {
         id: params.id
       }
@@ -56,7 +56,7 @@ export async function PATCH(
 
     const body = await request.json()
 
-    const updatedHoliday = await prisma.holiday.update({
+    const updatedHoliday = await db.holiday.update({
       where: {
         id: params.id
       },
@@ -83,25 +83,44 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    // Delete the holiday
-    await prisma.holiday.delete({
+    console.log('Attempting to delete holiday with ID:', params.id)
+
+    // First check if the holiday exists
+    const existingHoliday = await db.holiday.findUnique({
       where: {
         id: params.id
       }
     })
 
+    if (!existingHoliday) {
+      console.error('Holiday not found:', params.id)
+      return NextResponse.json(
+        { error: 'Holiday not found' },
+        { status: 404 }
+      )
+    }
+
+    // Delete the holiday
+    await db.holiday.delete({
+      where: {
+        id: params.id
+      }
+    })
+
+    console.log('Holiday deleted successfully:', params.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting holiday:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return NextResponse.json(
-      { error: 'Failed to delete holiday' },
+      { error: error instanceof Error ? error.message : 'Failed to delete holiday' },
       { status: 500 }
     )
   }
