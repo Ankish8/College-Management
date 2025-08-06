@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { CalendarEvent } from '@/types/timetable'
-import { Info, Pencil, Trash2, Calendar, AlertTriangle } from 'lucide-react'
+import { Info, Pencil, Trash2, Calendar, AlertTriangle, ChevronRight, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -30,21 +30,39 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showTypeSubmenu, setShowTypeSubmenu] = useState(false)
+  const [isUpdatingType, setIsUpdatingType] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const submenuRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  const holidayTypes = [
+    { value: 'NATIONAL', label: 'National Holiday', color: 'text-red-600' },
+    { value: 'UNIVERSITY', label: 'University Holiday', color: 'text-blue-600' },
+    { value: 'DEPARTMENT', label: 'Department Holiday', color: 'text-green-600' },
+    { value: 'LOCAL', label: 'Local Holiday', color: 'text-orange-600' },
+    { value: 'FESTIVAL', label: 'Festival', color: 'text-purple-600' }
+  ]
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (
+        menuRef.current && 
+        !menuRef.current.contains(e.target as Node) &&
+        submenuRef.current &&
+        !submenuRef.current.contains(e.target as Node)
+      ) {
         setShowMenu(false)
+        setShowTypeSubmenu(false)
       }
     }
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowMenu(false)
+        setShowTypeSubmenu(false)
       }
     }
 
@@ -70,6 +88,7 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
       y: e.clientY
     })
     setShowMenu(true)
+    setShowTypeSubmenu(false)
   }
 
   const handleLeftClick = (e: React.MouseEvent) => {
@@ -97,6 +116,50 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true)
     setShowMenu(false)
+    setShowTypeSubmenu(false)
+  }
+
+  const handleTypeChange = async (newType: string) => {
+    try {
+      setIsUpdatingType(true)
+      const holidayId = event.extendedProps?.holidayId || event.extendedProps?.id || event.id
+      
+      if (!holidayId || holidayId === 'undefined') {
+        throw new Error('No holiday ID found')
+      }
+
+      const response = await fetch(`/api/settings/holidays/${holidayId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: newType }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update holiday type')
+      }
+
+      toast({
+        title: "Holiday Type Updated",
+        description: `Changed to ${holidayTypes.find(t => t.value === newType)?.label}`,
+      })
+
+      // Invalidate the holidays query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['holidays'] })
+      
+      router.refresh()
+      setShowMenu(false)
+      setShowTypeSubmenu(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update holiday type. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUpdatingType(false)
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -202,6 +265,58 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
             <Calendar className="h-4 w-4" />
             Reschedule
           </button>
+          
+          <div className="border-t border-gray-200 my-1" />
+          
+          {/* Change Type Menu Item */}
+          <div 
+            className="relative"
+            onMouseEnter={() => setShowTypeSubmenu(true)}
+            onMouseLeave={() => setShowTypeSubmenu(false)}
+          >
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center justify-between"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowTypeSubmenu(!showTypeSubmenu)
+              }}
+            >
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Change Type
+              </span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            
+            {/* Type Submenu */}
+            {showTypeSubmenu && (
+              <div
+                ref={submenuRef}
+                className="absolute left-full top-0 -ml-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-[999999] min-w-[180px]"
+              >
+                {holidayTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    className={cn(
+                      "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center justify-between",
+                      type.color,
+                      isUpdatingType && "opacity-50 cursor-not-allowed"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleTypeChange(type.value)
+                    }}
+                    disabled={isUpdatingType}
+                  >
+                    <span>{type.label}</span>
+                    {event.extendedProps?.type === type.value && (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           
           <div className="border-t border-gray-200 my-1" />
           
