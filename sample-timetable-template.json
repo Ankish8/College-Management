@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "importId": "sample-batch-template-2025",
+    "createdAt": "2025-01-06T12:00:00Z",
+    "description": "Sample timetable template showing all supported formats"
+  },
+  "batch": {
+    "name": "Sample Batch Template",
+    "semester": "ODD",
+    "year": 2025,
+    "department": "Design",
+    "specialization": "User Experience Design",
+    "capacity": 30
+  },
+  "dateRange": {
+    "startDate": "2025-07-28",
+    "endDate": "2025-09-05",
+    "description": "Sample academic period for demonstration"
+  },
+  "timeSlots": [
+    {
+      "name": "10:15-11:05",
+      "startTime": "10:15",
+      "endTime": "11:05",
+      "duration": 50,
+      "isActive": true,
+      "sortOrder": 1
+    },
+    {
+      "name": "11:15-12:05",
+      "startTime": "11:15",
+      "endTime": "12:05",
+      "duration": 50,
+      "isActive": true,
+      "sortOrder": 2
+    },
+    {
+      "name": "12:15-13:05",
+      "startTime": "12:15",
+      "endTime": "13:05",
+      "duration": 50,
+      "isActive": true,
+      "sortOrder": 3
+    },
+    {
+      "name": "14:15-15:05",
+      "startTime": "14:15",
+      "endTime": "15:05",
+      "duration": 50,
+      "isActive": true,
+      "sortOrder": 4
+    }
+  ],
+  "entries": [
+    {
+      "_comment": "Example SUBJECT entry - regular class with faculty",
+      "type": "SUBJECT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:15-11:05",
+      "subject": {
+        "name": "Design for Social Innovation",
+        "code": "DSI301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Sushmita Shahi",
+        "email": "sushmita.shahi@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Introduction to sustainable design principles"
+    },
+    {
+      "_comment": "Example SUBJECT entry - practical class",
+      "type": "SUBJECT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:15-12:05",
+      "subject": {
+        "name": "Seminar and Research Writing",
+        "code": "SRW302", 
+        "credits": 2,
+        "type": "PRACTICAL"
+      },
+      "faculty": {
+        "name": "Madhu Toppo",
+        "email": "madhu.toppo@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Research methodology and presentation skills"
+    },
+    {
+      "_comment": "Example CUSTOM_EVENT entry - university activity",
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY", 
+      "timeSlot": "11:15-12:05",
+      "title": "University Level Clubs",
+      "description": "Student club activities and networking session",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "_comment": "Example CUSTOM_EVENT entry - special workshop",
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:15-15:05", 
+      "title": "Design Hive Club Workshop",
+      "description": "Hands-on design thinking workshop",
+      "color": "#10b981",
+      "recurring": false
+    },
+    {
+      "_comment": "Example HOLIDAY entry - national holiday",
+      "type": "HOLIDAY",
+      "date": "2025-08-15",
+      "name": "Independence Day",
+      "description": "National Holiday - India's Independence Day celebration",
+      "holidayType": "NATIONAL",
+      "isRecurring": false
+    },
+    {
+      "_comment": "Example HOLIDAY entry - festival holiday",
+      "type": "HOLIDAY",
+      "date": "2025-08-27",
+      "name": "Ganesh Chaturthi",
+      "description": "Traditional festival celebration",
+      "holidayType": "LOCAL",
+      "isRecurring": false
+    },
+    {
+      "_comment": "Example recurring pattern - same subject multiple days",
+      "type": "SUBJECT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:15-11:05",
+      "subject": {
+        "name": "Design for Social Innovation", 
+        "code": "DSI301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Sushmita Shahi",
+        "email": "sushmita.shahi@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Continuation of sustainable design concepts"
+    },
+    {
+      "_comment": "Example LAB entry - practical laboratory session",
+      "type": "SUBJECT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:15-15:05",
+      "subject": {
+        "name": "Digital Design Laboratory",
+        "code": "DDL303",
+        "credits": 4,
+        "type": "LAB"
+      },
+      "faculty": {
+        "name": "Rahul Sharma",
+        "email": "rahul.sharma@jlu.edu.in", 
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Adobe Creative Suite and design tools practice"
+    },
+    {
+      "_comment": "Example TUTORIAL entry - small group discussion",
+      "type": "SUBJECT", 
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "12:15-13:05",
+      "subject": {
+        "name": "Design Theory Tutorial",
+        "code": "DTT304",
+        "credits": 1,
+        "type": "TUTORIAL"
+      },
+      "faculty": {
+        "name": "Priya Singh",
+        "email": "priya.singh@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Group discussion on design principles and case studies"
+    },
+    {
+      "_comment": "Example CUSTOM_EVENT with different color",
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:15-11:05",
+      "title": "Open Elective Fair",
+      "description": "Students choose from various elective subjects",
+      "color": "#f59e0b",
+      "recurring": false
+    }
+  ]
+}
