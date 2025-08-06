@@ -118,28 +118,54 @@ export function CalendarWeekView({
     }
   }
 
-  const EventChip = ({ event }: { event: CalendarEvent }) => (
-    <div
-      className={cn(
-        "p-2 rounded text-xs cursor-pointer transition-all hover:shadow-sm hover:scale-105 mb-1",
-        event.className
-      )}
-      onClick={() => handleEventClick(event)}
-    >
-      <div className="font-medium truncate">
-        {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
+  const EventChip = ({ event }: { event: CalendarEvent }) => {
+    const handleMarkAttendance = (e: React.MouseEvent) => {
+      e.stopPropagation() // Prevent card click from triggering
+      
+      const subjectId = event.extendedProps?.subjectId
+      const batchId = event.extendedProps?.batchId
+      
+      if (subjectId && batchId) {
+        const today = new Date().toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        window.location.href = attendanceUrl
+      }
+    }
+
+    return (
+      <div
+        className={cn(
+          "p-2 rounded text-xs cursor-pointer transition-all hover:shadow-sm hover:scale-105 mb-1 relative",
+          event.className
+        )}
+        onClick={() => handleEventClick(event)}
+      >
+        <div className="font-medium truncate">
+          {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
+        </div>
+        <div className="opacity-90 truncate">
+          {event.extendedProps?.facultyName}
+        </div>
+        <div className="flex items-center justify-between gap-1 mt-1 opacity-75">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>
+              {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+            </span>
+          </div>
+          
+          {/* Mark Attendance Button - Bottom Right */}
+          <button
+            onClick={handleMarkAttendance}
+            className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer ml-2"
+            title="Mark Attendance"
+          >
+            Mark Attendance
+          </button>
+        </div>
       </div>
-      <div className="opacity-90 truncate">
-        {event.extendedProps?.facultyName}
-      </div>
-      <div className="flex items-center gap-1 mt-1 opacity-75">
-        <Clock className="h-3 w-3" />
-        <span>
-          {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-        </span>
-      </div>
-    </div>
-  )
+    )
+  }
 
   const TimeSlotCell = ({ day, timeSlot }: { day: Date; timeSlot: { time: string; label: string } }) => {
     const cellEvents = getEventsForTimeSlot(events, day, timeSlot.time)

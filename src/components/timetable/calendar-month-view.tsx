@@ -84,23 +84,49 @@ export function CalendarMonthView({
     }
   }
 
-  const EventChip = ({ event }: { event: CalendarEvent }) => (
-    <div
-      className={cn(
-        "text-xs p-1 rounded mb-1 cursor-pointer transition-all hover:shadow-sm truncate",
-        event.className
-      )}
-      onClick={(e) => handleEventClick(event, e)}
-      title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
-    >
-      <div className="font-medium truncate">
-        {event.extendedProps?.subjectName}
+  const EventChip = ({ event }: { event: CalendarEvent }) => {
+    const handleMarkAttendance = (e: React.MouseEvent) => {
+      e.stopPropagation() // Prevent card click from triggering
+      
+      const subjectId = event.extendedProps?.subjectId
+      const batchId = event.extendedProps?.batchId
+      
+      if (subjectId && batchId) {
+        const today = new Date().toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        window.location.href = attendanceUrl
+      }
+    }
+
+    return (
+      <div
+        className={cn(
+          "text-xs p-1 rounded mb-1 cursor-pointer transition-all hover:shadow-sm truncate relative group",
+          event.className
+        )}
+        onClick={(e) => handleEventClick(event, e)}
+        title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
+      >
+        <div className="font-medium truncate">
+          {event.extendedProps?.subjectName}
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="opacity-90 truncate">
+            {event.extendedProps?.subjectCode}
+          </div>
+          
+          {/* Mark Attendance Button - appears on hover */}
+          <button
+            onClick={handleMarkAttendance}
+            className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
+            title="Mark Attendance"
+          >
+            Attend
+          </button>
+        </div>
       </div>
-      <div className="opacity-90 truncate">
-        {event.extendedProps?.subjectCode}
-      </div>
-    </div>
-  )
+    )
+  }
 
   const DayCell = ({ day }: { day: Date }) => {
     const dayEvents = getEventsForDate(events, day)

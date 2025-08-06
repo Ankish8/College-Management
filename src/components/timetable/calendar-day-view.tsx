@@ -162,6 +162,19 @@ export function CalendarDayView({
   }
 
   const EventCard = ({ event }: { event: CalendarEvent }) => {
+    const handleMarkAttendance = (e: React.MouseEvent) => {
+      e.stopPropagation() // Prevent card click from triggering
+      
+      const subjectId = event.extendedProps?.subjectId
+      const batchId = event.extendedProps?.batchId
+      
+      if (subjectId && batchId) {
+        const today = new Date().toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        window.location.href = attendanceUrl
+      }
+    }
+
     return (
       <Card 
         className={cn(
@@ -211,6 +224,17 @@ export function CalendarDayView({
                 {event.extendedProps.notes}
               </p>
             )}
+            
+            {/* Mark Attendance Button - Bottom Right */}
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={handleMarkAttendance}
+                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                title="Mark Attendance"
+              >
+                Mark Attendance
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

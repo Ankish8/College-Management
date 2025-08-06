@@ -388,6 +388,19 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
       color: event.textColor || undefined,
     }
 
+    const handleMarkAttendance = (e: React.MouseEvent) => {
+      e.stopPropagation() // Prevent card click from triggering
+      
+      const subjectId = event.extendedProps?.subjectId
+      const batchId = event.extendedProps?.batchId
+      
+      if (subjectId && batchId) {
+        const today = new Date().toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        window.location.href = attendanceUrl
+      }
+    }
+
     return (
       <div
         ref={setNodeRef}
@@ -411,7 +424,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
         }
       >
         
-        <div className="space-y-1">
+        <div className="space-y-1 flex flex-col h-full">
           <div className="flex items-center gap-1">
             <div
               {...(isPastDate ? {} : listeners)}
@@ -445,6 +458,17 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               {event.extendedProps.subjectCode}
             </div>
           )}
+          
+          {/* Mark Attendance Button - Bottom Right */}
+          <div className="flex-1 flex items-end justify-end">
+            <button
+              onClick={handleMarkAttendance}
+              className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+              title="Mark Attendance"
+            >
+              Mark Attendance
+            </button>
+          </div>
         </div>
         
       </div>
