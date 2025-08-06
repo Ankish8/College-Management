@@ -110,6 +110,7 @@ const data = {
           title: "Mark Attendance",
           url: "/attendance",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "My Attendance",

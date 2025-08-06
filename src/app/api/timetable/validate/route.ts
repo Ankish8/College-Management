@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const validationResult = TimetableImportSchema.safeParse(jsonData)
     
     if (!validationResult.success) {
-      const errors = validationResult.error.errors.map(err => ({
+      const errors = validationResult.error.issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
         value: err.code === 'invalid_type' ? 'invalid_type' : undefined,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Check if department exists
     const department = await db.department.findFirst({
-      where: { name: { contains: data.batch.department, mode: 'insensitive' } }
+      where: { name: { contains: data.batch.department } }
     })
 
     if (!department) {

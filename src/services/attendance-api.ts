@@ -225,6 +225,19 @@ class AttendanceApiService {
   }
 
   /**
+   * Reset attendance for a specific date - clears all attendance records
+   */
+  async resetAttendance(
+    courseId: string,
+    date: string
+  ): Promise<ApiResponse<any>> {
+    return this.fetchApi(`/courses/${courseId}/attendance/reset`, {
+      method: 'POST',
+      body: JSON.stringify({ date })
+    })
+  }
+
+  /**
    * Retry wrapper for network resilience
    */
   private async retryRequest<T>(

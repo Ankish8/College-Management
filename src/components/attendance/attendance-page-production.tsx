@@ -11,7 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3, Search } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3, Search, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCommandPalette } from '@/components/attendance/command-palette-provider'
 
@@ -194,63 +205,57 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
     }
   }, [students, sessions, bulkMarkAttendance, onError])
 
-  // Handle save attendance
-  const handleSaveDay = useCallback(async () => {
+  // Handle reset attendance
+  const handleResetAttendance = useCallback(async () => {
     if (!hasSelection || !courseId || !selectedDate) {
-      console.warn('Cannot save: missing required data', { hasSelection, courseId, selectedDate })
-      toast.error('Cannot save attendance', {
+      console.warn('Cannot reset: missing required data', { hasSelection, courseId, selectedDate })
+      toast.error('Cannot reset attendance', {
         description: 'Please ensure batch and subject are selected'
       })
       return
     }
 
     try {
-      console.log('💾 Saving attendance for', selectedDate, 'courseId:', courseId)
+      console.log('🔄 Resetting attendance for', selectedDate, 'courseId:', courseId)
       
       // Import attendanceApi here to avoid circular dependencies
       const { attendanceApi } = await import('@/services/attendance-api')
       
-      // Call the proper save endpoint
-      const saveResponse = await attendanceApi.saveAttendance(courseId, selectedDate)
+      // Call the reset endpoint (this will need to be implemented in the API)
+      const resetResponse = await attendanceApi.resetAttendance(courseId, selectedDate)
       
-      if (saveResponse.success && saveResponse.data) {
-        const stats = saveResponse.data.statistics
-        const totalStudents = stats.totalStudents
-        const presentCount = stats.presentCount
-        const attendancePercentage = stats.attendancePercentage
-        const unmarkedCount = stats.unmarkedCount
+      if (resetResponse.success) {
+        console.log('✅ Attendance reset successfully')
         
-        console.log('✅ Attendance saved successfully:', saveResponse.data)
-        
-        // Refresh data to reflect the saved state
+        // Refresh data to reflect the reset state
         await Promise.all([
           refetchAttendance(),
           refetchStudents(),
           refetchSessions()
         ])
         
-        // Show beautiful toast notification with correct statistics
-        toast.success("Attendance Saved Successfully!", {
-          description: `${presentCount}/${totalStudents} students present (${attendancePercentage}%)${unmarkedCount > 0 ? ` • ${unmarkedCount} not marked` : ''}`,
+        // Show success notification
+        toast.success("Attendance Reset Successfully!", {
+          description: 'All attendance records for this session have been cleared',
           duration: 4000,
         })
         
       } else {
-        throw new Error(saveResponse.error || 'Failed to save attendance')
+        throw new Error(resetResponse.error || 'Failed to reset attendance')
       }
       
     } catch (error) {
-      console.error('Failed to save attendance:', error)
+      console.error('Failed to reset attendance:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       
       if (onError) {
         onError({
-          message: `Failed to save attendance: ${errorMessage}`,
-          code: 'SAVE_ATTENDANCE_ERROR',
+          message: `Failed to reset attendance: ${errorMessage}`,
+          code: 'RESET_ATTENDANCE_ERROR',
           details: error
         })
       } else {
-        toast.error('Failed to save attendance', {
+        toast.error('Failed to reset attendance', {
           description: errorMessage
         })
       }
@@ -384,9 +389,31 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
                     Choose batch and subject to begin
                   </div>
                 ) : (
-                  <Button onClick={handleSaveDay} className="bg-black text-white hover:bg-gray-800">
-                    Save
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="gap-2">
+                        <RotateCcw className="h-4 w-4" />
+                        Reset
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Reset Attendance</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to reset all attendance records for this session? This action cannot be undone and will clear all marked attendance for {selectedDate}.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleResetAttendance}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Reset Attendance
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
             </div>

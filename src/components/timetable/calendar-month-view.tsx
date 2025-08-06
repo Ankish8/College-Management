@@ -6,7 +6,7 @@ import { getEventsForDate } from '@/lib/utils/calendar-utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Filter, Check } from 'lucide-react'
 import { 
   format, 
   startOfMonth, 
@@ -19,6 +19,13 @@ import {
   isSameDay
 } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
+import { 
+  fetchAttendanceStatus, 
+  mergeAttendanceWithEvents, 
+  getAttendanceHeatmapColor, 
+  getAttendanceDotColor 
+} from '@/lib/utils/attendance-status'
 
 interface CalendarMonthViewProps {
   date: Date
@@ -53,6 +60,33 @@ export function CalendarMonthView({
   onFiltersToggle,
   showFilters
 }: CalendarMonthViewProps) {
+  const [eventsWithAttendance, setEventsWithAttendance] = React.useState<CalendarEvent[]>(events)
+  const [isLoadingAttendance, setIsLoadingAttendance] = React.useState(false)
+
+  // Fetch attendance status when events change
+  React.useEffect(() => {
+    const loadAttendanceStatus = async () => {
+      if (events.length === 0) {
+        setEventsWithAttendance([])
+        return
+      }
+
+      setIsLoadingAttendance(true)
+      try {
+        const attendanceStatus = await fetchAttendanceStatus(events)
+        const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
+        setEventsWithAttendance(eventsWithAttendanceData)
+      } catch (error) {
+        console.error('Failed to load attendance status:', error)
+        setEventsWithAttendance(events) // Fallback to events without attendance data
+      } finally {
+        setIsLoadingAttendance(false)
+      }
+    }
+
+    loadAttendanceStatus()
+  }, [events])
+
   const monthStart = startOfMonth(date)
   const monthEnd = endOfMonth(date)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
@@ -99,37 +133,42 @@ export function CalendarMonthView({
     }
 
     return (
-      <div
-        className={cn(
-          "text-xs p-1 rounded mb-1 cursor-pointer transition-all hover:shadow-sm truncate relative group",
-          event.className
-        )}
-        onClick={(e) => handleEventClick(event, e)}
-        title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
+      <TimetableEntryContextMenu 
+        event={event}
+        canMarkAttendance={true}
       >
-        <div className="font-medium truncate">
-          {event.extendedProps?.subjectName}
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="opacity-90 truncate">
-            {event.extendedProps?.subjectCode}
+        <div
+          className={cn(
+            "text-xs p-1 rounded mb-1 cursor-pointer transition-all hover:shadow-sm truncate relative group",
+            event.className
+          )}
+          onClick={(e) => handleEventClick(event, e)}
+          title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
+        >
+          <div className="font-medium truncate">
+            {event.extendedProps?.subjectName}
           </div>
-          
-          {/* Mark Attendance Button - appears on hover */}
-          <button
-            onClick={handleMarkAttendance}
-            className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
-            title="Mark Attendance"
-          >
-            Attend
-          </button>
+          <div className="flex items-center justify-between">
+            <div className="opacity-90 truncate">
+              {event.extendedProps?.subjectCode}
+            </div>
+            
+            {/* Mark Attendance Button - appears on hover */}
+            <button
+              onClick={handleMarkAttendance}
+              className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
+              title="Mark Attendance"
+            >
+              Attend
+            </button>
+          </div>
         </div>
-      </div>
+      </TimetableEntryContextMenu>
     )
   }
 
   const DayCell = ({ day }: { day: Date }) => {
-    const dayEvents = getEventsForDate(events, day)
+    const dayEvents = getEventsForDate(eventsWithAttendance, day)
     const isCurrentMonth = isSameMonth(day, date)
     const isCurrentDay = isToday(day)
     const hasEvents = dayEvents.length > 0

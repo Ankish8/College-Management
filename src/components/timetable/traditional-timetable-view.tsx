@@ -6,7 +6,7 @@ import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical, X, Calendar } from 'lucide-react'
+import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical, X, Calendar, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DndContext,
@@ -22,6 +22,13 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { QuickCreatePopup } from './quick-create-popup'
+import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
+import { 
+  fetchAttendanceStatus, 
+  mergeAttendanceWithEvents, 
+  getAttendanceHeatmapColor, 
+  getAttendanceDotColor 
+} from '@/lib/utils/attendance-status'
 
 interface TraditionalTimetableViewProps {
   date: Date
@@ -109,6 +116,8 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   const [activeEvent, setActiveEvent] = React.useState<CalendarEvent | null>(null)
   const [conflictCache, setConflictCache] = React.useState<Record<string, boolean>>({})
   const [isLoadingConflicts, setIsLoadingConflicts] = React.useState(false)
+  const [eventsWithAttendance, setEventsWithAttendance] = React.useState<CalendarEvent[]>(events)
+  const [isLoadingAttendance, setIsLoadingAttendance] = React.useState(false)
   
   // State for popup management
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -151,6 +160,30 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     }
     return DEFAULT_TIME_SLOTS
   }, [timeSlots])
+
+  // Fetch attendance status when events change
+  React.useEffect(() => {
+    const loadAttendanceStatus = async () => {
+      if (events.length === 0) {
+        setEventsWithAttendance([])
+        return
+      }
+
+      setIsLoadingAttendance(true)
+      try {
+        const attendanceStatus = await fetchAttendanceStatus(events)
+        const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
+        setEventsWithAttendance(eventsWithAttendanceData)
+      } catch (error) {
+        console.error('Failed to load attendance status:', error)
+        setEventsWithAttendance(events) // Fallback to events without attendance data
+      } finally {
+        setIsLoadingAttendance(false)
+      }
+    }
+
+    loadAttendanceStatus()
+  }, [events])
 
   // Preload conflicts when activeEvent changes
   React.useEffect(() => {
@@ -215,7 +248,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     if (!draggedEvent) return null
     
     // Find any event already in the target slot (in current view)
-    const existingEvent = events.find(event => 
+    const existingEvent = eventsWithAttendance.find(event => 
       event.id !== draggedEvent.id && // Don't conflict with self
       event.extendedProps?.dayOfWeek === targetDayKey &&
       event.extendedProps?.timeSlotName === targetTimeSlot
@@ -245,7 +278,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   }
   // Get events for a specific day and time slot
   const getEventForSlot = (dayKey: string, timeSlot: string) => {
-    return events.find(event => 
+    return eventsWithAttendance.find(event => 
       event.extendedProps?.dayOfWeek === dayKey &&
       event.extendedProps?.timeSlotName === timeSlot
     )
@@ -308,7 +341,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const draggedEvent = events.find(e => e.id === event.active.id)
+    const draggedEvent = eventsWithAttendance.find(e => e.id === event.active.id)
     setActiveEvent(draggedEvent || null)
   }
 
@@ -324,7 +357,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     const dropTarget = over.id as string
     
     // Find the dragged event
-    const draggedEvent = events.find(e => e.id === eventId)
+    const draggedEvent = eventsWithAttendance.find(e => e.id === eventId)
     if (!draggedEvent) {
       setActiveEvent(null)
       return
@@ -402,27 +435,34 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     }
 
     return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        className={cn(
-          "p-3 h-full transition-all hover:shadow-md rounded-lg group relative",
-          // Don't override backgroundColor/borderColor - let inline styles handle it
-          !event.backgroundColor && "bg-muted/50 border border-border hover:bg-muted/70", // Only use fallback if no custom color
-          isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
-          isPastDate && "bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed",
-          isDragging && "opacity-50 z-50"
-        )}
-        onClick={() => handleEventClick(event)}
-        title={
-          isPastDate 
-            ? "Past class - cannot be modified" 
-            : isSampleEvent 
-              ? "Sample data - you can drag but changes won't save" 
-              : "Drag to move this class"
-        }
+      <TimetableEntryContextMenu 
+        event={event}
+        canMarkAttendance={true}
+        canEdit={!isPastDate && !isSampleEvent}
+        canDelete={!isPastDate && !isSampleEvent}
+        onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
       >
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          className={cn(
+            "p-3 h-full transition-all hover:shadow-md rounded-lg group relative",
+            // Don't override backgroundColor/borderColor - let inline styles handle it
+            !event.backgroundColor && "bg-muted/50 border border-border hover:bg-muted/70", // Only use fallback if no custom color
+            isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
+            isPastDate && "bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed",
+            isDragging && "opacity-50 z-50"
+          )}
+          onClick={() => handleEventClick(event)}
+          title={
+            isPastDate 
+              ? "Past class - cannot be modified" 
+              : isSampleEvent 
+                ? "Sample data - you can drag but changes won't save" 
+                : "Drag to move this class"
+          }
+        >
         
         <div className="space-y-1 flex flex-col h-full">
           <div className="flex items-center gap-1">
@@ -459,8 +499,27 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             </div>
           )}
           
-          {/* Mark Attendance Button - Bottom Right */}
-          <div className="flex-1 flex items-end justify-end">
+          {/* Attendance Status Indicators */}
+          <div className="flex-1 flex items-end justify-between">
+            {/* Left side: Attendance status indicators */}
+            <div className="flex items-center gap-1">
+              {/* Attendance marked checkmark */}
+              {event.extendedProps?.attendance?.isMarked && (
+                <div className="flex items-center gap-1">
+                  <Check className="h-3 w-3 text-green-600 opacity-70" />
+                  {/* Colored indicator dot */}
+                  <div 
+                    className={cn(
+                      "h-2 w-2 rounded-full", 
+                      getAttendanceDotColor(event.extendedProps.attendance.attendancePercentage)
+                    )}
+                    title={`${event.extendedProps.attendance.presentStudents}/${event.extendedProps.attendance.totalStudents} students (${event.extendedProps.attendance.attendancePercentage}%)`}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right side: Mark Attendance Button */}
             <button
               onClick={handleMarkAttendance}
               className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
@@ -469,9 +528,22 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               Mark Attendance
             </button>
           </div>
+          
+          {/* Heat map bar at bottom */}
+          {event.extendedProps?.attendance?.isMarked && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-lg overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full w-full opacity-80",
+                  getAttendanceHeatmapColor(event.extendedProps.attendance.attendancePercentage)
+                )}
+              />
+            </div>
+          )}
         </div>
         
-      </div>
+        </div>
+      </TimetableEntryContextMenu>
     )
   }
 
@@ -667,7 +739,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             Time / Day
           </div>
           {weekDays.map((day) => {
-            const dayEvents = events.filter(event => 
+            const dayEvents = eventsWithAttendance.filter(event => 
               event.start.toDateString() === day.fullDate.toDateString()
             )
             const holidayEvents = dayEvents.filter(event => event.allDay)
@@ -730,7 +802,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               {/* Day Cells */}
               {weekDays.map((day) => {
                 // Check if this day has holidays
-                const dayEvents = events.filter(event => 
+                const dayEvents = eventsWithAttendance.filter(event => 
                   event.start.toDateString() === day.fullDate.toDateString()
                 )
                 const holidayEvents = dayEvents.filter(event => event.allDay)
@@ -764,7 +836,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
       </div>
 
       {/* Empty State */}
-      {events.length === 0 && (
+      {eventsWithAttendance.length === 0 && (
         <div className="flex-shrink-0 p-8 text-center">
           <div className="text-muted-foreground">
             <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -821,7 +893,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
           return clickDate
         })() : new Date()}
         timeSlot={selectedTimeSlot}
-        batchId={batchId || events[0]?.extendedProps?.batchId || ''}
+        batchId={batchId || eventsWithAttendance[0]?.extendedProps?.batchId || ''}
         dayOfWeek={selectedDay}
         subjects={subjects}
         onCheckConflicts={onCheckConflicts}

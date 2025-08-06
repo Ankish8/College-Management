@@ -6,10 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { Plus, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Filter, Check } from 'lucide-react'
 import { format, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { QuickCreatePopup } from './quick-create-popup'
+import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
+import { HolidayEventCard } from './holiday-event-card'
+import { 
+  fetchAttendanceStatus, 
+  mergeAttendanceWithEvents, 
+  getAttendanceHeatmapColor, 
+  getAttendanceDotColor 
+} from '@/lib/utils/attendance-status'
 
 interface CalendarDayViewProps {
   date: Date
@@ -78,9 +86,35 @@ export function CalendarDayView({
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
+  const [eventsWithAttendance, setEventsWithAttendance] = React.useState<CalendarEvent[]>(events)
+  const [isLoadingAttendance, setIsLoadingAttendance] = React.useState(false)
+
+  // Fetch attendance status when events change
+  React.useEffect(() => {
+    const loadAttendanceStatus = async () => {
+      if (events.length === 0) {
+        setEventsWithAttendance([])
+        return
+      }
+
+      setIsLoadingAttendance(true)
+      try {
+        const attendanceStatus = await fetchAttendanceStatus(events)
+        const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
+        setEventsWithAttendance(eventsWithAttendanceData)
+      } catch (error) {
+        console.error('Failed to load attendance status:', error)
+        setEventsWithAttendance(events) // Fallback to events without attendance data
+      } finally {
+        setIsLoadingAttendance(false)
+      }
+    }
+
+    loadAttendanceStatus()
+  }, [events])
 
   // Filter events for this specific day
-  const dayEvents = events.filter(event => isSameDay(event.start, date))
+  const dayEvents = eventsWithAttendance.filter(event => isSameDay(event.start, date))
   
   // Sort events by start time
   const sortedEvents = dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
@@ -176,68 +210,105 @@ export function CalendarDayView({
     }
 
     return (
-      <Card 
-        className={cn(
-          "cursor-pointer transition-all hover:shadow-md",
-          event.className
-        )}
-        onClick={() => handleEventClick(event)}
+      <TimetableEntryContextMenu 
+        event={event}
+        canMarkAttendance={true}
       >
-        <CardContent className="p-3">
-          <div className="space-y-2">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <h4 className="font-medium text-sm leading-tight">
-                  {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {event.extendedProps?.facultyName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {event.extendedProps?.subjectCode}
-                </p>
-              </div>
-              <Badge variant="secondary" className="text-xs ml-2">
-                {event.extendedProps?.entryType || 'REGULAR'}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {event.extendedProps?.batchName}
-              </div>
-              {event.extendedProps?.credits && (
-                <div className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  {event.extendedProps.credits} credits
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            event.className
+          )}
+          onClick={() => handleEventClick(event)}
+        >
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <h4 className="font-medium text-sm leading-tight">
+                    {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {event.extendedProps?.facultyName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {event.extendedProps?.subjectCode}
+                  </p>
                 </div>
-              )}
-            </div>
+                <Badge variant="secondary" className="text-xs ml-2">
+                  {event.extendedProps?.entryType || 'REGULAR'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {event.extendedProps?.batchName}
+                </div>
+                {event.extendedProps?.credits && (
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" />
+                    {event.extendedProps.credits} credits
+                  </div>
+                )}
+              </div>
 
-            {event.extendedProps?.notes && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {event.extendedProps.notes}
-              </p>
-            )}
-            
-            {/* Mark Attendance Button - Bottom Right */}
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleMarkAttendance}
-                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
-                title="Mark Attendance"
-              >
-                Mark Attendance
-              </button>
+              {event.extendedProps?.notes && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {event.extendedProps.notes}
+                </p>
+              )}
+              
+              {/* Attendance Status and Mark Attendance Section */}
+              <div className="pt-2 space-y-2">
+                {/* Attendance Status Indicators */}
+                {event.extendedProps?.attendance?.isMarked && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-3 w-3 text-green-600 opacity-70" />
+                    <div 
+                      className={cn(
+                        "h-2 w-2 rounded-full", 
+                        getAttendanceDotColor(event.extendedProps.attendance.attendancePercentage)
+                      )}
+                      title={`${event.extendedProps.attendance.presentStudents}/${event.extendedProps.attendance.totalStudents} students (${event.extendedProps.attendance.attendancePercentage}%)`}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {event.extendedProps.attendance.attendancePercentage}% present
+                    </span>
+                  </div>
+                )}
+
+                {/* Heat map bar */}
+                {event.extendedProps?.attendance?.isMarked && (
+                  <div className="h-1 rounded overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full w-full opacity-80",
+                        getAttendanceHeatmapColor(event.extendedProps.attendance.attendancePercentage)
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Mark Attendance Button */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleMarkAttendance}
+                    className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                    title="Mark Attendance"
+                  >
+                    Mark Attendance
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </TimetableEntryContextMenu>
     )
   }
 
@@ -402,18 +473,11 @@ export function CalendarDayView({
             </div>
             <div className="p-3 space-y-2">
               {dayEvents.filter(event => event.allDay).map((event) => (
-                <div 
+                <HolidayEventCard
                   key={event.id}
-                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
-                  onClick={() => onEventClick?.(event)}
-                >
-                  {event.title}
-                  {event.extendedProps?.holidayDescription && (
-                    <div className="text-xs opacity-90 mt-1">
-                      {event.extendedProps.holidayDescription}
-                    </div>
-                  )}
-                </div>
+                  event={event}
+                  onClick={onEventClick}
+                />
               ))}
             </div>
           </div>
@@ -450,7 +514,7 @@ export function CalendarDayView({
         position={popupPosition}
         date={date}
         timeSlot={selectedTimeSlot}
-        batchId={batchId || events[0]?.extendedProps?.batchId || ''}
+        batchId={batchId || eventsWithAttendance[0]?.extendedProps?.batchId || ''}
         dayOfWeek={format(date, 'EEEE').toUpperCase()}
         subjects={subjects}
         onCheckConflicts={onCheckConflicts}

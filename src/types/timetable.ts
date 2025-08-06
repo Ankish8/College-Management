@@ -7,26 +7,30 @@ export interface CalendarEvent {
   title: string
   start: Date
   end: Date
+  allDay?: boolean
   color?: string
+  backgroundColor?: string
+  borderColor?: string
+  textColor?: string
   className?: string
   editable?: boolean
   startEditable?: boolean
   durationEditable?: boolean
   extendedProps?: {
-    timetableEntryId: string
-    batchId: string
-    batchName: string
-    subjectId: string
-    subjectName: string
-    subjectCode: string
-    facultyId: string
-    facultyName: string
-    timeSlotId: string
-    timeSlotName: string
-    dayOfWeek: DayOfWeek
-    entryType: EntryType
+    timetableEntryId?: string
+    batchId?: string
+    batchName?: string
+    subjectId?: string
+    subjectName?: string
+    subjectCode?: string
+    facultyId?: string
+    facultyName?: string
+    timeSlotId?: string
+    timeSlotName?: string
+    dayOfWeek?: DayOfWeek
+    entryType?: EntryType
     notes?: string
-    credits: number
+    credits?: number
     isPastDate?: boolean
     editable?: boolean
     startEditable?: boolean
@@ -39,6 +43,23 @@ export interface CalendarEvent {
       name: string
       shortName: string
     }
+    // Attendance status data
+    attendance?: {
+      isMarked: boolean
+      attendancePercentage: number
+      totalStudents: number
+      presentStudents: number
+    }
+    // Custom event properties
+    isCustomEvent?: boolean
+    customEventTitle?: string
+    customEventColor?: string
+    // Holiday properties
+    type?: string
+    holidayId?: string
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }
 }
 
@@ -129,6 +150,19 @@ export interface CreateTimetableEntryData {
 }
 
 export type CalendarView = 'day' | 'week' | 'month' | 'year'
+
+// Attendance status types
+export interface AttendanceStatusResponse {
+  attendanceStatus: AttendanceStatus[]
+}
+
+export interface AttendanceStatus {
+  timetableEntryId: string
+  isMarked: boolean
+  attendancePercentage: number
+  totalStudents: number
+  presentStudents: number
+}
 
 // Types are defined above in this file
 

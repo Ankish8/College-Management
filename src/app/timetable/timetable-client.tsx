@@ -411,28 +411,28 @@ export default function TimetableClient() {
   const events: CalendarEvent[] = React.useMemo(() => {
     
     
-    // Get the current visible week range
+    // Get the current visible week range for timetable entries
     const currentWeekStart = new Date(selectedDate)
     currentWeekStart.setDate(selectedDate.getDate() - selectedDate.getDay()) // Start of week (Sunday)
     const currentWeekEnd = new Date(currentWeekStart)
     currentWeekEnd.setDate(currentWeekStart.getDate() + 6) // End of week (Saturday)
     
+    // Get broader date range for holidays (current month ± 6 months)
+    const currentMonth = new Date(selectedDate)
+    const rangeStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 6, 1)
+    const rangeEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 6, 31)
+    
     
     const allEvents: CalendarEvent[] = []
 
-    // First, add holiday events that fall in the visible week
+    // First, add holiday events that fall in the broader range
     if (holidaysData && holidaysData.length > 0) {
       holidaysData.forEach((holiday: any) => {
-        
         const holidayDate = new Date(holiday.date)
         holidayDate.setUTCHours(0, 0, 0, 0)
-        const weekStart = new Date(currentWeekStart)
-        weekStart.setUTCHours(0, 0, 0, 0)
-        const weekEnd = new Date(currentWeekEnd)
-        weekEnd.setUTCHours(23, 59, 59, 999)
         
-        
-        if (holidayDate >= weekStart && holidayDate <= weekEnd) {
+        // Show all holidays in the broader range, not just current week
+        if (holidayDate >= rangeStart && holidayDate <= rangeEnd) {
           // Create all-day holiday event
           const holidayEvent: CalendarEvent = {
             id: `holiday-${holiday.id}`,
@@ -681,6 +681,8 @@ export default function TimetableClient() {
           departmentId: null // University-wide holiday
         }
         
+        console.log('Sending holiday data:', holidayData)
+        
         const response = await fetch('/api/holidays', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -690,8 +692,19 @@ export default function TimetableClient() {
         
         if (!response.ok) {
           const errorData = await response.json()
+          console.error('Holiday creation failed:', errorData)
+          
+          // Handle validation errors more gracefully
+          if (errorData.details && Array.isArray(errorData.details)) {
+            const validationErrors = errorData.details.map((err: any) => err.message).join(', ')
+            throw new Error(`Validation failed: ${validationErrors}`)
+          }
+          
           throw new Error(errorData.error || 'Failed to create holiday')
         }
+        
+        const result = await response.json()
+        toast.success(`🎊 Holiday "${data.holidayName}" created successfully!`)
         
         // Refresh both timetable and holiday data
         refetch()

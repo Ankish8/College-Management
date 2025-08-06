@@ -448,7 +448,8 @@ export function QuickCreatePopup({
                       <SelectItem value="NATIONAL">National Holiday</SelectItem>
                       <SelectItem value="UNIVERSITY">University Holiday</SelectItem>
                       <SelectItem value="DEPARTMENT">Department Holiday</SelectItem>
-                      <SelectItem value="LOCAL">Local/Festival Holiday</SelectItem>
+                      <SelectItem value="LOCAL">Local Holiday</SelectItem>
+                      <SelectItem value="FESTIVAL">Festival Holiday</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

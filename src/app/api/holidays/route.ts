@@ -8,11 +8,11 @@ import { z } from "zod"
 const createHolidaySchema = z.object({
   name: z.string().min(1, "Holiday name is required"),
   date: z.string().min(1, "Date is required"),
-  type: z.enum(["NATIONAL", "UNIVERSITY", "DEPARTMENT", "LOCAL"]),
-  description: z.string().optional(),
+  type: z.enum(["NATIONAL", "UNIVERSITY", "DEPARTMENT", "LOCAL", "FESTIVAL"]),
+  description: z.string().optional().nullable(),
   isRecurring: z.boolean().default(false),
-  departmentId: z.string().optional(), // Optional for university-wide holidays
-  academicCalendarId: z.string().optional(),
+  departmentId: z.string().nullable().optional(), // Optional for university-wide holidays
+  academicCalendarId: z.string().nullable().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(holiday)
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error("Holiday validation error:", error.issues)
       return NextResponse.json(
         { error: "Invalid input", details: error.issues },
         { status: 400 }

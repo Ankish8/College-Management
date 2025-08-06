@@ -68,7 +68,7 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
   }
 
   // Build OR conditions dynamically based on what fields are present
-  const orConditions = [
+  const orConditions: Array<{ batchId?: string; facultyId?: string }> = [
     { batchId: data.batchId }, // Always check batch conflicts
   ]
   

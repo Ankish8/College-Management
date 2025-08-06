@@ -12,10 +12,33 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, Clock, Users } from 'lucide-react'
+import { Plus, Clock, Users, Check } from 'lucide-react'
 import { format, isSameDay, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { QuickCreatePopup } from './quick-create-popup'
+import { TimetableEntryContextMenu } from './timetable-entry-context-menu'
+import { HolidayEventCard } from './holiday-event-card'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import { 
+  Pencil, 
+  Trash2, 
+  Calendar as CalendarIcon,
+  Info,
+} from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { 
+  fetchAttendanceStatus, 
+  mergeAttendanceWithEvents, 
+  getAttendanceHeatmapColor, 
+  getAttendanceDotColor 
+} from '@/lib/utils/attendance-status'
 
 interface CalendarWeekViewProps {
   date: Date
@@ -68,6 +91,11 @@ export function CalendarWeekView({
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [eventsWithAttendance, setEventsWithAttendance] = React.useState<CalendarEvent[]>(events)
+  const [isLoadingAttendance, setIsLoadingAttendance] = React.useState(false)
+  
+  const { toast } = useToast()
+  const router = useRouter()
   
   React.useEffect(() => {
     const checkMobile = () => {
@@ -78,6 +106,30 @@ export function CalendarWeekView({
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Fetch attendance status when events change
+  React.useEffect(() => {
+    const loadAttendanceStatus = async () => {
+      if (events.length === 0) {
+        setEventsWithAttendance([])
+        return
+      }
+
+      setIsLoadingAttendance(true)
+      try {
+        const attendanceStatus = await fetchAttendanceStatus(events)
+        const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
+        setEventsWithAttendance(eventsWithAttendanceData)
+      } catch (error) {
+        console.error('Failed to load attendance status:', error)
+        setEventsWithAttendance(events) // Fallback to events without attendance data
+      } finally {
+        setIsLoadingAttendance(false)
+      }
+    }
+
+    loadAttendanceStatus()
+  }, [events])
 
   const handleTimeSlotClick = (day: Date, timeSlot: string, event?: React.MouseEvent) => {
     if (onQuickCreate && subjects.length > 0 && event) {
@@ -133,42 +185,77 @@ export function CalendarWeekView({
     }
 
     return (
-      <div
-        className={cn(
-          "p-2 rounded text-xs cursor-pointer transition-all hover:shadow-sm hover:scale-105 mb-1 relative",
-          event.className
-        )}
-        onClick={() => handleEventClick(event)}
+      <TimetableEntryContextMenu 
+        event={event}
+        canMarkAttendance={true}
       >
-        <div className="font-medium truncate">
-          {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
-        </div>
-        <div className="opacity-90 truncate">
-          {event.extendedProps?.facultyName}
-        </div>
-        <div className="flex items-center justify-between gap-1 mt-1 opacity-75">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>
-              {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-            </span>
+        <div
+          className={cn(
+            "p-2 rounded text-xs cursor-pointer transition-all hover:shadow-sm hover:scale-105 mb-1 relative",
+            event.className
+          )}
+          onClick={() => handleEventClick(event)}
+        >
+          <div className="font-medium truncate">
+            {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}
           </div>
-          
-          {/* Mark Attendance Button - Bottom Right */}
-          <button
-            onClick={handleMarkAttendance}
-            className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer ml-2"
-            title="Mark Attendance"
-          >
-            Mark Attendance
-          </button>
+          <div className="opacity-90 truncate">
+            {event.extendedProps?.facultyName}
+          </div>
+          <div className="space-y-1 mt-1">
+            {/* Time and Attendance Status Row */}
+            <div className="flex items-center justify-between gap-1 opacity-75">
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+                </span>
+                {/* Attendance status indicators */}
+                {event.extendedProps?.attendance?.isMarked && (
+                  <div className="flex items-center gap-1 ml-1">
+                    <Check className="h-3 w-3 text-green-600 opacity-70" />
+                    <div 
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full", 
+                        getAttendanceDotColor(event.extendedProps.attendance.attendancePercentage)
+                      )}
+                      title={`${event.extendedProps.attendance.presentStudents}/${event.extendedProps.attendance.totalStudents} students (${event.extendedProps.attendance.attendancePercentage}%)`}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Mark Attendance Button Row */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleMarkAttendance}
+                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                title="Mark Attendance"
+              >
+                Mark Attendance
+              </button>
+            </div>
+
+            {/* Heat map bar at bottom */}
+            {event.extendedProps?.attendance?.isMarked && (
+              <div className="h-0.5 rounded overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full w-full opacity-80",
+                    getAttendanceHeatmapColor(event.extendedProps.attendance.attendancePercentage)
+                  )}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </TimetableEntryContextMenu>
     )
   }
 
   const TimeSlotCell = ({ day, timeSlot }: { day: Date; timeSlot: { time: string; label: string } }) => {
-    const cellEvents = getEventsForTimeSlot(events, day, timeSlot.time)
+    const cellEvents = getEventsForTimeSlot(eventsWithAttendance, day, timeSlot.time)
     const isEmpty = cellEvents.length === 0
 
     return (
@@ -194,7 +281,7 @@ export function CalendarWeekView({
   }
 
   const DayHeader = ({ day }: { day: Date }) => {
-    const dayEvents = events.filter(event => isSameDay(event.start, day))
+    const dayEvents = eventsWithAttendance.filter(event => isSameDay(event.start, day))
     const regularEvents = dayEvents.filter(event => !event.allDay)
     const holidayEvents = dayEvents.filter(event => event.allDay)
     const totalCredits = regularEvents.reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)
@@ -253,7 +340,7 @@ export function CalendarWeekView({
               {format(weekDays[0], 'MMM d')} - {format(weekDays[6], 'MMM d, yyyy')}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {events.filter(event => !event.allDay).length} class{events.filter(event => !event.allDay).length !== 1 ? 'es' : ''}{events.some(event => event.allDay) ? ', ' + events.filter(event => event.allDay).length + ' holiday' + (events.filter(event => event.allDay).length !== 1 ? 's' : '') : ''} this week
+              {eventsWithAttendance.filter(event => !event.allDay).length} class{eventsWithAttendance.filter(event => !event.allDay).length !== 1 ? 'es' : ''}{eventsWithAttendance.some(event => event.allDay) ? ', ' + eventsWithAttendance.filter(event => event.allDay).length + ' holiday' + (eventsWithAttendance.filter(event => event.allDay).length !== 1 ? 's' : '') : ''} this week
             </p>
           </div>
           
@@ -261,22 +348,22 @@ export function CalendarWeekView({
           <div className="flex gap-4 text-sm">
             <div className="text-center">
               <div className="font-medium">
-                {events.filter(event => !event.allDay).reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)}
+                {eventsWithAttendance.filter(event => !event.allDay).reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)}
               </div>
               <div className="text-muted-foreground">Credits</div>
             </div>
             <div className="text-center">
               <div className="font-medium">
                 {displayDays.filter(day => 
-                  events.some(event => !event.allDay && isSameDay(event.start, day))
+                  eventsWithAttendance.some(event => !event.allDay && isSameDay(event.start, day))
                 ).length}
               </div>
               <div className="text-muted-foreground">Class Days</div>
             </div>
-            {events.some(event => event.allDay) && (
+            {eventsWithAttendance.some(event => event.allDay) && (
               <div className="text-center">
                 <div className="font-medium text-red-600">
-                  {events.filter(event => event.allDay).length}
+                  {eventsWithAttendance.filter(event => event.allDay).length}
                 </div>
                 <div className="text-red-600">Holidays</div>
               </div>
@@ -292,7 +379,7 @@ export function CalendarWeekView({
             // Mobile: Vertical scrolling layout
             <div className="space-y-4 p-4">
               {displayDays.map((day) => {
-                const dayEvents = events.filter(event => isSameDay(event.start, day))
+                const dayEvents = eventsWithAttendance.filter(event => isSameDay(event.start, day))
                 const regularEvents = dayEvents.filter(event => !event.allDay)
                 const holidayEvents = dayEvents.filter(event => event.allDay)
                 const hasHoliday = holidayEvents.length > 0
@@ -331,18 +418,96 @@ export function CalendarWeekView({
                         <div className="space-y-2">
                           <div className="text-xs font-medium text-red-800 mb-2">🎊 Holiday Events</div>
                           {holidayEvents.map((event) => (
-                            <div
-                              key={event.id}
-                              className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
-                              onClick={() => handleEventClick(event)}
-                            >
-                              {event.title}
-                              {event.extendedProps?.holidayDescription && (
-                                <div className="text-xs opacity-90 mt-1">
-                                  {event.extendedProps.holidayDescription}
+                            <ContextMenu key={event.id}>
+                              <ContextMenuTrigger asChild>
+                                <div 
+                                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
+                                  onClick={() => handleEventClick(event)}
+                                >
+                                  Holiday: {event.title}
                                 </div>
-                              )}
-                            </div>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent className="w-56" style={{ zIndex: 99999 }}>
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Holiday Details",
+                                      description: event.title || "Holiday",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Info className="h-4 w-4" />
+                                  View Details
+                                </ContextMenuItem>
+                                
+                                <ContextMenuSeparator />
+                                
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Edit Holiday",
+                                      description: "Edit feature coming soon!",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Edit Holiday
+                                </ContextMenuItem>
+                                
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Reschedule",
+                                      description: "Reschedule feature coming soon!",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                  Reschedule
+                                </ContextMenuItem>
+                                
+                                <ContextMenuSeparator />
+                                
+                                <ContextMenuItem 
+                                  onClick={async () => {
+                                    if (!confirm(`Are you sure you want to delete this holiday?`)) {
+                                      return
+                                    }
+                                    
+                                    try {
+                                      const deleteId = event.extendedProps?.holidayId || event.id
+                                      const response = await fetch(`/api/settings/holidays/${deleteId}`, {
+                                        method: 'DELETE',
+                                      })
+                                      
+                                      if (!response.ok) {
+                                        throw new Error('Failed to delete holiday')
+                                      }
+                                      
+                                      toast({
+                                        title: "Holiday Deleted",
+                                        description: `${event.title} has been deleted successfully`,
+                                      })
+                                      
+                                      router.refresh()
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to delete holiday. Please try again.",
+                                        variant: "destructive"
+                                      })
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete Holiday
+                                </ContextMenuItem>
+                              </ContextMenuContent>
+                            </ContextMenu>
                           ))}
                         </div>
                       )}
@@ -379,7 +544,7 @@ export function CalendarWeekView({
             </div>
           ) : (
             // Desktop: Grid layout
-            <div className="grid" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
+            <div className="grid relative" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)`, isolation: 'isolate' }}>
               {/* Header Row */}
               <div className="sticky top-0 bg-background z-10 grid" style={{ gridTemplateColumns: 'subgrid', gridColumn: '1 / -1' }}>
                 {/* Empty corner cell */}
@@ -392,8 +557,8 @@ export function CalendarWeekView({
               </div>
 
               {/* All-Day Events Row */}
-              {events.some(event => event.allDay) && (
-                <React.Fragment>
+              {eventsWithAttendance.some(event => event.allDay) && (
+                <>
                   {/* All-Day Header */}
                   <div className="w-20 flex-shrink-0 p-3 bg-red-100 border-r border-b text-center border-red-200">
                     <div className="text-xs font-medium text-red-800">
@@ -406,29 +571,113 @@ export function CalendarWeekView({
                   
                   {/* All-Day Event Cells */}
                   {displayDays.map((day) => {
-                    const dayHolidays = events.filter(event => event.allDay && isSameDay(event.start, day))
+                    const dayHolidays = eventsWithAttendance.filter(event => event.allDay && isSameDay(event.start, day))
                     
                     return (
-                      <div key={`${day.toISOString()}-allday`} className="min-h-[60px] p-2 border-r border-b border-red-200 bg-red-50">
+                      <div 
+                        key={`${day.toISOString()}-allday`} 
+                        className="min-h-[60px] p-2 border-r border-b border-red-200 bg-red-50"
+                      >
                         {dayHolidays.length > 0 ? (
-                          <div className="space-y-1">
-                            {dayHolidays.map((event) => (
-                              <div
-                                key={event.id}
-                                className="bg-red-500 text-white rounded px-2 py-1 text-xs font-medium cursor-pointer hover:bg-red-600 transition-colors text-center"
-                                onClick={() => handleEventClick(event)}
-                              >
-                                {event.title}
-                              </div>
-                            ))}
-                          </div>
+                          dayHolidays.map((event) => (
+                            <ContextMenu key={event.id}>
+                              <ContextMenuTrigger asChild>
+                                <div 
+                                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors text-center px-2 py-1 text-xs mb-1"
+                                  onClick={() => handleEventClick(event)}
+                                >
+                                  Holiday: {event.title}
+                                </div>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent className="w-56" style={{ zIndex: 99999 }}>
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Holiday Details",
+                                      description: event.title || "Holiday",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Info className="h-4 w-4" />
+                                  View Details
+                                </ContextMenuItem>
+                                
+                                <ContextMenuSeparator />
+                                
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Edit Holiday",
+                                      description: "Edit feature coming soon!",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Edit Holiday
+                                </ContextMenuItem>
+                                
+                                <ContextMenuItem 
+                                  onClick={() => {
+                                    toast({
+                                      title: "Reschedule",
+                                      description: "Reschedule feature coming soon!",
+                                    })
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                  Reschedule
+                                </ContextMenuItem>
+                                
+                                <ContextMenuSeparator />
+                                
+                                <ContextMenuItem 
+                                  onClick={async () => {
+                                    if (!confirm(`Are you sure you want to delete this holiday?`)) {
+                                      return
+                                    }
+                                    
+                                    try {
+                                      const deleteId = event.extendedProps?.holidayId || event.id
+                                      const response = await fetch(`/api/settings/holidays/${deleteId}`, {
+                                        method: 'DELETE',
+                                      })
+                                      
+                                      if (!response.ok) {
+                                        throw new Error('Failed to delete holiday')
+                                      }
+                                      
+                                      toast({
+                                        title: "Holiday Deleted",
+                                        description: `${event.title} has been deleted successfully`,
+                                      })
+                                      
+                                      router.refresh()
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to delete holiday. Please try again.",
+                                        variant: "destructive"
+                                      })
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete Holiday
+                                </ContextMenuItem>
+                              </ContextMenuContent>
+                            </ContextMenu>
+                          ))
                         ) : (
                           <div className="h-full opacity-30"></div>
                         )}
                       </div>
                     )
                   })}
-                </React.Fragment>
+                </>
               )}
 
               {/* Time Slot Rows */}
@@ -453,7 +702,7 @@ export function CalendarWeekView({
       </div>
 
       {/* Week Summary */}
-      {events.length === 0 && (
+      {eventsWithAttendance.length === 0 && (
         <div className="flex-shrink-0 p-8 text-center">
           <div className="text-muted-foreground">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -473,7 +722,7 @@ export function CalendarWeekView({
         position={popupPosition}
         date={selectedDate}
         timeSlot={selectedTimeSlot}
-        batchId={batchId || events[0]?.extendedProps?.batchId || ''}
+        batchId={batchId || eventsWithAttendance[0]?.extendedProps?.batchId || ''}
         dayOfWeek={format(selectedDate, 'EEEE').toUpperCase()}
         subjects={subjects}
         onCheckConflicts={onCheckConflicts}
