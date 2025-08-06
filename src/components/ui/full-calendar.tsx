@@ -302,6 +302,7 @@ export function FullCalendar({
                   onToday={handleToday}
                   onViewChange={handleViewChange}
                   currentView={viewState.view}
+                  onDateSelect={handleDateChange}
                   onFiltersToggle={() => setShowFilters(!showFilters)}
                   showFilters={showFilters}
                 />

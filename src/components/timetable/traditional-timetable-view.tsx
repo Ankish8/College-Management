@@ -5,7 +5,8 @@ import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical, X } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
+import { Plus, Clock, User, ChevronLeft, ChevronRight, Filter, GripVertical, X, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DndContext,
@@ -60,6 +61,7 @@ interface TraditionalTimetableViewProps {
   onToday?: () => void
   onViewChange?: (view: CalendarView) => void
   currentView?: CalendarView
+  onDateSelect?: (date: Date) => void
   onFiltersToggle?: () => void
   showFilters?: boolean
   onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
@@ -99,6 +101,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   onToday,
   onViewChange,
   currentView,
+  onDateSelect,
   onFiltersToggle,
   showFilters,
   onCheckConflicts
@@ -407,40 +410,26 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               : "Drag to move this class"
         }
       >
-        {/* Delete button - only show for real events, not sample data, and not past dates */}
-        {!isSampleEvent && !isPastDate && onEventDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-1 right-1 h-5 w-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              // Delete button clicked for event
-              onEventDelete(event.id)
-            }}
-            title="Delete this class"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
         
-        <div 
-          className="space-y-1" 
-          {...(isPastDate ? {} : listeners)} 
-          style={{ 
-            cursor: isPastDate 
-              ? 'not-allowed' 
-              : isDragging 
-                ? 'grabbing' 
-                : 'grab' 
-          }}
-        >
+        <div className="space-y-1">
           <div className="flex items-center gap-1">
-            <GripVertical className={cn(
-              "h-3 w-3 flex-shrink-0",
-              isSampleEvent ? "text-orange-500" : isPastDate ? "text-gray-400" : "text-muted-foreground"
-            )} />
+            <div
+              {...(isPastDate ? {} : listeners)}
+              style={{ 
+                cursor: isPastDate 
+                  ? 'not-allowed' 
+                  : isDragging 
+                    ? 'grabbing' 
+                    : 'grab' 
+              }}
+              className="flex-shrink-0 p-1 hover:bg-muted/50 rounded transition-colors"
+              title={isPastDate ? "Cannot drag past events" : "Drag to move this class"}
+            >
+              <GripVertical className={cn(
+                "h-3 w-3",
+                isSampleEvent ? "text-orange-500" : isPastDate ? "text-gray-400" : "text-muted-foreground"
+              )} />
+            </div>
             <div className="font-semibold text-sm line-clamp-1">
               {event.extendedProps?.customEventTitle || event.extendedProps?.subjectName || event.extendedProps?.subjectCode || event.title}
             </div>
@@ -451,12 +440,6 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               <span className="line-clamp-1">{event.extendedProps?.facultyName}</span>
             </div>
           )}
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>
-              {event.start && !isNaN(new Date(event.start).getTime()) ? format(new Date(event.start), 'h:mm a') : 'Invalid time'} - {event.end && !isNaN(new Date(event.end).getTime()) ? format(new Date(event.end), 'h:mm a') : 'Invalid time'}
-            </span>
-          </div>
           {event.extendedProps?.subjectCode && (
             <div className="text-xs text-muted-foreground">
               {event.extendedProps.subjectCode}
@@ -598,6 +581,18 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
                 <ChevronRight className="h-4 w-4" />
                 <span className="sr-only">Next</span>
               </Button>
+              {onDateSelect && (
+                <DatePicker
+                  date={date}
+                  onDateChange={(selectedDate) => {
+                    if (selectedDate) {
+                      onDateSelect(selectedDate)
+                    }
+                  }}
+                  placeholder="Jump to date"
+                  className="h-8"
+                />
+              )}
             </div>
           </div>
 
@@ -638,17 +633,13 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             </Button>
           </div>
         </div>
-        
-        <p className="text-sm text-muted-foreground mt-2">
-          {events.length} class{events.length !== 1 ? 'es' : ''} scheduled this week
-        </p>
       </div>
 
       {/* Traditional Timetable Grid */}
       <div className="flex-1 p-4 overflow-auto">
-        <div className="grid grid-cols-6 gap-1 min-w-[800px]">
+        <div className="grid gap-1 min-w-[800px]" style={{gridTemplateColumns: 'auto 1fr 1fr 1fr 1fr 1fr'}}>
           {/* Header Row */}
-          <div className="bg-muted/50 p-3 text-center font-medium border rounded-lg">
+          <div className="bg-muted/50 p-3 text-center font-medium border rounded-lg" style={{width: '141px'}}>
             Time / Day
           </div>
           {weekDays.map((day) => (
@@ -664,26 +655,29 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
           {activeTimeSlots.map((timeSlot) => (
             <React.Fragment key={timeSlot.time}>
               {/* Time Header */}
-              <div className="bg-muted/30 p-3 text-center border rounded-lg">
-                <div className="text-sm font-medium">
-                  {(() => {
-                    try {
-                      const startDate = new Date(`2000-01-01T${timeSlot.label}`)
-                      return !isNaN(startDate.getTime()) ? format(startDate, 'h:mm a') : timeSlot.label
-                    } catch {
-                      return timeSlot.label
-                    }
-                  })()}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  to {(() => {
-                    try {
-                      const endDate = new Date(`2000-01-01T${timeSlot.endTime}`)
-                      return !isNaN(endDate.getTime()) ? format(endDate, 'h:mm a') : timeSlot.endTime
-                    } catch {
-                      return timeSlot.endTime
-                    }
-                  })()}
+              <div className="bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-slate-200 rounded-lg p-2 shadow-sm" style={{width: '141px'}}>
+                <div className="text-center flex flex-col justify-around" style={{minHeight: '82px'}}>
+                  <div className="text-xs font-semibold text-slate-700 leading-tight">
+                    {(() => {
+                      try {
+                        const startDate = new Date(`2000-01-01T${timeSlot.label}`)
+                        return !isNaN(startDate.getTime()) ? format(startDate, 'h:mm a') : timeSlot.label
+                      } catch {
+                        return timeSlot.label
+                      }
+                    })()}
+                  </div>
+                  <div className="text-[10px] text-slate-400 leading-tight">to</div>
+                  <div className="text-xs font-semibold text-slate-700 leading-tight">
+                    {(() => {
+                      try {
+                        const endDate = new Date(`2000-01-01T${timeSlot.endTime}`)
+                        return !isNaN(endDate.getTime()) ? format(endDate, 'h:mm a') : timeSlot.endTime
+                      } catch {
+                        return timeSlot.endTime
+                      }
+                    })()}
+                  </div>
                 </div>
               </div>
               

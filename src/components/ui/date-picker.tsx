@@ -56,6 +56,7 @@ export function DatePicker({
           }}
           initialFocus
           className="rounded-md"
+          captionLayout="dropdown"
         />
       </PopoverContent>
     </Popover>
