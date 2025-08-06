@@ -319,10 +319,16 @@ export default function TimetableClient() {
   })
 
 
-  // Auto-select first batch if none selected (only once)
+  // Load saved batch from localStorage and auto-select first batch if none selected
   useEffect(() => {
     if (batchesData && batchesData.length > 0 && !hasInitializedBatch.current) {
-      setSelectedBatchId(batchesData[0].id)
+      // Try to load saved batch from localStorage
+      const savedBatchId = localStorage.getItem('selectedBatchId')
+      if (savedBatchId && batchesData.find((batch: any) => batch.id === savedBatchId)) {
+        setSelectedBatchId(savedBatchId)
+      } else {
+        setSelectedBatchId(batchesData[0].id)
+      }
       hasInitializedBatch.current = true
     }
   }, [batchesData])
@@ -828,6 +834,8 @@ export default function TimetableClient() {
 
   const handleBatchChange = (batchId: string) => {
     setSelectedBatchId(batchId)
+    // Save selected batch to localStorage
+    localStorage.setItem('selectedBatchId', batchId)
     // Force refetch of timetable data when batch changes
     refetch()
   }
