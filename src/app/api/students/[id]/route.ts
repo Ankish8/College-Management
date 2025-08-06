@@ -77,8 +77,8 @@ export async function GET(
     }
 
     // Try to get attendance data if tables exist, otherwise use defaults
-    let attendanceRecords = [];
-    let attendanceDisputes = [];
+    let attendanceRecords: any[] = [];
+    let attendanceDisputes: any[] = [];
     
     try {
       attendanceRecords = await db.attendanceRecord.findMany({

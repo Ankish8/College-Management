@@ -314,8 +314,8 @@ async function checkSimpleConflict(data: z.infer<typeof simpleConflictCheckSchem
       hasConflict: true,
       conflictType: "FACULTY_CONFLICT",
       conflictDetails: {
-        subjectName: conflictingEntry.subject.name,
-        subjectCode: conflictingEntry.subject.code,
+        subjectName: conflictingEntry.subject?.name || 'Unknown Subject',
+        subjectCode: conflictingEntry.subject?.code || 'Unknown',
         batchName: conflictingEntry.batch.name,
         timeSlot: conflictingEntry.timeSlot.name,
       }

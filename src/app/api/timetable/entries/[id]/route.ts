@@ -633,7 +633,7 @@ export async function DELETE(
     const relatedAttendance = await db.attendanceSession.findFirst({
       where: {
         batchId: existingEntry.batchId,
-        subjectId: existingEntry.subjectId,
+        subjectId: existingEntry.subjectId || undefined,
         date: existingEntry.date || undefined,
       }
     })

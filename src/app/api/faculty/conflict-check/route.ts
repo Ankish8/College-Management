@@ -311,7 +311,7 @@ export async function POST(request: NextRequest) {
               timeSlotConflicts.push({
                 day: transferEntry.dayOfWeek,
                 timeSlot: transferEntry.timeSlot.name,
-                conflictingSubject: existingEntry.subject.code + ' - ' + existingEntry.subject.name,
+                conflictingSubject: (existingEntry.subject?.code || 'Unknown') + ' - ' + (existingEntry.subject?.name || 'Unknown Subject'),
                 conflictingBatch: existingEntry.batch.name
               })
             }
@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
             timeSlotConflicts.push({
               day: transferEntry.dayOfWeek,
               timeSlot: transferEntry.timeSlot.name,
-              conflictingSubject: existingEntry.subject.code + ' - ' + existingEntry.subject.name,
+              conflictingSubject: (existingEntry.subject?.code || 'Unknown') + ' - ' + (existingEntry.subject?.name || 'Unknown Subject'),
               conflictingBatch: existingEntry.batch.name
             })
           }

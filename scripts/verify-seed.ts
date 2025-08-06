@@ -87,7 +87,7 @@ async function verifySeedData() {
 
     console.log(`📋 Sample Timetable for ${sampleBatch.name} (first 5 entries):`)
     for (const entry of sampleEntries) {
-      console.log(`   ${entry.dayOfWeek} ${entry.timeSlot.name}: ${entry.subject.name} by ${entry.faculty.name}`)
+      console.log(`   ${entry.dayOfWeek} ${entry.timeSlot.name}: ${entry.subject?.name || 'No Subject'} by ${entry.faculty?.name || 'No Faculty'}`)
     }
     console.log()
 

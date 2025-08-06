@@ -101,10 +101,6 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       ? entry.customEventTitle 
       : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
     
-    // Debug logging for date-specific entries
-    if (entry.subject?.name === 'Design Ethics' || (entry.dayOfWeek === 'WEDNESDAY' && entry.subject?.name === 'Thesis Project')) {
-      console.log(`📍 Date-specific event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
-    }
 
     // Check if this is a past date to apply different styling
     const today = new Date()
@@ -210,10 +206,6 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         ? entry.customEventTitle 
         : `${entry.subject?.name || 'Unknown Subject'} - ${entry.faculty?.name || 'No Faculty'}`
 
-      // Debug logging for recurring entries on Wednesday (to debug Thesis Project issue)
-      if (entry.dayOfWeek === 'WEDNESDAY' && entry.subject?.name === 'Thesis Project') {
-        console.log(`🔄 Recurring WEDNESDAY event: ${entry.subject.name} on ${eventDate.toDateString()} (${eventDate.toISOString().split('T')[0]}) - ID: ${eventId}`)
-      }
 
       // Check if this is a past date to apply different styling
       const today = new Date()
@@ -366,10 +358,7 @@ export default function TimetableClient() {
     refetch 
   } = useQuery({
     queryKey: ['timetable-entries', filters],
-    queryFn: () => {
-      console.log('🔄 Fetching timetable with filters:', filters)
-      return fetchTimetableEntries(filters)
-    },
+    queryFn: () => fetchTimetableEntries(filters),
     enabled: !!session?.user && !!selectedBatchId,
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache data
@@ -389,30 +378,9 @@ export default function TimetableClient() {
     staleTime: 5 * 60 * 1000, // Cache holidays for 5 minutes
   })
 
-  // Debug holidays data
-  React.useEffect(() => {
-    console.log('🎊 HOLIDAYS DEBUG:')
-    console.log('  Data:', holidaysData)
-    console.log('  Loading:', isLoadingHolidays)
-    console.log('  Error:', holidaysError)
-    if (holidaysData) {
-      console.log('  Holiday count:', holidaysData.length)
-      holidaysData.forEach((h: any) => {
-        console.log(`    - ${h.name} on ${h.date} (${h.type})`)
-      })
-    }
-  }, [holidaysData, isLoadingHolidays, holidaysError])
+  // Holidays are ready for display
+  const hasHolidays = holidaysData && holidaysData.length > 0
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('📊 Timetable Query State:', {
-      selectedBatchId,
-      isLoading,
-      error: error?.message,
-      dataEntries: timetableData?.entries?.length || 0,
-      enabled: !!session?.user && !!selectedBatchId
-    })
-  }, [selectedBatchId, isLoading, error, timetableData, session])
 
 
   // Format batch display text
@@ -442,8 +410,6 @@ export default function TimetableClient() {
   // Convert entries to calendar events - INCLUDES HOLIDAYS
   const events: CalendarEvent[] = React.useMemo(() => {
     
-    console.log(`🎯 Processing timetable entries: ${timetableData?.entries?.length || 0}`)
-    console.log(`🎊 Processing holidays: ${holidaysData?.length || 0}`)
     
     // Get the current visible week range
     const currentWeekStart = new Date(selectedDate)
@@ -451,19 +417,12 @@ export default function TimetableClient() {
     const currentWeekEnd = new Date(currentWeekStart)
     currentWeekEnd.setDate(currentWeekStart.getDate() + 6) // End of week (Saturday)
     
-    console.log(`📅 Filtering events for visible week: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`)
     
     const allEvents: CalendarEvent[] = []
 
     // First, add holiday events that fall in the visible week
-    console.log(`🎊 HOLIDAY PROCESSING DEBUG:`)
-    console.log(`  holidaysData exists: ${!!(holidaysData && holidaysData.length > 0)}`)
-    console.log(`  holidaysData length: ${holidaysData?.length || 0}`)
-    
     if (holidaysData && holidaysData.length > 0) {
-      console.log(`  Processing ${holidaysData.length} holidays...`)
-      holidaysData.forEach((holiday: any, index: number) => {
-        console.log(`  Holiday ${index + 1}: ${holiday.name} on ${holiday.date}`)
+      holidaysData.forEach((holiday: any) => {
         
         const holidayDate = new Date(holiday.date)
         holidayDate.setUTCHours(0, 0, 0, 0)
@@ -472,9 +431,6 @@ export default function TimetableClient() {
         const weekEnd = new Date(currentWeekEnd)
         weekEnd.setUTCHours(23, 59, 59, 999)
         
-        console.log(`    Holiday date (UTC): ${holidayDate.toISOString()}`)
-        console.log(`    Week range: ${weekStart.toISOString()} to ${weekEnd.toISOString()}`)
-        console.log(`    Falls in range: ${holidayDate >= weekStart && holidayDate <= weekEnd}`)
         
         if (holidayDate >= weekStart && holidayDate <= weekEnd) {
           // Create all-day holiday event
@@ -500,13 +456,8 @@ export default function TimetableClient() {
             }
           }
           allEvents.push(holidayEvent)
-          console.log(`✅ Added holiday event: ${holiday.name} on ${holiday.date}`)
-        } else {
-          console.log(`⏭️ Skipped holiday (not in visible week): ${holiday.name}`)
         }
       })
-    } else {
-      console.log(`  No holidays data available`)
     }
     
     // Process timetable entries - only show entries that fall in the visible week
@@ -616,22 +567,6 @@ export default function TimetableClient() {
       })
     }
     
-    console.log(`✅ Generated ${allEvents.length} calendar events for current week`)
-    
-    // Debug: Show events by date
-    const eventsByDate = allEvents.reduce((acc, event) => {
-      const date = event.start.toISOString().split('T')[0]
-      if (!acc[date]) acc[date] = []
-      acc[date].push(event.title)
-      return acc
-    }, {} as Record<string, string[]>)
-    
-    console.log('📅 Events by date:')
-    Object.entries(eventsByDate).forEach(([date, titles]) => {
-      console.log(`  ${date}: ${titles.length} events`)
-      titles.slice(0, 3).forEach(title => console.log(`    - ${title}`))
-      if (titles.length > 3) console.log(`    ... and ${titles.length - 3} more`)
-    })
     return allEvents
     
   }, [timetableData, holidaysData, selectedDate])
@@ -643,13 +578,6 @@ export default function TimetableClient() {
         entry.date ? new Date(entry.date).toDateString() : 'NO DATE'
       ))].sort()
       
-      console.log('📋 RAW DATA FROM API:')
-      console.log('   Total entries:', timetableData.entries.length)
-      console.log('   Unique dates:', allDates)
-      console.log('   First 5 entries:')
-      timetableData.entries.slice(0, 5).forEach((entry: any, i: number) => {
-        console.log(`     ${i + 1}. ${entry.subject?.name} - ${entry.dayOfWeek} ${entry.date ? new Date(entry.date).toDateString() : 'NO DATE'} at ${entry.timeSlot?.name}`)
-      })
     }
   }, [timetableData])
 
@@ -768,7 +696,6 @@ export default function TimetableClient() {
         // Refresh both timetable and holiday data
         refetch()
         queryClient.invalidateQueries({ queryKey: ['holidays'] })
-        console.log('✅ Holiday created successfully')
         return
       }
 
@@ -995,7 +922,6 @@ export default function TimetableClient() {
       
       // Extract the base timetable entry ID from the event ID
       // Event IDs are formatted as "entryId-YYYY-MM-DD"
-      console.log(`🔍 Parsing event ID for deletion: ${eventToDelete.id}`)
       
       let baseEntryId = eventToDelete.id
       let specificDate = null
@@ -1008,9 +934,6 @@ export default function TimetableClient() {
         specificDate = dateMatch[1]
         // Remove the date part (including the hyphen before it) to get the base entry ID
         baseEntryId = eventToDelete.id.replace(`-${specificDate}`, '')
-        console.log(`✅ Date-specific entry: ${specificDate}, base ID: ${baseEntryId}`)
-      } else {
-        console.log(`🔄 Recurring entry (no date): ID: ${baseEntryId}`)
       }
       
       // Build the delete URL
@@ -1019,13 +942,11 @@ export default function TimetableClient() {
         deleteUrl += `?date=${specificDate}`
       }
       
-      console.log(`🌐 Sending DELETE request to: ${deleteUrl}`)
 
       const response = await fetch(deleteUrl, {
         method: 'DELETE',
       })
       
-      console.log(`📡 DELETE response status: ${response.status}`)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }))
@@ -1063,11 +984,9 @@ export default function TimetableClient() {
   }
 
   const handleViewStateChange = (viewState: any) => {
-    console.log(`📆 Calendar view state changed:`, viewState)
     setCurrentView(viewState.view)
     // Update selected date when view date changes (for month navigation)
     if (viewState.currentDate && viewState.currentDate !== selectedDate) {
-      console.log(`📅 Updating selected date from ${selectedDate.toDateString()} to ${viewState.currentDate.toDateString()}`)
       setSelectedDate(viewState.currentDate)
     }
   }
