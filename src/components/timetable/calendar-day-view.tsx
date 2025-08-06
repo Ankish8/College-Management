@@ -359,13 +359,42 @@ export function CalendarDayView({
             </div>
             <div className="text-center">
               <div className="font-medium">
-                {sortedEvents.length}
+                {sortedEvents.filter(event => !event.allDay).length}
               </div>
               <div className="text-muted-foreground">Classes</div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* All-Day Events Section (Holidays, etc.) */}
+      {dayEvents.some(event => event.allDay) && (
+        <div className="flex-shrink-0 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 border-b border-red-200 bg-red-100">
+              <h3 className="text-sm font-medium text-red-800 flex items-center gap-2">
+                🎊 Holiday / All-Day Events
+              </h3>
+            </div>
+            <div className="p-3 space-y-2">
+              {dayEvents.filter(event => event.allDay).map((event) => (
+                <div 
+                  key={event.id}
+                  className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
+                  onClick={() => onEventClick?.(event)}
+                >
+                  {event.title}
+                  {event.extendedProps?.holidayDescription && (
+                    <div className="text-xs opacity-90 mt-1">
+                      {event.extendedProps.holidayDescription}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Time Slots Grid */}
       <ScrollArea className="flex-1">
@@ -377,7 +406,7 @@ export function CalendarDayView({
       </ScrollArea>
 
       {/* Day Summary */}
-      {dayEvents.length === 0 && (
+      {dayEvents.filter(event => !event.allDay).length === 0 && !dayEvents.some(event => event.allDay) && (
         <div className="flex-shrink-0 p-8 text-center">
           <div className="text-muted-foreground">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />

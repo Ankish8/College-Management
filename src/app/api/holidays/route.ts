@@ -11,8 +11,8 @@ const createHolidaySchema = z.object({
   type: z.enum(["NATIONAL", "UNIVERSITY", "DEPARTMENT", "LOCAL"]),
   description: z.string().optional(),
   isRecurring: z.boolean().default(false),
-  departmentId: z.string().min(1, "Department ID is required"),
-  academicCalendarId: z.string().optional(), // Optional for department-wide holidays
+  departmentId: z.string().optional(), // Optional for university-wide holidays
+  academicCalendarId: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -25,21 +25,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createHolidaySchema.parse(body)
 
-    // Verify user has access to this department
-    const user = await db.user.findUnique({
-      where: { id: (session.user as any).id },
-      include: { department: true }
-    })
+    // For department-specific holidays, verify user has access
+    if (validatedData.departmentId) {
+      const user = await db.user.findUnique({
+        where: { id: (session.user as any).id },
+        include: { department: true }
+      })
 
-    if (!user?.department || user.department.id !== validatedData.departmentId) {
-      return NextResponse.json(
-        { error: "Department not found or access denied" },
-        { status: 403 }
-      )
+      if (!user?.department || user.department.id !== validatedData.departmentId) {
+        return NextResponse.json(
+          { error: "Department not found or access denied" },
+          { status: 403 }
+        )
+      }
     }
 
-    // If academic calendar is specified, verify it belongs to the department
-    if (validatedData.academicCalendarId) {
+    // If academic calendar is specified, verify it exists and matches department
+    if (validatedData.academicCalendarId && validatedData.departmentId) {
       const academicCalendar = await db.academicCalendar.findFirst({
         where: {
           id: validatedData.academicCalendarId,
@@ -88,28 +90,52 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's department
+    const { searchParams } = new URL(request.url)
+    const dateFrom = searchParams.get('dateFrom')
+    const dateTo = searchParams.get('dateTo')
+
+    let whereClause: any = {}
+    
+    // Date filtering
+    if (dateFrom || dateTo) {
+      whereClause.date = {}
+      if (dateFrom) whereClause.date.gte = new Date(dateFrom)
+      if (dateTo) whereClause.date.lte = new Date(dateTo)
+    }
+
+    // Get holidays - include university-wide holidays (departmentId: null) and department-specific ones
     const user = await db.user.findUnique({
       where: { id: (session.user as any).id },
       include: { department: true }
     })
 
-    if (!user?.department) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      )
+    if (user?.department) {
+      // Include both university-wide and department-specific holidays
+      whereClause.OR = [
+        { departmentId: null }, // University-wide holidays
+        { departmentId: user.department.id } // Department-specific holidays
+      ]
+    } else {
+      // If no department, only show university-wide holidays
+      whereClause.departmentId = null
     }
 
-    // Get holidays for the department
     const holidays = await db.holiday.findMany({
-      where: { departmentId: user.department.id },
-      orderBy: {
-        date: 'desc'
+      where: whereClause,
+      orderBy: { date: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        type: true,
+        description: true,
+        isRecurring: true,
+        departmentId: true,
+        createdAt: true,
       }
     })
 

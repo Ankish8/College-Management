@@ -18,6 +18,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
+// Fetch holidays for calendar display
+async function fetchHolidays() {
+  const response = await fetch('/api/holidays', {
+    credentials: 'include'
+  })
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch holidays' }))
+    throw new Error(error.message || 'Failed to fetch holidays')
+  }
+
+  const data = await response.json()
+  return data
+}
+
 // Fetch timetable entries
 async function fetchTimetableEntries(filters: TimetableFilters = {}) {
   const searchParams = new URLSearchParams()
@@ -362,6 +377,32 @@ export default function TimetableClient() {
     refetchOnWindowFocus: true
   })
 
+  // Fetch holidays
+  const { 
+    data: holidaysData,
+    isLoading: isLoadingHolidays,
+    error: holidaysError
+  } = useQuery({
+    queryKey: ['holidays'],
+    queryFn: fetchHolidays,
+    enabled: !!session?.user,
+    staleTime: 5 * 60 * 1000, // Cache holidays for 5 minutes
+  })
+
+  // Debug holidays data
+  React.useEffect(() => {
+    console.log('🎊 HOLIDAYS DEBUG:')
+    console.log('  Data:', holidaysData)
+    console.log('  Loading:', isLoadingHolidays)
+    console.log('  Error:', holidaysError)
+    if (holidaysData) {
+      console.log('  Holiday count:', holidaysData.length)
+      holidaysData.forEach((h: any) => {
+        console.log(`    - ${h.name} on ${h.date} (${h.type})`)
+      })
+    }
+  }, [holidaysData, isLoadingHolidays, holidaysError])
+
   // Debug logging
   React.useEffect(() => {
     console.log('📊 Timetable Query State:', {
@@ -398,14 +439,11 @@ export default function TimetableClient() {
     return parts.join(' • ')
   }, [])
 
-  // Convert entries to calendar events - COMPLETELY REWRITTEN
+  // Convert entries to calendar events - INCLUDES HOLIDAYS
   const events: CalendarEvent[] = React.useMemo(() => {
     
-    if (!timetableData?.entries || timetableData.entries.length === 0) {
-      return []
-    }
-    
-    console.log(`🎯 Processing ${timetableData.entries.length} timetable entries`)
+    console.log(`🎯 Processing timetable entries: ${timetableData?.entries?.length || 0}`)
+    console.log(`🎊 Processing holidays: ${holidaysData?.length || 0}`)
     
     // Get the current visible week range
     const currentWeekStart = new Date(selectedDate)
@@ -416,10 +454,65 @@ export default function TimetableClient() {
     console.log(`📅 Filtering events for visible week: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`)
     
     const allEvents: CalendarEvent[] = []
+
+    // First, add holiday events that fall in the visible week
+    console.log(`🎊 HOLIDAY PROCESSING DEBUG:`)
+    console.log(`  holidaysData exists: ${!!(holidaysData && holidaysData.length > 0)}`)
+    console.log(`  holidaysData length: ${holidaysData?.length || 0}`)
     
-    // Process each entry individually - only show entries that fall in the visible week
-    timetableData.entries.forEach((entry: any) => {
-      if (!entry.date) {
+    if (holidaysData && holidaysData.length > 0) {
+      console.log(`  Processing ${holidaysData.length} holidays...`)
+      holidaysData.forEach((holiday: any, index: number) => {
+        console.log(`  Holiday ${index + 1}: ${holiday.name} on ${holiday.date}`)
+        
+        const holidayDate = new Date(holiday.date)
+        holidayDate.setUTCHours(0, 0, 0, 0)
+        const weekStart = new Date(currentWeekStart)
+        weekStart.setUTCHours(0, 0, 0, 0)
+        const weekEnd = new Date(currentWeekEnd)
+        weekEnd.setUTCHours(23, 59, 59, 999)
+        
+        console.log(`    Holiday date (UTC): ${holidayDate.toISOString()}`)
+        console.log(`    Week range: ${weekStart.toISOString()} to ${weekEnd.toISOString()}`)
+        console.log(`    Falls in range: ${holidayDate >= weekStart && holidayDate <= weekEnd}`)
+        
+        if (holidayDate >= weekStart && holidayDate <= weekEnd) {
+          // Create all-day holiday event
+          const holidayEvent: CalendarEvent = {
+            id: `holiday-${holiday.id}`,
+            title: `🎊 ${holiday.name}`,
+            start: new Date(holiday.date),
+            end: new Date(holiday.date),
+            allDay: true,
+            className: 'holiday-event',
+            backgroundColor: '#ef4444', // Red background for holidays
+            borderColor: '#dc2626',
+            textColor: '#ffffff',
+            editable: false,
+            startEditable: false,
+            durationEditable: false,
+            extendedProps: {
+              type: 'holiday',
+              holidayId: holiday.id,
+              holidayName: holiday.name,
+              holidayType: holiday.type,
+              holidayDescription: holiday.description
+            }
+          }
+          allEvents.push(holidayEvent)
+          console.log(`✅ Added holiday event: ${holiday.name} on ${holiday.date}`)
+        } else {
+          console.log(`⏭️ Skipped holiday (not in visible week): ${holiday.name}`)
+        }
+      })
+    } else {
+      console.log(`  No holidays data available`)
+    }
+    
+    // Process timetable entries - only show entries that fall in the visible week
+    if (timetableData?.entries && timetableData.entries.length > 0) {
+      timetableData.entries.forEach((entry: any) => {
+        if (!entry.date) {
         // Skip recurring entries for now - we only want date-specific entries
         return
       }
@@ -520,7 +613,8 @@ export default function TimetableClient() {
           customEventColor: entry.customEventColor
         }
       })
-    })
+      })
+    }
     
     console.log(`✅ Generated ${allEvents.length} calendar events for current week`)
     
@@ -540,7 +634,7 @@ export default function TimetableClient() {
     })
     return allEvents
     
-  }, [timetableData, selectedDate])
+  }, [timetableData, holidaysData, selectedDate])
   
   // DEBUG: Log what data we're actually getting
   React.useEffect(() => {
@@ -635,13 +729,50 @@ export default function TimetableClient() {
   }
 
   const handleQuickCreate = async (data: {
-    subjectId: string
-    facultyId: string
+    subjectId?: string
+    facultyId?: string
     date: Date
     timeSlot: string
+    customEventTitle?: string
+    customEventColor?: string
+    isCustomEvent?: boolean
+    isHoliday?: boolean
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }) => {
     try {
-      // Map day of week
+      // Handle holidays separately
+      if (data.isHoliday) {
+        const holidayData = {
+          name: data.holidayName!,
+          date: data.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          type: data.holidayType!,
+          description: data.holidayDescription || '',
+          isRecurring: false,
+          departmentId: null // University-wide holiday
+        }
+        
+        const response = await fetch('/api/holidays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(holidayData),
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create holiday')
+        }
+        
+        // Refresh both timetable and holiday data
+        refetch()
+        queryClient.invalidateQueries({ queryKey: ['holidays'] })
+        console.log('✅ Holiday created successfully')
+        return
+      }
+
+      // Handle timetable entries (subjects and custom events)
       const dayOfWeekMap = {
         0: 'SUNDAY',
         1: 'MONDAY', 
@@ -659,24 +790,31 @@ export default function TimetableClient() {
       if (timeSlotsList && Array.isArray(timeSlotsList)) {
         const timeSlot = timeSlotsList.find((ts: any) => ts.name === data.timeSlot)
         timeSlotId = timeSlot?.id
-        // Time slot found and mapped successfully
       }
       
       if (!timeSlotId) {
         throw new Error(`Time slot "${data.timeSlot}" not found or is inactive`)
       }
       
-      const createData = {
+      let createData: any = {
         batchId: selectedBatchId || '',
-        subjectId: data.subjectId,
-        facultyId: data.facultyId,
         timeSlotId: timeSlotId,
         dayOfWeek: dayOfWeek,
         entryType: 'REGULAR',
         date: data.date.toISOString().split('T')[0] // Format as YYYY-MM-DD
       }
-      
-      // Creating timetable entry
+
+      // Add fields based on whether it's a custom event or regular subject
+      if (data.isCustomEvent) {
+        createData.customEventTitle = data.customEventTitle!
+        createData.customEventColor = data.customEventColor
+        createData.isCustomEvent = true
+        createData.subjectId = null
+        createData.facultyId = data.facultyId || null // Optional faculty for custom events
+      } else {
+        createData.subjectId = data.subjectId!
+        createData.facultyId = data.facultyId!
+      }
       
       const response = await fetch('/api/timetable/entries', {
         method: 'POST',

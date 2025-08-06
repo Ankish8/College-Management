@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { X, Clock, BookOpen, Star, History, Ban, Loader2, CalendarDays, User, Palette } from 'lucide-react'
+import { X, Clock, BookOpen, Star, History, Ban, Loader2, CalendarDays, User, Palette, Gift } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,10 @@ interface QuickCreatePopupProps {
     customEventTitle?: string
     customEventColor?: string
     isCustomEvent?: boolean
+    isHoliday?: boolean
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }) => void
   position: { x: number; y: number }
   date: Date
@@ -69,10 +73,13 @@ export function QuickCreatePopup({
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
   const [filteredSubjects, setFilteredSubjects] = useState<FilteredSubject[]>([])
   const [showUnavailable, setShowUnavailable] = useState(false)
-  const [isCustomEvent, setIsCustomEvent] = useState(false)
+  const [activeTab, setActiveTab] = useState<'subject' | 'custom' | 'holiday'>('subject')
   const [customEventTitle, setCustomEventTitle] = useState('')
   const [customEventColor, setCustomEventColor] = useState('#3b82f6')
   const [customEventFaculty, setCustomEventFaculty] = useState('')
+  const [holidayName, setHolidayName] = useState('')
+  const [holidayType, setHolidayType] = useState('UNIVERSITY')
+  const [holidayDescription, setHolidayDescription] = useState('')
   const popupRef = useRef<HTMLDivElement>(null)
 
   // Predefined color options for custom events
@@ -259,6 +266,28 @@ export function QuickCreatePopup({
     onClose()
   }, [onCreateEvent, date, timeSlot, customEventTitle, customEventColor, customEventFaculty, onClose])
 
+  // Handle holiday creation
+  const handleHolidayCreate = useCallback(() => {
+    if (!holidayName.trim()) return
+    
+    onCreateEvent({
+      date,
+      timeSlot,
+      isHoliday: true,
+      holidayName: holidayName.trim(),
+      holidayType,
+      holidayDescription: holidayDescription.trim()
+    })
+    
+    // Reset form
+    setHolidayName('')
+    setHolidayType('UNIVERSITY')
+    setHolidayDescription('')
+    setActiveTab('subject')
+    
+    onClose()
+  }, [onCreateEvent, date, timeSlot, holidayName, holidayType, holidayDescription, onClose])
+
   // Reset form when switching modes or popup opens
   useEffect(() => {
     if (isOpen) {
@@ -266,7 +295,10 @@ export function QuickCreatePopup({
       setCustomEventTitle('')
       setCustomEventColor('#3b82f6')
       setCustomEventFaculty('')
-      setIsCustomEvent(false)
+      setHolidayName('')
+      setHolidayType('UNIVERSITY')
+      setHolidayDescription('')
+      setActiveTab('subject')
     }
   }, [isOpen])
 
@@ -363,28 +395,83 @@ export function QuickCreatePopup({
           
           <CardContent className="space-y-4">
             {/* Mode Toggle */}
-            <div className="flex gap-2 border rounded-lg p-1 bg-muted/50">
+            <div className="flex gap-1 border rounded-lg p-1 bg-muted/50">
               <Button
-                variant={!isCustomEvent ? "default" : "ghost"}
+                variant={activeTab === 'subject' ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setIsCustomEvent(false)}
-                className="flex-1 h-8 text-xs"
+                onClick={() => setActiveTab('subject')}
+                className="flex-1 h-8 text-xs px-2"
               >
                 <BookOpen className="h-3 w-3 mr-1" />
                 Subject
               </Button>
               <Button
-                variant={isCustomEvent ? "default" : "ghost"}
+                variant={activeTab === 'custom' ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setIsCustomEvent(true)}
-                className="flex-1 h-8 text-xs"
+                onClick={() => setActiveTab('custom')}
+                className="flex-1 h-8 text-xs px-2"
               >
                 <CalendarDays className="h-3 w-3 mr-1" />
-                Custom Event
+                Custom
+              </Button>
+              <Button
+                variant={activeTab === 'holiday' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab('holiday')}
+                className="flex-1 h-8 text-xs px-2"
+              >
+                <Gift className="h-3 w-3 mr-1" />
+                Holiday
               </Button>
             </div>
 
-            {isCustomEvent ? (
+            {activeTab === 'holiday' ? (
+              /* Holiday Form */
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium">Holiday Name</Label>
+                  <Input
+                    value={holidayName}
+                    onChange={(e) => setHolidayName(e.target.value)}
+                    placeholder="e.g., Independence Day, Ganesh Chaturthi"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Holiday Type</Label>
+                  <Select value={holidayType} onValueChange={setHolidayType}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NATIONAL">National Holiday</SelectItem>
+                      <SelectItem value="UNIVERSITY">University Holiday</SelectItem>
+                      <SelectItem value="DEPARTMENT">Department Holiday</SelectItem>
+                      <SelectItem value="LOCAL">Local/Festival Holiday</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Description (Optional)</Label>
+                  <Input
+                    value={holidayDescription}
+                    onChange={(e) => setHolidayDescription(e.target.value)}
+                    placeholder="Brief description of the holiday"
+                    className="mt-1"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleHolidayCreate}
+                  disabled={!holidayName.trim()}
+                  className="w-full"
+                >
+                  Create Holiday
+                </Button>
+              </div>
+            ) : activeTab === 'custom' ? (
               /* Custom Event Form */
               <div className="space-y-3">
                 <div>

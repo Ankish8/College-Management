@@ -169,26 +169,37 @@ export function CalendarWeekView({
 
   const DayHeader = ({ day }: { day: Date }) => {
     const dayEvents = events.filter(event => isSameDay(event.start, day))
-    const totalCredits = dayEvents.reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)
+    const regularEvents = dayEvents.filter(event => !event.allDay)
+    const holidayEvents = dayEvents.filter(event => event.allDay)
+    const totalCredits = regularEvents.reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)
+    const hasHoliday = holidayEvents.length > 0
 
     return (
       <div className={cn(
-        "p-3 border-r border-b bg-muted/30 text-center",
-        isToday(day) && "bg-primary/10 border-primary/30"
+        "p-3 border-r border-b text-center",
+        hasHoliday ? "bg-red-50 border-red-200" : "bg-muted/30",
+        isToday(day) && !hasHoliday && "bg-primary/10 border-primary/30",
+        isToday(day) && hasHoliday && "bg-red-100 border-red-300"
       )}>
         <div className="font-medium text-sm">
           {format(day, 'EEE')}
         </div>
         <div className={cn(
           "text-lg font-semibold",
-          isToday(day) && "text-primary"
+          hasHoliday ? "text-red-700" : isToday(day) ? "text-primary" : ""
         )}>
           {format(day, 'd')}
         </div>
-        <div className="text-xs text-muted-foreground mt-1">
-          {dayEvents.length} class{dayEvents.length !== 1 ? 'es' : ''}
-        </div>
-        {totalCredits > 0 && (
+        {hasHoliday ? (
+          <div className="text-xs text-red-600 mt-1 font-medium">
+            🎊 Holiday
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground mt-1">
+            {regularEvents.length} class{regularEvents.length !== 1 ? 'es' : ''}
+          </div>
+        )}
+        {totalCredits > 0 && !hasHoliday && (
           <Badge variant="secondary" className="text-xs mt-1">
             {totalCredits} credits
           </Badge>
@@ -216,7 +227,7 @@ export function CalendarWeekView({
               {format(weekDays[0], 'MMM d')} - {format(weekDays[6], 'MMM d, yyyy')}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {events.length} total class{events.length !== 1 ? 'es' : ''} this week
+              {events.filter(event => !event.allDay).length} class{events.filter(event => !event.allDay).length !== 1 ? 'es' : ''}{events.some(event => event.allDay) ? ', ' + events.filter(event => event.allDay).length + ' holiday' + (events.filter(event => event.allDay).length !== 1 ? 's' : '') : ''} this week
             </p>
           </div>
           
@@ -224,18 +235,26 @@ export function CalendarWeekView({
           <div className="flex gap-4 text-sm">
             <div className="text-center">
               <div className="font-medium">
-                {events.reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)}
+                {events.filter(event => !event.allDay).reduce((acc, event) => acc + (event.extendedProps?.credits || 0), 0)}
               </div>
               <div className="text-muted-foreground">Credits</div>
             </div>
             <div className="text-center">
               <div className="font-medium">
                 {displayDays.filter(day => 
-                  events.some(event => isSameDay(event.start, day))
+                  events.some(event => !event.allDay && isSameDay(event.start, day))
                 ).length}
               </div>
-              <div className="text-muted-foreground">Active Days</div>
+              <div className="text-muted-foreground">Class Days</div>
             </div>
+            {events.some(event => event.allDay) && (
+              <div className="text-center">
+                <div className="font-medium text-red-600">
+                  {events.filter(event => event.allDay).length}
+                </div>
+                <div className="text-red-600">Holidays</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -248,32 +267,74 @@ export function CalendarWeekView({
             <div className="space-y-4 p-4">
               {displayDays.map((day) => {
                 const dayEvents = events.filter(event => isSameDay(event.start, day))
+                const regularEvents = dayEvents.filter(event => !event.allDay)
+                const holidayEvents = dayEvents.filter(event => event.allDay)
+                const hasHoliday = holidayEvents.length > 0
+                
                 return (
                   <Card key={day.toISOString()} className="overflow-hidden">
                     <div className={cn(
-                      "p-3 border-b bg-muted/30 text-center",
-                      isToday(day) && "bg-primary/10 border-primary/30"
+                      "p-3 border-b text-center",
+                      hasHoliday ? "bg-red-50 border-red-200" : "bg-muted/30",
+                      isToday(day) && !hasHoliday && "bg-primary/10 border-primary/30",
+                      isToday(day) && hasHoliday && "bg-red-100 border-red-300"
                     )}>
                       <div className="font-medium text-sm">
                         {format(day, 'EEEE')}
                       </div>
                       <div className={cn(
                         "text-xl font-semibold",
-                        isToday(day) && "text-primary"
+                        hasHoliday ? "text-red-700" : isToday(day) ? "text-primary" : ""
                       )}>
                         {format(day, 'MMM d')}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {dayEvents.length} class{dayEvents.length !== 1 ? 'es' : ''}
-                      </div>
+                      {hasHoliday ? (
+                        <div className="text-xs text-red-600 mt-1 font-medium">
+                          🎊 Holiday
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {regularEvents.length} class{regularEvents.length !== 1 ? 'es' : ''}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="p-3 space-y-2">
-                      {dayEvents.length > 0 ? (
-                        dayEvents.map((event) => (
-                          <EventChip key={event.id} event={event} />
-                        ))
-                      ) : (
+                      {/* Show holidays first */}
+                      {holidayEvents.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-red-800 mb-2">🎊 Holiday Events</div>
+                          {holidayEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              className="bg-red-500 text-white rounded px-3 py-2 text-sm font-medium cursor-pointer hover:bg-red-600 transition-colors"
+                              onClick={() => handleEventClick(event)}
+                            >
+                              {event.title}
+                              {event.extendedProps?.holidayDescription && (
+                                <div className="text-xs opacity-90 mt-1">
+                                  {event.extendedProps.holidayDescription}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Show regular events */}
+                      {regularEvents.length > 0 && (
+                        <div className="space-y-2">
+                          {holidayEvents.length > 0 && (
+                            <div className="text-xs font-medium text-muted-foreground mb-2">Classes</div>
+                          )}
+                          {regularEvents.map((event) => (
+                            <EventChip key={event.id} event={event} />
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Show add button only if no holidays */}
+                      {dayEvents.length === 0 && (
                         <div className="text-center py-4 text-muted-foreground">
                           <Button
                             variant="ghost"
@@ -303,6 +364,46 @@ export function CalendarWeekView({
                   <DayHeader key={day.toISOString()} day={day} />
                 ))}
               </div>
+
+              {/* All-Day Events Row */}
+              {events.some(event => event.allDay) && (
+                <React.Fragment>
+                  {/* All-Day Header */}
+                  <div className="w-20 flex-shrink-0 p-3 bg-red-100 border-r border-b text-center border-red-200">
+                    <div className="text-xs font-medium text-red-800">
+                      All-Day
+                    </div>
+                    <div className="text-xs text-red-600">
+                      Events
+                    </div>
+                  </div>
+                  
+                  {/* All-Day Event Cells */}
+                  {displayDays.map((day) => {
+                    const dayHolidays = events.filter(event => event.allDay && isSameDay(event.start, day))
+                    
+                    return (
+                      <div key={`${day.toISOString()}-allday`} className="min-h-[60px] p-2 border-r border-b border-red-200 bg-red-50">
+                        {dayHolidays.length > 0 ? (
+                          <div className="space-y-1">
+                            {dayHolidays.map((event) => (
+                              <div
+                                key={event.id}
+                                className="bg-red-500 text-white rounded px-2 py-1 text-xs font-medium cursor-pointer hover:bg-red-600 transition-colors text-center"
+                                onClick={() => handleEventClick(event)}
+                              >
+                                {event.title}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="h-full opacity-30"></div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </React.Fragment>
+              )}
 
               {/* Time Slot Rows */}
               {timeSlots.map((timeSlot) => (

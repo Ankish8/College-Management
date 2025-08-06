@@ -67,11 +67,16 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
     })
   }
 
-  // Check faculty conflicts (same faculty, same time)
+  // Check faculty conflicts (same faculty, same time) - only for recurring entries or different dates
   const facultyConflicts = await db.timetableEntry.findMany({
     where: {
       ...whereClause,
       facultyId: data.facultyId,
+      // Only conflict if it's a recurring entry (no date) or different dates
+      OR: [
+        { date: null }, // Recurring entry
+        ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
+      ]
     },
     include: {
       batch: { 
@@ -185,8 +190,12 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
           facultyId: data.facultyId,
           timeSlotId: timeSlot.id,
           dayOfWeek: data.dayOfWeek,
-          date: data.date ? new Date(data.date) : undefined,
           isActive: true,
+          // Only conflict with recurring entries or different dates
+          OR: [
+            { date: null }, // Recurring entry
+            ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
+          ],
           ...(data.excludeId ? { NOT: { id: data.excludeId } } : {}),
         }
       })
@@ -226,8 +235,12 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
             facultyId: data.facultyId,
             timeSlotId: data.timeSlotId,
             dayOfWeek: day,
-            date: data.date ? new Date(data.date) : undefined,
             isActive: true,
+            // Only conflict with recurring entries or different dates
+            OR: [
+              { date: null }, // Recurring entry
+              ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
+            ],
             ...(data.excludeId ? { NOT: { id: data.excludeId } } : {}),
           }
         })
@@ -267,12 +280,13 @@ async function checkSimpleConflict(data: z.infer<typeof simpleConflictCheckSchem
     return { hasConflict: false, reason: "Time slot not found" }
   }
 
-  // Check for faculty conflicts across all batches
+  // Check for faculty conflicts across all batches - only for recurring entries
   const whereClause: any = {
     isActive: true,
     facultyId: data.facultyId,
     dayOfWeek: data.dayOfWeek,
     timeSlotId: timeSlot.id,
+    date: null, // Only check recurring entries for drag and drop conflicts
   }
 
   // Exclude the current event if provided

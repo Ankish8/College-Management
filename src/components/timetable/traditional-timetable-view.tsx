@@ -642,14 +642,36 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
           <div className="bg-muted/50 p-3 text-center font-medium border rounded-lg" style={{width: '141px'}}>
             Time / Day
           </div>
-          {weekDays.map((day) => (
-            <div key={day.key} className="bg-muted/50 p-3 text-center font-medium border rounded-lg">
-              <div className="text-sm font-semibold">{day.short} {day.dayNumber}</div>
-              <div className="text-xs text-muted-foreground">
-                {day.fullDate && !isNaN(new Date(day.fullDate).getTime()) ? format(new Date(day.fullDate), 'MMM') : 'Invalid'}
+          {weekDays.map((day) => {
+            const dayEvents = events.filter(event => 
+              event.start.toDateString() === day.fullDate.toDateString()
+            )
+            const holidayEvents = dayEvents.filter(event => event.allDay)
+            const hasHoliday = holidayEvents.length > 0
+            
+            return (
+              <div key={day.key} className={cn(
+                "p-3 text-center font-medium border rounded-lg",
+                hasHoliday ? "bg-red-50 border-red-200" : "bg-muted/50"
+              )}>
+                <div className={cn(
+                  "text-sm font-semibold",
+                  hasHoliday ? "text-red-700" : ""
+                )}>
+                  {day.short} {day.dayNumber}
+                </div>
+                {hasHoliday ? (
+                  <div className="text-xs text-red-600">
+                    🎊 {holidayEvents[0].title}
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    {day.fullDate && !isNaN(new Date(day.fullDate).getTime()) ? format(new Date(day.fullDate), 'MMM') : 'Invalid'}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {/* Time Slot Rows */}
           {activeTimeSlots.map((timeSlot) => (
@@ -682,11 +704,36 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
               </div>
               
               {/* Day Cells */}
-              {weekDays.map((day) => (
-                <div key={`${day.key}-${timeSlot.time}`} className="border rounded-lg min-h-[100px]">
-                  <DroppableTimeSlot dayKey={day.key} timeSlot={timeSlot.time} />
-                </div>
-              ))}
+              {weekDays.map((day) => {
+                // Check if this day has holidays
+                const dayEvents = events.filter(event => 
+                  event.start.toDateString() === day.fullDate.toDateString()
+                )
+                const holidayEvents = dayEvents.filter(event => event.allDay)
+                const hasHoliday = holidayEvents.length > 0
+                
+                return (
+                  <div 
+                    key={`${day.key}-${timeSlot.time}`} 
+                    className={cn(
+                      "border rounded-lg min-h-[100px]",
+                      hasHoliday ? "bg-red-50 border-red-200" : ""
+                    )}
+                  >
+                    {hasHoliday ? (
+                      // Holiday cell - subtle display
+                      <div className="h-full p-3 flex items-center justify-center text-center">
+                        <div className="text-red-400 text-xs opacity-60">
+                          Holiday
+                        </div>
+                      </div>
+                    ) : (
+                      // Regular time slot
+                      <DroppableTimeSlot dayKey={day.key} timeSlot={timeSlot.time} />
+                    )}
+                  </div>
+                )
+              })}
             </React.Fragment>
           ))}
         </div>
