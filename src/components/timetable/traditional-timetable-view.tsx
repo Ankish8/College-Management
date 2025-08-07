@@ -323,8 +323,17 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   }
 
   const handleSlotClick = (dayKey: string, timeSlot: string, event?: React.MouseEvent) => {
+    console.log('🎯 handleSlotClick called:', {
+      dayKey,
+      timeSlot,
+      clickX: event?.clientX,
+      clickY: event?.clientY,
+      targetElement: event?.target
+    });
+    
     if (onQuickCreate && event) {
       // Use the new popup system
+      console.log('📍 Setting popup position and opening popup');
       setPopupPosition({ x: event.clientX, y: event.clientY })
       setSelectedTimeSlot(timeSlot)
       setSelectedDay(dayKey)
@@ -668,6 +677,9 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             )}
             onClick={(e) => handleSlotClick(dayKey, timeSlot, e)}
             disabled={slotState === 'conflict'}
+            data-day={dayKey}
+            data-timeslot={timeSlot}
+            data-testid={`add-event-${dayKey}-${timeSlot}`}
           >
             {slotState === 'conflict' ? (
               <div className="text-red-500 text-xs text-center">

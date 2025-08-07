@@ -195,16 +195,43 @@ function debugEventCreation() {
         const rect = button.getBoundingClientRect();
         const gridCell = button.closest('.grid > div');
         let cellInfo = 'Unknown';
+        let gridPosition = -1;
         
         if (gridCell) {
             const gridParent = gridCell.parentElement;
-            const cellIndex = Array.from(gridParent.children).indexOf(gridCell);
+            gridPosition = Array.from(gridParent.children).indexOf(gridCell);
             
-            // Try to figure out which day/time this represents
-            const timeSlot = button.closest('div[data-timeslot]')?.dataset.timeslot;
-            const dayKey = button.closest('div[data-day]')?.dataset.day;
+            // Get data attributes directly from the button
+            const timeSlot = button.dataset.timeslot;
+            const dayKey = button.dataset.day;
             
-            cellInfo = `Grid position: ${cellIndex}, TimeSlot: ${timeSlot || 'N/A'}, Day: ${dayKey || 'N/A'}`;
+            // Calculate which day/time this should be based on grid position
+            // Grid: Time column (0), then 5 day columns per row
+            // Header row: positions 0-5
+            // First time slot: positions 6-11 (6=time, 7-11=days)
+            // Second time slot: positions 12-17, etc.
+            
+            let calculatedDay = 'Unknown';
+            let calculatedTime = 'Unknown';
+            
+            if (gridPosition > 5) { // Skip header row
+                const rowStartPosition = Math.floor((gridPosition - 6) / 6) * 6 + 6;
+                const columnInRow = gridPosition - rowStartPosition;
+                const timeSlotIndex = Math.floor((gridPosition - 6) / 6);
+                
+                const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+                if (columnInRow > 0 && columnInRow <= 5) {
+                    calculatedDay = dayNames[columnInRow - 1];
+                }
+                
+                // Assume time slots (this would need to match your actual time slots)
+                const timeSlots = ['09:30-10:30', '10:30-11:30', '11:30-12:30', '12:30-13:30', '13:30-14:30', '14:30-15:30', '15:30-16:30'];
+                if (timeSlotIndex < timeSlots.length) {
+                    calculatedTime = timeSlots[timeSlotIndex];
+                }
+            }
+            
+            cellInfo = `Grid pos: ${gridPosition}, Data: [${dayKey || 'N/A'}/${timeSlot || 'N/A'}], Calculated: [${calculatedDay}/${calculatedTime}]`;
         }
         
         console.log(`Add button ${index + 1}: ${cellInfo}`);
@@ -213,20 +240,21 @@ function debugEventCreation() {
         button.style.outline = '2px solid red';
         button.title = `DEBUG: Button ${index + 1} - ${cellInfo}`;
         
-        // Override click handler to log info
-        const originalClick = button.onclick;
-        button.onclick = function(e) {
+        // Store original handler and add debug wrapper
+        const originalHandler = button.onclick;
+        button.addEventListener('click', function(e) {
             console.log(`\n🎯 BUTTON CLICKED: ${index + 1}`);
             console.log('Click position:', { x: e.clientX, y: e.clientY });
             console.log('Button info:', cellInfo);
-            console.log('Event target:', e.target);
+            console.log('Button data attributes:', {
+                day: this.dataset.day,
+                timeslot: this.dataset.timeslot,
+                testid: this.dataset.testid
+            });
+            console.log('Grid position analysis:', gridPosition);
             
-            // Call original handler if it exists
-            if (originalClick) {
-                originalClick.call(this, e);
-            }
-        };
-    });
+            // Don't prevent the original handler - let it run normally
+        });
 }
 
 // 8. Monitor for popup creation
