@@ -153,9 +153,9 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
       backgroundColor: backgroundColor,
       borderColor: borderColor,
       textColor: textColor,
-      editable: !isPastDate,
-      startEditable: !isPastDate,
-      durationEditable: !isPastDate,
+      editable: true, // All events are editable - past date restriction removed
+      startEditable: true, // All events can be moved in time
+      durationEditable: true, // All events can have duration changed
       extendedProps: {
         timetableEntryId: entry.id,
         batchId: entry.batchId,
@@ -258,9 +258,9 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         backgroundColor: backgroundColor,
         borderColor: borderColor,
         textColor: textColor,
-        editable: !isPastDate, // Disable drag/drop for past events
-        startEditable: !isPastDate, // Disable time editing for past events
-        durationEditable: !isPastDate, // Disable duration editing for past events
+        editable: true, // All events are editable - past date restriction removed
+        startEditable: true, // All events can be moved in time
+        durationEditable: true, // All events can have duration changed
         extendedProps: {
           timetableEntryId: entry.id,
           batchId: entry.batchId,
@@ -551,9 +551,9 @@ export default function TimetableClient() {
         backgroundColor: backgroundColor,
         borderColor: borderColor,
         textColor: textColor,
-        editable: !isPastDate,
-        startEditable: !isPastDate,
-        durationEditable: !isPastDate,
+        editable: true, // All events are editable - past date restriction removed
+        startEditable: true, // All events can be moved in time
+        durationEditable: true, // All events can have duration changed
         extendedProps: {
           timetableEntryId: entry.id,
           batchId: entry.batchId,
@@ -643,21 +643,13 @@ export default function TimetableClient() {
   }, [subjectsData])
 
   const handleEventClick = (event: CalendarEvent) => {
-    // Check if this is a past event
-    if (event.extendedProps?.isPastDate) {
-      toast.info('📅 This is a past class. Historical records cannot be modified.')
-      return
-    }
+    // Allow editing all events - past date restriction removed
     
     toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
   }
 
   const handleEventEdit = (event: CalendarEvent) => {
-    // Check if this is a past event
-    if (event.extendedProps?.isPastDate) {
-      toast.info('📅 Past classes cannot be edited.')
-      return
-    }
+    // Allow editing all events - past date restriction removed
     
     toast.info(`Edit: ${event.extendedProps?.subjectName}`)
   }
@@ -806,12 +798,7 @@ export default function TimetableClient() {
         return
       }
       
-      // Find the event to check if it's a past event
-      const event = events.find(e => e.id === eventId)
-      if (event?.extendedProps?.isPastDate) {
-        toast.error('📅 Past classes cannot be moved.')
-        return
-      }
+      // Allow moving all events - past date restriction removed
       
       // Extract the base timetable entry ID from the event ID
       // Event IDs for recurring events are formatted as "entryId-YYYY-MM-DD"
@@ -915,10 +902,7 @@ export default function TimetableClient() {
     const eventDate = new Date(event.start)
     eventDate.setHours(0, 0, 0, 0)
     
-    if (eventDate < today) {
-      toast.error('⏰ Cannot delete timetable entries for past dates. Past classes cannot be modified.')
-      return
-    }
+    // Allow deleting all events - past date restriction removed
 
     // If user has chosen to skip confirmation, delete directly
     if (skipDeleteConfirmation) {

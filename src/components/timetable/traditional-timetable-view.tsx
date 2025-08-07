@@ -469,15 +469,15 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             // Don't override backgroundColor/borderColor - let inline styles handle it
             !event.backgroundColor && "bg-muted/50 border border-border hover:bg-muted/70", // Only use fallback if no custom color
             isSampleEvent && "border-dashed border-orange-300 bg-orange-50/50",
-            isPastDate && "bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed",
+            isPastDate && "opacity-75", // Subtle indication for past events but still interactive
             isDragging && "opacity-50 z-50"
           )}
           onClick={() => handleEventClick(event)}
           title={
-            isPastDate 
-              ? "Past class - cannot be modified" 
-              : isSampleEvent 
-                ? "Sample data - you can drag but changes won't save" 
+            isSampleEvent 
+              ? "Sample data - you can drag but changes won't save" 
+              : isPastDate
+                ? "Past class - can be modified (restriction removed)"
                 : "Drag to move this class"
           }
         >

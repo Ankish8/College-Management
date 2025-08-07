@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent } from "@/components/ui/card"
+import { SubjectListSkeleton, DashboardStatsSkeleton } from "@/components/ui/skeletons"
 import { SubjectCard } from "./subject-card"
 import { SubjectTable } from "./subject-table"
 import dynamic from "next/dynamic"
@@ -334,21 +335,24 @@ export const SubjectList = memo(function SubjectList() {
               Manage academic subjects and faculty assignments
             </p>
           </div>
+          <div className="flex items-center space-x-2">
+            <div className="h-10 w-24 bg-muted animate-pulse rounded"></div>
+            <div className="h-10 w-32 bg-muted animate-pulse rounded"></div>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-3 bg-muted rounded"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        
+        {/* Stats skeleton */}
+        <DashboardStatsSkeleton />
+        
+        {/* Filters skeleton */}
+        <div className="flex items-center space-x-4">
+          <div className="h-10 w-64 bg-muted animate-pulse rounded"></div>
+          <div className="h-10 w-32 bg-muted animate-pulse rounded"></div>
+          <div className="h-10 w-24 bg-muted animate-pulse rounded"></div>
         </div>
+        
+        {/* Subject list skeleton */}
+        <SubjectListSkeleton count={6} />
       </div>
     )
   }

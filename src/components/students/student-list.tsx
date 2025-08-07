@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { StudentListSkeleton, DashboardStatsSkeleton } from "@/components/ui/skeletons"
 import { StudentTable } from "./student-table"
 import dynamic from "next/dynamic"
 
@@ -328,7 +329,7 @@ function StudentListComponent() {
 
   if (loading && students.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">Students</h1>
@@ -336,12 +337,24 @@ function StudentListComponent() {
               Manage student records and information
             </p>
           </div>
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-32" />
+          </div>
         </div>
-        <div className="space-y-4">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-16 bg-muted animate-pulse rounded"></div>
-          ))}
+        
+        {/* Stats skeleton */}
+        <DashboardStatsSkeleton />
+        
+        {/* Filters skeleton */}
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-24" />
         </div>
+        
+        {/* Student list skeleton */}
+        <StudentListSkeleton count={8} />
       </div>
     )
   }

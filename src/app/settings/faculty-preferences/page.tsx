@@ -4,10 +4,29 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isFaculty, isAdmin } from "@/lib/utils/permissions"
 import { db } from "@/lib/db"
-import { FacultyPreferencesForm } from "@/components/settings/faculty-preferences-form"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import dynamic from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+// Dynamic import for heavy admin components
+const FacultyPreferencesForm = dynamic(
+  () => import("@/components/settings/faculty-preferences-form").then(mod => ({ default: mod.FacultyPreferencesForm })),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    ),
+    ssr: false
+  }
+)
 
 export const metadata: Metadata = {
   title: "Faculty Preferences",

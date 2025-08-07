@@ -505,35 +505,17 @@ export async function DELETE(
       )
     }
 
-    // Check if trying to delete a past date
+    // Allow deleting all entries - past date restriction removed
     const today = new Date()
     today.setHours(0, 0, 0, 0) // Start of today
     
     if (specificDate) {
-      const dateToCheck = new Date(specificDate)
-      dateToCheck.setHours(0, 0, 0, 0)
-      
-      if (dateToCheck < today) {
-        console.log(`❌ Attempted to delete past date: ${specificDate}`)
-        return NextResponse.json(
-          { error: "Cannot delete timetable entries for past dates" },
-          { status: 400 }
-        )
-      }
+      console.log(`✅ Deleting entry for date: ${specificDate} (past date restriction removed)`)
     }
     
-    // For date-specific entries, check if the entry date is in the past
     if (existingEntry.date) {
       const entryDate = new Date(existingEntry.date)
-      entryDate.setHours(0, 0, 0, 0)
-      
-      if (entryDate < today) {
-        console.log(`❌ Attempted to delete past date-specific entry: ${entryDate.toDateString()}`)
-        return NextResponse.json(
-          { error: "Cannot delete timetable entries for past dates" },
-          { status: 400 }
-        )
-      }
+      console.log(`✅ Deleting date-specific entry: ${entryDate.toDateString()} (past date restriction removed)`)
     }
 
     // If this is a recurring entry (date = null) and user wants to delete a specific occurrence
@@ -579,23 +561,19 @@ export async function DELETE(
           continue
         }
         
-        // Only include current and future dates
-        if (entryDate >= currentDate) {
-          console.log(`✅ Adding entry for: ${entryDate.toDateString()}`)
-          entries.push({
-            batchId: existingEntry.batchId,
-            subjectId: existingEntry.subjectId,
-            facultyId: existingEntry.facultyId,
-            timeSlotId: existingEntry.timeSlotId,
-            dayOfWeek: existingEntry.dayOfWeek,
-            date: entryDate,
-            entryType: existingEntry.entryType,
-            notes: existingEntry.notes,
-            isActive: true,
-          })
-        } else {
-          console.log(`⏭️  Skipping past date: ${entryDate.toDateString()}`)
-        }
+        // Include all dates - past date restriction removed
+        console.log(`✅ Adding entry for: ${entryDate.toDateString()} (past dates now allowed)`)
+        entries.push({
+          batchId: existingEntry.batchId,
+          subjectId: existingEntry.subjectId,
+          facultyId: existingEntry.facultyId,
+          timeSlotId: existingEntry.timeSlotId,
+          dayOfWeek: existingEntry.dayOfWeek,
+          date: entryDate,
+          entryType: existingEntry.entryType,
+          notes: existingEntry.notes,
+          isActive: true,
+        })
       }
 
       console.log(`📊 Generated ${entries.length} date-specific entries`)

@@ -4,12 +4,32 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isAdmin } from "@/lib/utils/permissions"
 import { db } from "@/lib/db"
-import dynamic from "next/dynamic"
-
-const DepartmentSettingsForm = dynamic(() => import("@/components/settings/department-settings-form").then(mod => ({ default: mod.DepartmentSettingsForm })))
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import dynamic from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+// Dynamic import for heavy admin components with loading skeleton
+const DepartmentSettingsForm = dynamic(
+  () => import("@/components/settings/department-settings-form").then(mod => ({ default: mod.DepartmentSettingsForm })),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+        <Skeleton className="h-48 w-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </div>
+    ),
+    ssr: false
+  }
+)
 
 export const metadata: Metadata = {
   title: "Department Settings",

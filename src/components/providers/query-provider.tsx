@@ -9,19 +9,27 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Balanced caching for development
-            staleTime: 10 * 1000, // 10 seconds - fresh enough for development
-            gcTime: 5 * 60 * 1000, // 5 minutes
+            // Optimized caching for performance
+            staleTime: 5 * 60 * 1000, // 5 minutes - aggressive caching
+            gcTime: 10 * 60 * 1000, // 10 minutes in memory
             refetchOnWindowFocus: false,
-            refetchOnMount: 'always', // Always refetch on mount for fresh data
-            refetchOnReconnect: true,
+            refetchOnMount: false, // Use cache first, only refetch if stale
+            refetchOnReconnect: 'always',
             refetchInterval: false,
             refetchIntervalInBackground: false,
-            retry: 1, // One retry for reliability
+            retry: (failureCount, error: any) => {
+              // Don't retry on 4xx errors
+              if (error?.status >= 400 && error?.status < 500) return false
+              return failureCount < 2
+            },
             networkMode: 'online',
           },
           mutations: {
-            retry: 0,
+            retry: (failureCount, error: any) => {
+              // Don't retry client errors
+              if (error?.status >= 400 && error?.status < 500) return false
+              return failureCount < 1
+            },
             networkMode: 'online',
           },
         },
