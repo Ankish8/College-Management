@@ -685,7 +685,7 @@ export default function TimetableClient() {
       if (data.isHoliday) {
         const holidayData = {
           name: data.holidayName!,
-          date: data.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          date: `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`, // Format as YYYY-MM-DD without timezone conversion
           type: data.holidayType!,
           description: data.holidayDescription || '',
           isRecurring: false,
@@ -741,6 +741,11 @@ export default function TimetableClient() {
       console.log('Day of Week:', dayOfWeek);
       console.log('Time Slot:', data.timeSlot);
       
+      // Debug the date formatting
+      const formattedDate = `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`;
+      console.log('📅 Formatted Date (what we send to API):', formattedDate);
+      console.log('⚠️ Original toISOString would have been:', data.date.toISOString().split('T')[0]);
+      
       // Map time slot names to actual IDs from database
       let timeSlotId = null
       const timeSlotsList = timeSlotsData?.timeSlots || timeSlotsData
@@ -758,7 +763,7 @@ export default function TimetableClient() {
         timeSlotId: timeSlotId,
         dayOfWeek: dayOfWeek,
         entryType: 'REGULAR',
-        date: data.date.toISOString().split('T')[0] // Format as YYYY-MM-DD
+        date: `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}` // Format as YYYY-MM-DD without timezone conversion
       }
 
       // Add fields based on whether it's a custom event or regular subject

@@ -255,6 +255,7 @@ function debugEventCreation() {
             
             // Don't prevent the original handler - let it run normally
         });
+    });
 }
 
 // 8. Monitor for popup creation
