@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useSession } from "next-auth/react"
 import { isAdmin } from "@/lib/utils/permissions"
-import Link from "next/link"
+import { PrefetchLink } from "@/components/ui/prefetch-link"
 
 // Navigation data based on user roles
 const data = {
@@ -210,7 +210,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
-                <Link href="/auth/signin">
+                <PrefetchLink href="/auth/signin">
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <GraduationCap className="size-4" />
                   </div>
@@ -233,7 +233,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <PrefetchLink href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <GraduationCap className="size-4" />
                 </div>
@@ -278,9 +278,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               </div>
                             ) : (
                               <SidebarMenuSubButton asChild>
-                                <Link href={subItem.url || "#"}>
+                                <PrefetchLink href={subItem.url || "#"}>
                                   <span>{subItem.title}</span>
-                                </Link>
+                                </PrefetchLink>
                               </SidebarMenuSubButton>
                             )}
                           </SidebarMenuSubItem>
@@ -289,10 +289,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </>
                   ) : (
                     <SidebarMenuButton tooltip={item.title} asChild>
-                      <Link href={item.url || "#"}>
+                      <PrefetchLink href={item.url || "#"}>
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
-                      </Link>
+                      </PrefetchLink>
                     </SidebarMenuButton>
                   )}
                 </SidebarMenuItem>
@@ -352,10 +352,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </DropdownMenuItem>
                 {isAdmin(user as any) && (
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">
+                    <PrefetchLink href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
-                    </Link>
+                    </PrefetchLink>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
