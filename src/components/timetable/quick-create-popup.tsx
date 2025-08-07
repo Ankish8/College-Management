@@ -342,7 +342,24 @@ export function QuickCreatePopup({
   // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      const target = e.target as Element
+      
+      // Don't close if clicking on Select dropdown content
+      if (target && target.closest('[role="option"]')) {
+        return
+      }
+      
+      // Don't close if clicking on Select trigger or content
+      if (target && target.closest('[data-radix-select-trigger]')) {
+        return
+      }
+      
+      // Don't close if clicking on Select content portal
+      if (target && target.closest('[data-radix-select-content]')) {
+        return
+      }
+      
+      if (popupRef.current && !popupRef.current.contains(target as Node)) {
         onClose()
       }
     }

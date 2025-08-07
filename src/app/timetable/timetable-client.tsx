@@ -433,10 +433,22 @@ export default function TimetableClient() {
         
         // Show all holidays in the broader range, not just current week
         if (holidayDate >= rangeStart && holidayDate <= rangeEnd) {
+          // Get holiday type display name
+          const getHolidayTypeLabel = (type: string) => {
+            const typeMap: { [key: string]: string } = {
+              'NATIONAL': 'National',
+              'UNIVERSITY': 'University', 
+              'DEPARTMENT': 'Department',
+              'LOCAL': 'Local',
+              'FESTIVAL': 'Festival'
+            }
+            return typeMap[type] || type
+          }
+          
           // Create all-day holiday event
           const holidayEvent: CalendarEvent = {
             id: `holiday-${holiday.id}`,
-            title: `🎊 ${holiday.name}`,
+            title: `${holiday.name} (${getHolidayTypeLabel(holiday.type)})`,
             start: new Date(holiday.date),
             end: new Date(holiday.date),
             allDay: true,
@@ -448,10 +460,12 @@ export default function TimetableClient() {
             startEditable: false,
             durationEditable: false,
             extendedProps: {
-              type: 'holiday',
+              type: holiday.type,
               holidayId: holiday.id,
               holidayName: holiday.name,
-              holidayType: holiday.type,
+              id: holiday.id,
+              description: holiday.description,
+              isRecurring: holiday.isRecurring,
               holidayDescription: holiday.description
             }
           }

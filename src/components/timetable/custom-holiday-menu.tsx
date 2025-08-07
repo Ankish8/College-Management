@@ -16,6 +16,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { format } from 'date-fns'
 
 interface CustomHolidayMenuProps {
@@ -29,9 +32,18 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   const [showMenu, setShowMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showTypeSubmenu, setShowTypeSubmenu] = useState(false)
   const [isUpdatingType, setIsUpdatingType] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    type: '',
+    description: '',
+    date: ''
+  })
   const menuRef = useRef<HTMLDivElement>(null)
   const submenuRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -98,19 +110,69 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   }
 
   const handleViewDetails = () => {
-    toast({
-      title: "Holiday Details",
-      description: event.title || "Holiday",
-    })
+    setShowDetailsDialog(true)
     setShowMenu(false)
+    setShowTypeSubmenu(false)
   }
 
   const handleEdit = () => {
-    toast({
-      title: "Edit Holiday",
-      description: "Edit feature coming soon!",
+    // Initialize form with current event data
+    setEditForm({
+      name: event.title || '',
+      type: event.extendedProps?.type || 'UNIVERSITY',
+      description: event.extendedProps?.description || '',
+      date: event.start ? format(event.start, 'yyyy-MM-dd') : ''
     })
+    setShowEditDialog(true)
     setShowMenu(false)
+    setShowTypeSubmenu(false)
+  }
+
+  const handleEditSubmit = async () => {
+    try {
+      setIsUpdating(true)
+      const holidayId = event.extendedProps?.holidayId || event.extendedProps?.id || event.id
+      
+      if (!holidayId || holidayId === 'undefined') {
+        throw new Error('No holiday ID found')
+      }
+
+      const response = await fetch(`/api/settings/holidays/${holidayId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          type: editForm.type,
+          description: editForm.description.trim(),
+          date: editForm.date
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update holiday')
+      }
+
+      toast({
+        title: "Holiday Updated",
+        description: `${editForm.name} has been updated successfully`,
+      })
+
+      // Invalidate the holidays query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['holidays'] })
+      
+      router.refresh()
+      setShowEditDialog(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update holiday. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   const handleDeleteClick = () => {
@@ -390,6 +452,175 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
                 <>
                   <Trash2 className="h-4 w-4" />
                   Delete Holiday
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Info className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle>Holiday Details</DialogTitle>
+                <DialogDescription>
+                  View information about this holiday.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Holiday Details */}
+          <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+            <div>
+              <div className="text-sm text-muted-foreground font-medium mb-1">Holiday Name</div>
+              <div className="font-semibold">
+                {event.title}
+              </div>
+            </div>
+            
+            <div>
+              <div className="text-sm text-muted-foreground font-medium mb-1">Date</div>
+              <div>{event.start && format(event.start, 'EEEE, MMMM d, yyyy')}</div>
+            </div>
+            
+            {event.extendedProps?.type && (
+              <div>
+                <div className="text-sm text-muted-foreground font-medium mb-1">Type</div>
+                <div className={cn(
+                  holidayTypes.find(t => t.value === event.extendedProps?.type)?.color || 'text-gray-600'
+                )}>
+                  {holidayTypes.find(t => t.value === event.extendedProps?.type)?.label || event.extendedProps.type}
+                </div>
+              </div>
+            )}
+            
+            {event.extendedProps?.description && (
+              <div>
+                <div className="text-sm text-muted-foreground font-medium mb-1">Description</div>
+                <div>{event.extendedProps.description}</div>
+              </div>
+            )}
+            
+            {event.extendedProps?.isRecurring && (
+              <div>
+                <div className="text-sm text-muted-foreground font-medium mb-1">Recurring</div>
+                <div>This holiday repeats annually</div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDetailsDialog(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Holiday Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                <Pencil className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <DialogTitle>Edit Holiday</DialogTitle>
+                <DialogDescription>
+                  Update the holiday information.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Edit Form */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name" className="text-sm font-medium">Holiday Name</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Holiday name"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-date" className="text-sm font-medium">Date</Label>
+              <Input
+                id="edit-date"
+                type="date"
+                value={editForm.date}
+                onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-type" className="text-sm font-medium">Holiday Type</Label>
+              <Select 
+                value={editForm.type} 
+                onValueChange={(value) => setEditForm(prev => ({ ...prev, type: value }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {holidayTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className={type.color}>{type.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-description" className="text-sm font-medium">Description (Optional)</Label>
+              <Input
+                id="edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description"
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={isUpdating || !editForm.name.trim()}
+              className="gap-2"
+            >
+              {isUpdating ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-4 w-4" />
+                  Update Holiday
                 </>
               )}
             </Button>
