@@ -5,7 +5,17 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { SubjectList } from "@/components/subjects/subject-list"
+import dynamic from "next/dynamic"
+import { TableSkeleton } from "@/components/ui/skeletons"
+
+// Dynamic import for heavy subject components
+const SubjectList = dynamic(
+  () => import("@/components/subjects/subject-list").then(mod => ({ default: mod.SubjectList })),
+  {
+    loading: () => <TableSkeleton rows={8} columns={6} />,
+    ssr: false
+  }
+)
 
 export default async function SubjectsPage() {
   const session = await getServerSession(authOptions)

@@ -5,7 +5,23 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { BatchList } from "@/components/batches/batch-list"
+import dynamic from "next/dynamic"
+import { CardSkeleton } from "@/components/ui/skeletons"
+
+// Dynamic import for heavy batch components
+const BatchList = dynamic(
+  () => import("@/components/batches/batch-list").then(mod => ({ default: mod.BatchList })),
+  {
+    loading: () => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    ),
+    ssr: false
+  }
+)
 
 export default async function BatchesPage() {
   const session = await getServerSession(authOptions)

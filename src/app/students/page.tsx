@@ -5,7 +5,17 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { StudentList } from "@/components/students/student-list"
+import dynamic from "next/dynamic"
+import { StudentListSkeleton } from "@/components/ui/skeletons"
+
+// Dynamic import for heavy student components
+const StudentList = dynamic(
+  () => import("@/components/students/student-list").then(mod => ({ default: mod.StudentList })),
+  {
+    loading: () => <StudentListSkeleton count={8} />,
+    ssr: false
+  }
+)
 
 export default async function StudentsPage() {
   const session = await getServerSession(authOptions)
