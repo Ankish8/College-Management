@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentListSkeleton, DashboardStatsSkeleton } from "@/components/ui/skeletons"
 import { StudentTable } from "./student-table"
+import { VirtualStudentTable } from "./virtual-student-table"
 import dynamic from "next/dynamic"
 
 const AddStudentModal = dynamic(() => import("./add-student-modal").then(mod => ({ default: mod.AddStudentModal })), {
@@ -550,12 +551,25 @@ function StudentListComponent() {
           ))}
         </div>
       ) : (
-        <StudentTable
-          students={filteredStudents}
-          onUpdate={handleStudentUpdated}
-          onDelete={handleStudentDeleted}
-          loading={loading}
-        />
+        <>
+          {/* Use virtual scrolling for large datasets */}
+          {filteredStudents.length > 100 ? (
+            <VirtualStudentTable
+              students={filteredStudents}
+              onUpdate={handleStudentUpdated}
+              onDelete={handleStudentDeleted}
+              loading={loading}
+              height={600}
+            />
+          ) : (
+            <StudentTable
+              students={filteredStudents}
+              onUpdate={handleStudentUpdated}
+              onDelete={handleStudentDeleted}
+              loading={loading}
+            />
+          )}
+        </>
       )}
 
       {/* Modals */}
