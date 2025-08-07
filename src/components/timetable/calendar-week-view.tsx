@@ -99,13 +99,20 @@ export function CalendarWeekView({
         return
       }
 
+      console.log('🔍 Loading attendance status for events:', events.length)
+      console.log('📋 Sample event:', events[0])
+      
       setIsLoadingAttendance(true)
       try {
         const attendanceStatus = await fetchAttendanceStatus(events)
+        console.log('📊 Attendance status received:', attendanceStatus)
+        
         const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
+        console.log('🔗 Events with attendance data:', eventsWithAttendanceData.slice(0, 2))
+        
         setEventsWithAttendance(eventsWithAttendanceData)
       } catch (error) {
-        console.error('Failed to load attendance status:', error)
+        console.error('❌ Failed to load attendance status:', error)
         setEventsWithAttendance(events) // Fallback to events without attendance data
       } finally {
         setIsLoadingAttendance(false)
@@ -172,6 +179,12 @@ export function CalendarWeekView({
   }
 
   const EventChip = ({ event }: { event: CalendarEvent }) => {
+    console.log('🎯 EventChip rendering for:', event.id, {
+      attendance: event.extendedProps?.attendance,
+      batchId: event.extendedProps?.batchId,
+      subjectId: event.extendedProps?.subjectId
+    })
+
     const handleMarkAttendance = (e: React.MouseEvent) => {
       e.stopPropagation() // Prevent card click from triggering
       
