@@ -1,7 +1,14 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useTimetablePreloader } from '@/hooks/useTimetablePreloader'
+
+// Component to handle preloading after providers are setup
+function PreloaderSetup({ children }: { children: React.ReactNode }) {
+  useTimetablePreloader() // Initialize preloading
+  return <>{children}</>
+}
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -38,7 +45,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <PreloaderSetup>
+        {children}
+      </PreloaderSetup>
     </QueryClientProvider>
   )
 }
