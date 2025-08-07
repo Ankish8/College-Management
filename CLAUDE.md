@@ -92,6 +92,11 @@ This is a comprehensive college management system built for Jagran Lakecity Univ
 - **Auto-save System**: Recent subjects and preferences persistence
 - **Drag Extensions**: Visual drag handles for extending time slots
 - **Calendar Views**: Multiple view modes (traditional, calendar, workload)
+- **Attendance Status Indicators**: Visual feedback on timetable cards showing attendance status
+  - **Color-coded badges** showing attendance counts (e.g., "23/35 students")
+  - **"Not Marked" status** for classes without attendance data
+  - **Heat map bars** indicating attendance percentage with color coding
+  - **Direct navigation** to attendance marking from timetable cards
 
 ### 2. Student Management System
 **Comprehensive Student Portal** (`src/components/students/`):
@@ -177,17 +182,18 @@ NEXTAUTH_URL="http://localhost:3000"            # Application URL
 3. **Student Management**: Advanced filtering, bulk operations, table management
 4. **Faculty Management**: Workload tracking, subject allotment, preferences
 5. **Batch Management**: Hierarchical organization, capacity tracking
-6. **Timetable System**: Quick creation, conflict detection, multiple views
-7. **Universal Search**: Natural language search across all entities
-8. **Settings Management**: Configurable academic calendar, time slots, types
-9. **User Preferences**: View mode persistence, customizable interfaces
+6. **Timetable System**: Quick creation, conflict detection, multiple views, attendance indicators
+7. **Attendance System**: Complete attendance tracking with status indicators and bulk operations
+8. **Universal Search**: Natural language search across all entities
+9. **Settings Management**: Configurable academic calendar, time slots, types
+10. **User Preferences**: View mode persistence, customizable interfaces
 
 ### 🚧 In Progress / Next Steps
-1. **Attendance System**: Daily marking, dispute resolution, analytics
-2. **Advanced Reporting**: Faculty workload reports, student analytics
-3. **Bulk Operations**: Enhanced async operations with better progress tracking
-4. **Mobile Optimization**: Enhanced responsive design for tablet/mobile usage
-5. **Performance Optimization**: Database query optimization, caching strategies
+1. **Advanced Reporting**: Faculty workload reports, student analytics
+2. **Bulk Operations**: Enhanced async operations with better progress tracking
+3. **Mobile Optimization**: Enhanced responsive design for tablet/mobile usage
+4. **Performance Optimization**: Database query optimization, caching strategies
+5. **Attendance Analytics**: Comprehensive attendance reporting and insights
 
 ### 🔄 Recent Improvements
 - **User Preferences API**: Fixed 500 error with proper error handling
@@ -195,6 +201,52 @@ NEXTAUTH_URL="http://localhost:3000"            # Application URL
 - **Table Interactions**: Copy functionality with hover-based icons
 - **Subject Management**: Bug fixes and improved modal layout
 - **Universal Search**: Feature-complete search system implementation
+- **Attendance Status Indicators**: Complete implementation with visual feedback system
+- **Bulk Attendance Marking**: Comprehensive bulk action system for efficient attendance management
+
+## ⚠️ CRITICAL: DO NOT REPEAT PAST MISTAKES
+
+### 🚨 TIMETABLE VIEW COMPONENT ROUTING - READ THIS FIRST!
+**NEVER FORGET**: The main timetable Week view uses `TraditionalTimetableView`, NOT `CalendarWeekView`!
+
+**Component Routing Logic** (src/components/ui/full-calendar.tsx):
+```typescript
+// Line 287-310: Week view routing
+{viewState.view === 'week' && (
+  <TraditionalTimetableView     // ← THIS IS THE WEEK VIEW COMPONENT!
+    date={viewState.currentDate}
+    events={processedEvents}
+    // ... other props
+  />
+)}
+```
+
+**DO NOT IMPLEMENT TIMETABLE FEATURES IN THE WRONG COMPONENT:**
+- ❌ **CalendarWeekView** - This is NOT used for the main week view
+- ✅ **TraditionalTimetableView** - This IS the actual week view component
+
+### Timetable View Architecture
+**Component mapping based on selected view mode**:
+- **Week View** → `TraditionalTimetableView` (src/components/timetable/traditional-timetable-view.tsx)
+- **Day View** → `CalendarDayView` 
+- **Month View** → `CalendarMonthView`
+- **Year View** → `CalendarYearView`
+- **CalendarWeekView** → Used for different calendar-style week display (NOT the main week view)
+
+### Attendance Status Implementation
+**Location**: `src/components/timetable/traditional-timetable-view.tsx`
+- **Attendance Data Fetching**: Uses `fetchAttendanceStatus()` utility function
+- **Data Merging**: Uses `mergeAttendanceWithEvents()` to combine attendance status with timetable events
+- **Visual Indicators**: Color-coded badges and heat map bars based on attendance percentage
+- **API Endpoint**: `/api/timetable/attendance-status` for bulk attendance status retrieval
+- **Status Types**: `isMarked`, `attendancePercentage`, `totalStudents`, `presentStudents`
+
+### Bulk Attendance Operations
+**Location**: `src/components/attendance/session-attendance-table.tsx`
+- **Mark All Actions**: `handleMarkAllStudents()` - marks all filtered students
+- **Selective Bulk Actions**: `handleBulkMarkAttendance()` - marks only selected students
+- **Selection Management**: Individual checkboxes with select all/none functionality
+- **Loading States**: `isBulkMarking` state prevents concurrent operations
 
 ## Development Guidelines
 
