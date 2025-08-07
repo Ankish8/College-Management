@@ -6,6 +6,7 @@ const STATIC_CACHE = 'jlu-static-cache-v1'
 // Critical routes and API endpoints to cache
 const CRITICAL_ROUTES = [
   '/',
+  '/dashboard',
   '/students',
   '/faculty', 
   '/subjects',
@@ -22,8 +23,16 @@ const CRITICAL_API_ENDPOINTS = [
   '/api/batches?fields=minimal',
   '/api/timetable/entries?fields=calendar',
   '/api/settings/time-slots',
-  '/api/settings/academic-calendar'
+  '/api/settings/academic-calendar',
+  '/api/user/preferences'
 ]
+
+// Priority levels for different types of data
+const CACHE_PRIORITIES = {
+  CRITICAL: 1,    // Essential for offline functionality
+  IMPORTANT: 2,   // Frequently accessed data
+  STANDARD: 3     // Normal caching
+}
 
 const STATIC_ASSETS = [
   '/favicon.ico',
@@ -130,18 +139,40 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(request))
 })
 
-// API Request Handler - Network first with cache fallback
+// API Request Handler - Enhanced for offline data management
 async function handleApiRequest(request) {
   const url = new URL(request.url)
   const cache = await caches.open(API_CACHE)
+  const isCriticalEndpoint = CRITICAL_API_ENDPOINTS.some(endpoint => 
+    url.pathname.includes(endpoint.split('?')[0])
+  )
   
   try {
     // Try network first
     const networkResponse = await fetch(request.clone())
     
-    // Cache successful GET requests
+    // Cache successful GET requests with priority handling
     if (request.method === 'GET' && networkResponse.ok) {
-      cache.put(request, networkResponse.clone())
+      const cacheHeaders = new Headers(networkResponse.headers)
+      
+      // Add cache metadata
+      if (isCriticalEndpoint) {
+        cacheHeaders.set('x-cache-priority', CACHE_PRIORITIES.CRITICAL.toString())
+        cacheHeaders.set('x-cache-type', 'critical')
+      } else {
+        cacheHeaders.set('x-cache-priority', CACHE_PRIORITIES.STANDARD.toString())
+        cacheHeaders.set('x-cache-type', 'standard')
+      }
+      
+      cacheHeaders.set('x-cache-timestamp', Date.now().toString())
+      
+      const responseToCache = new Response(await networkResponse.clone().text(), {
+        status: networkResponse.status,
+        statusText: networkResponse.statusText,
+        headers: cacheHeaders
+      })
+      
+      cache.put(request, responseToCache)
     }
     
     return networkResponse
@@ -149,20 +180,51 @@ async function handleApiRequest(request) {
   } catch (error) {
     console.log('[SW] Network failed for API request:', url.pathname)
     
-    // For GET requests, try cache
+    // For GET requests, try cache with fallback strategies
     if (request.method === 'GET') {
       const cachedResponse = await cache.match(request)
       if (cachedResponse) {
         console.log('[SW] Serving API from cache:', url.pathname)
-        return cachedResponse
+        
+        // Add offline indicator header
+        const offlineHeaders = new Headers(cachedResponse.headers)
+        offlineHeaders.set('x-served-by', 'service-worker-cache')
+        offlineHeaders.set('x-offline-mode', 'true')
+        
+        const offlineResponse = new Response(await cachedResponse.text(), {
+          status: cachedResponse.status,
+          statusText: cachedResponse.statusText,
+          headers: offlineHeaders
+        })
+        
+        return offlineResponse
+      }
+
+      // Try to construct fallback response for critical endpoints
+      if (isCriticalEndpoint) {
+        const fallbackData = await getFallbackData(url.pathname)
+        if (fallbackData) {
+          console.log('[SW] Serving fallback data:', url.pathname)
+          return new Response(JSON.stringify(fallbackData), {
+            status: 200,
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-served-by': 'service-worker-fallback',
+              'x-offline-mode': 'true'
+            }
+          })
+        }
       }
     } else {
-      // For POST/PUT/DELETE, add to sync queue
-      await addToSyncQueue(request)
+      // For POST/PUT/DELETE, add to sync queue with priority
+      const priority = isCriticalEndpoint ? CACHE_PRIORITIES.CRITICAL : CACHE_PRIORITIES.STANDARD
+      await addToSyncQueue(request, priority)
+      
       return new Response(
         JSON.stringify({ 
           error: 'Offline - queued for sync',
-          queued: true 
+          queued: true,
+          priority: priority
         }), 
         { 
           status: 202,
@@ -173,6 +235,34 @@ async function handleApiRequest(request) {
     
     throw error
   }
+}
+
+// Get fallback data for critical endpoints when offline
+async function getFallbackData(pathname) {
+  // Basic fallback data structures for critical endpoints
+  if (pathname.includes('/students')) {
+    return { students: [], total: 0, offline: true }
+  }
+  if (pathname.includes('/faculty')) {
+    return { faculty: [], total: 0, offline: true }
+  }
+  if (pathname.includes('/subjects')) {
+    return { subjects: [], total: 0, offline: true }
+  }
+  if (pathname.includes('/batches')) {
+    return { batches: [], total: 0, offline: true }
+  }
+  if (pathname.includes('/timetable/entries')) {
+    return { entries: [], total: 0, offline: true }
+  }
+  if (pathname.includes('/time-slots')) {
+    return { timeSlots: [], offline: true }
+  }
+  if (pathname.includes('/preferences')) {
+    return { preferences: {}, offline: true }
+  }
+  
+  return null
 }
 
 // Static Assets Handler - Cache first

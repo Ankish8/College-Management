@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ServiceWorkerProvider } from "@/components/providers/service-worker-provider";
+import { OfflineProvider } from "@/components/providers/offline-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -55,9 +56,11 @@ export default function RootLayout({
       >
         <ServiceWorkerProvider>
           <QueryProvider>
-            <Providers>
-              {children}
-            </Providers>
+            <OfflineProvider>
+              <Providers>
+                {children}
+              </Providers>
+            </OfflineProvider>
           </QueryProvider>
         </ServiceWorkerProvider>
         <Toaster />
