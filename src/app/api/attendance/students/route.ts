@@ -92,6 +92,11 @@ export async function GET(request: NextRequest) {
         },
         // Include detailed attendance records for history
         attendanceRecords: {
+          where: {
+            session: {
+              subjectId: subjectId || undefined // Filter by subject if provided
+            }
+          },
           include: {
             session: {
               include: {

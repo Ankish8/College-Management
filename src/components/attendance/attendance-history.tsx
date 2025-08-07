@@ -13,6 +13,31 @@ export function AttendanceHistory({
   history,
   currentDate
 }: AttendanceHistoryProps) {
+  // If no history, show empty state
+  if (!history || history.length === 0) {
+    return (
+      <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-center gap-2 text-xs text-gray-500">
+            {['M', 'T', 'W', 'T', 'F'].map((day, index) => (
+              <span key={index} className="w-3 text-center font-medium">
+                {day}
+              </span>
+            ))}
+          </div>
+          <div className="flex justify-center gap-2">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="w-3 h-3 rounded-full bg-gray-200" />
+            ))}
+          </div>
+        </div>
+        <Badge variant="outline" className="text-xs border-gray-300 text-gray-500">
+          No data
+        </Badge>
+      </div>
+    )
+  }
+
   // Create a map of dates to attendance records for quick lookup
   const attendanceMap = new Map<string, AttendanceRecord>()
   history.forEach(record => {
@@ -37,10 +62,13 @@ export function AttendanceHistory({
     date.setDate(startOfWeek.getDate() + i)
     const dateStr = date.toISOString().split('T')[0]
     
+    // Only add attendance if we have a record for this date
+    const attendanceRecord = attendanceMap.get(dateStr)
+    
     weekDates.push({
       day: weekDays[i],
       date: dateStr,
-      attendance: attendanceMap.get(dateStr)
+      attendance: attendanceRecord // Will be undefined if no class that day
     })
   }
 
@@ -56,20 +84,20 @@ export function AttendanceHistory({
     if (!attendance) return 'bg-gray-200' // No class
     switch (attendance.status) {
       case 'present':
-        return 'bg-gray-900' // Subtle black for present
+        return 'bg-green-500' // Green for present
       case 'absent':
-        return 'bg-gray-400' // Light gray for absent
+        return 'bg-red-500' // Red for absent
       case 'medical':
-        return 'bg-gray-600' // Medium gray for medical
+        return 'bg-blue-500' // Blue for medical
       default:
         return 'bg-gray-200'
     }
   }
 
   const getPercentageColor = (pct: number) => {
-    if (pct >= 75) return "text-gray-900"
-    if (pct >= 50) return "text-gray-700"
-    return "text-gray-500"
+    if (pct >= 75) return "text-green-600"
+    if (pct >= 50) return "text-amber-600"
+    return "text-red-600"
   }
 
   return (
