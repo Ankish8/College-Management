@@ -120,7 +120,7 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
     setEditForm({
       name: event.title || '',
       type: event.extendedProps?.type || 'UNIVERSITY',
-      description: event.extendedProps?.description || '',
+      description: event.extendedProps?.holidayDescription || '',
       date: event.start ? format(event.start, 'yyyy-MM-dd') : ''
     })
     setShowEditDialog(true)
@@ -131,7 +131,7 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   const handleEditSubmit = async () => {
     try {
       setIsUpdating(true)
-      const holidayId = event.extendedProps?.holidayId || event.extendedProps?.id || event.id
+      const holidayId = event.extendedProps?.holidayId || event.id
       
       if (!holidayId || holidayId === 'undefined') {
         throw new Error('No holiday ID found')
@@ -184,7 +184,7 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
   const handleTypeChange = async (newType: string) => {
     try {
       setIsUpdatingType(true)
-      const holidayId = event.extendedProps?.holidayId || event.extendedProps?.id || event.id
+      const holidayId = event.extendedProps?.holidayId || event.id
       
       if (!holidayId || holidayId === 'undefined') {
         throw new Error('No holiday ID found')
@@ -228,7 +228,7 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
     try {
       setIsDeleting(true)
       // For holidays, we need to use the correct ID
-      const deleteId = event.extendedProps?.holidayId || event.extendedProps?.id || event.id
+      const deleteId = event.extendedProps?.holidayId || event.id
       
       if (!deleteId || deleteId === 'undefined') {
         console.error('No valid holiday ID found in event:', event)
@@ -422,9 +422,9 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
                 <strong>Type:</strong> {event.extendedProps.type}
               </div>
             )}
-            {event.extendedProps?.description && (
+            {event.extendedProps?.holidayDescription && (
               <div className="text-sm text-muted-foreground">
-                <strong>Description:</strong> {event.extendedProps.description}
+                <strong>Description:</strong> {event.extendedProps.holidayDescription}
               </div>
             )}
           </div>
@@ -501,19 +501,13 @@ export function CustomHolidayMenu({ event, onClick, className = "", children }: 
               </div>
             )}
             
-            {event.extendedProps?.description && (
+            {event.extendedProps?.holidayDescription && (
               <div>
                 <div className="text-sm text-muted-foreground font-medium mb-1">Description</div>
-                <div>{event.extendedProps.description}</div>
+                <div>{event.extendedProps.holidayDescription}</div>
               </div>
             )}
             
-            {event.extendedProps?.isRecurring && (
-              <div>
-                <div className="text-sm text-muted-foreground font-medium mb-1">Recurring</div>
-                <div>This holiday repeats annually</div>
-              </div>
-            )}
           </div>
 
           <DialogFooter>

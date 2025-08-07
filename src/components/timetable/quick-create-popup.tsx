@@ -261,7 +261,6 @@ export function QuickCreatePopup({
     setCustomEventTitle('')
     setCustomEventColor('#3b82f6')
     setCustomEventFaculty('')
-    setIsCustomEvent(false)
     
     onClose()
   }, [onCreateEvent, date, timeSlot, customEventTitle, customEventColor, customEventFaculty, onClose])

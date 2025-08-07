@@ -22,9 +22,10 @@ interface EventDetailsModalProps {
 export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsModalProps) {
   if (!event) return null
 
-  const isHoliday = event.type === 'holiday'
-  const isCustom = event.type === 'custom'
-  const isClass = event.type === 'class'
+  const eventType = event.extendedProps?.type || (event.allDay ? 'holiday' : 'class')
+  const isHoliday = eventType === 'holiday' || event.allDay
+  const isCustom = event.extendedProps?.isCustomEvent
+  const isClass = !event.allDay && !event.extendedProps?.isCustomEvent
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,8 +97,8 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
             </div>
           )}
 
-          {/* Room (if available) */}
-          {event.extendedProps?.room && (
+          {/* Room (if available) - TODO: Add room support to CalendarEvent type */}
+          {/* {event.extendedProps?.room && (
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground">Room</div>
               <div className="flex items-center gap-2">
@@ -105,7 +106,7 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
                 <span>{event.extendedProps.room}</span>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Entry Type */}
           {isClass && event.extendedProps?.entryType && (
@@ -126,13 +127,13 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
           )}
 
           {/* Description/Notes */}
-          {(event.description || event.extendedProps?.notes || event.extendedProps?.holidayDescription) && (
+          {(event.extendedProps?.notes || event.extendedProps?.holidayDescription) && (
             <div className="space-y-1">
               <div className="text-sm font-medium text-muted-foreground">
                 {isHoliday ? 'Description' : 'Notes'}
               </div>
               <div className="text-sm text-muted-foreground">
-                {event.description || event.extendedProps?.notes || event.extendedProps?.holidayDescription}
+                {event.extendedProps?.notes || event.extendedProps?.holidayDescription}
               </div>
             </div>
           )}

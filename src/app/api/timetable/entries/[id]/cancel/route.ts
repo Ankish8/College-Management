@@ -20,13 +20,13 @@ export async function PATCH(
 
     const { cancelled } = await request.json()
 
-    // Update the timetable entry
+    // Update the timetable entry - use isActive field to represent cancellation
     const updatedEntry = await db.timetableEntry.update({
       where: {
         id: params.id
       },
       data: {
-        cancelled: cancelled,
+        isActive: !cancelled, // If cancelled=true, then isActive=false
         updatedAt: new Date()
       }
     })

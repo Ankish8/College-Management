@@ -40,7 +40,6 @@ export function CustomContextMenu({
 
   // Determine event type
   const eventType = event.extendedProps?.type || (event.allDay ? 'holiday' : 'class')
-  event.type = eventType
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

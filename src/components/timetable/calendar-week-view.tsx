@@ -135,13 +135,30 @@ export function CalendarWeekView({
   }
 
   const handleQuickCreate = (data: {
-    subjectId: string
-    facultyId: string
+    subjectId?: string
+    facultyId?: string
     date: Date
     timeSlot: string
+    customEventTitle?: string
+    customEventColor?: string
+    isCustomEvent?: boolean
+    isHoliday?: boolean
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }) => {
-    if (onQuickCreate) {
-      onQuickCreate(data)
+    if (onQuickCreate && data.subjectId && data.facultyId) {
+      // Handle regular subject creation
+      onQuickCreate({
+        subjectId: data.subjectId,
+        facultyId: data.facultyId,
+        date: data.date,
+        timeSlot: data.timeSlot
+      })
+    } else if (data.isCustomEvent || data.isHoliday) {
+      // Handle custom events and holidays - these would need different handling
+      // For now, we'll log them since the parent onQuickCreate only handles subjects
+      console.log('Custom event or holiday creation not handled by this view:', data)
     }
     setIsPopupOpen(false)
     setSelectedTimeSlot('')

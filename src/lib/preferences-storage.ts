@@ -1,6 +1,6 @@
 "use client"
 
-import { UserPreferences, DEFAULT_PREFERENCES, DEFAULT_TIMETABLE_PREFERENCES } from "@/types/preferences"
+import { UserPreferences, DEFAULT_PREFERENCES } from "@/types/preferences"
 
 const STORAGE_KEY = 'jlu-user-preferences'
 
@@ -11,7 +11,6 @@ export class PreferencesStorage {
       // Server-side fallback
       return {
         viewModes: DEFAULT_PREFERENCES,
-        timetable: DEFAULT_TIMETABLE_PREFERENCES,
         updatedAt: new Date(),
       }
     }
@@ -29,7 +28,6 @@ export class PreferencesStorage {
         const parsed = JSON.parse(stored)
         const result = {
           viewModes: { ...DEFAULT_PREFERENCES, ...parsed.viewModes },
-          timetable: { ...DEFAULT_TIMETABLE_PREFERENCES, ...parsed.timetable },
           updatedAt: new Date(parsed.updatedAt || new Date()),
         }
         console.log('📋 Loaded preferences:', result)
@@ -42,7 +40,6 @@ export class PreferencesStorage {
     // Return defaults if no stored preferences or error
     return {
       viewModes: DEFAULT_PREFERENCES,
-      timetable: DEFAULT_TIMETABLE_PREFERENCES,
       updatedAt: new Date(),
     }
   }
@@ -55,12 +52,11 @@ export class PreferencesStorage {
     try {
       const toStore = {
         viewModes: preferences.viewModes,
-        timetable: preferences.timetable,
         updatedAt: preferences.updatedAt.toISOString(),
       }
       console.log('💾 Saving to localStorage:', {
         key: `${STORAGE_KEY}-${userId}`,
-        timetablePrefs: toStore.timetable
+        viewModes: toStore.viewModes
       })
       localStorage.setItem(`${STORAGE_KEY}-${userId}`, JSON.stringify(toStore))
     } catch (error) {

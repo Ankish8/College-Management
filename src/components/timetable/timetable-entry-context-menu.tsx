@@ -50,7 +50,6 @@ export function TimetableEntryContextMenu({
   
   // Determine event type
   const eventType = event.extendedProps?.type || (event.allDay ? 'holiday' : 'class')
-  event.type = eventType // Ensure type is set for modals
 
   const handleViewDetails = () => {
     setShowDetailsModal(true)
@@ -111,7 +110,7 @@ export function TimetableEntryContextMenu({
   const handleMarkAttendance = () => {
     if (onMarkAttendance) {
       onMarkAttendance(event)
-    } else if (event.type === 'class' && event.extendedProps?.subjectId && event.extendedProps?.batchId) {
+    } else if (eventType === 'class' && event.extendedProps?.subjectId && event.extendedProps?.batchId) {
       // Navigate to attendance page for this specific class
       const dateStr = new Date(event.start).toISOString().split('T')[0]
       router.push(`/dashboard/attendance?batchId=${event.extendedProps.batchId}&subjectId=${event.extendedProps.subjectId}&date=${dateStr}`)

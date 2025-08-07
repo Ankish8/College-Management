@@ -117,6 +117,10 @@ model User {
   userPreferences    UserPreferences?
   department         Department?            @relation(fields: [departmentId], references: [id])
 
+  @@index([role])
+  @@index([departmentId])
+  @@index([status])
+  @@index([role, status])
   @@map("users")
 }
 
@@ -137,6 +141,8 @@ model Student {
   batch              Batch               @relation(fields: [batchId], references: [id], onDelete: Cascade)
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([batchId])
+  @@index([rollNumber])
   @@map("students")
 }
 

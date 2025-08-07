@@ -463,9 +463,6 @@ export default function TimetableClient() {
               type: holiday.type,
               holidayId: holiday.id,
               holidayName: holiday.name,
-              id: holiday.id,
-              description: holiday.description,
-              isRecurring: holiday.isRecurring,
               holidayDescription: holiday.description
             }
           }

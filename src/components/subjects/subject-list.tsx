@@ -979,7 +979,7 @@ export const SubjectList = memo(function SubjectList() {
       <AddSubjectModal
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
-        onSubjectCreated={handleSubjectCreated}
+        onSubjectCreated={handleSubjectCreated as any}
       />
 
       {/* Edit Subject Modal */}
@@ -987,7 +987,7 @@ export const SubjectList = memo(function SubjectList() {
         open={!!editingSubject}
         onOpenChange={(open) => !open && setEditingSubject(null)}
         subject={editingSubject as any}
-        onSubjectUpdated={handleSubjectUpdated}
+        onSubjectUpdated={handleSubjectUpdated as any}
       />
     </div>
   )

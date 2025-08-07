@@ -16,8 +16,7 @@ const updateSettingsSchema = z.object({
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
-      console.log("Unauthorized access attempt:", (session?.user as any)?.role)
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -35,11 +34,10 @@ export async function GET() {
       }
     })
 
-    console.log("User found:", user ? "Yes" : "No", "Department:", user?.department ? "Yes" : "No")
+    console.log("User found:", user ? "Yes" : "No", "Department:", user?.department ? "Yes" : "No", "Role:", user?.role)
 
-    // Handle admin users who may not have a department
-    if (!user?.department && user?.role === "ADMIN") {
-      // For admin users without department, return default settings
+    // For any user (admin, faculty, etc.) without department, return default settings
+    if (!user?.department) {
       const response = {
         creditHoursRatio: 15,
         defaultExamTypes: ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"],
@@ -47,15 +45,8 @@ export async function GET() {
         customExamTypes: [],
         customSubjectTypes: [],
       }
-      console.log("Returning default settings for admin user without department")
+      console.log("Returning default settings for user without department")
       return NextResponse.json(response)
-    }
-
-    if (!user?.department) {
-      return NextResponse.json(
-        { error: "User department not found" },
-        { status: 400 }
-      )
     }
 
     // Get or create department settings
@@ -125,18 +116,10 @@ export async function PUT(request: NextRequest) {
       }
     })
 
-    // Handle admin users who may not have a department  
-    if (!user?.department && user?.role === "ADMIN") {
-      // For admin users without department, return error since they can't modify settings
-      return NextResponse.json(
-        { error: "No department found. Create a department first to modify settings." },
-        { status: 400 }
-      )
-    }
-
+    // Handle users without department - they can't modify settings
     if (!user?.department) {
       return NextResponse.json(
-        { error: "User department not found" },
+        { error: "No department found. Settings cannot be modified without a department assignment." },
         { status: 400 }
       )
     }

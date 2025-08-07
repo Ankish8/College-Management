@@ -48,18 +48,22 @@ export function EventEditModal({ event, open, onOpenChange, onSave }: EventEditM
     if (event) {
       setFormData({
         title: event.title || event.extendedProps?.subjectName || event.extendedProps?.customEventTitle || '',
-        description: event.description || event.extendedProps?.notes || event.extendedProps?.holidayDescription || '',
-        room: event.extendedProps?.room || '',
-        entryType: event.extendedProps?.entryType || 'REGULAR'
+        description: event.extendedProps?.notes || event.extendedProps?.holidayDescription || '',
+        room: '', // TODO: Add room support to CalendarEvent type
+        entryType: (event.extendedProps?.entryType && 
+          ['REGULAR', 'MAKEUP', 'EXTRA', 'CANCELLED'].includes(event.extendedProps.entryType) 
+          ? event.extendedProps.entryType 
+          : 'REGULAR') as 'REGULAR' | 'MAKEUP' | 'EXTRA' | 'CANCELLED'
       })
     }
   }, [event])
 
   if (!event) return null
 
-  const isHoliday = event.type === 'holiday'
-  const isCustom = event.type === 'custom'
-  const isClass = event.type === 'class'
+  const eventType = event.extendedProps?.type || (event.allDay ? 'holiday' : 'class')
+  const isHoliday = eventType === 'holiday' || event.allDay
+  const isCustom = event.extendedProps?.isCustomEvent
+  const isClass = !event.allDay && !event.extendedProps?.isCustomEvent
 
   const handleSave = async () => {
     setLoading(true)

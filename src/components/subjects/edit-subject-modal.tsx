@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useSession } from "next-auth/react"
 import {
   Dialog,
   DialogContent,
@@ -130,24 +131,38 @@ interface Faculty {
 
 interface Settings {
   creditHoursRatio: number
-  examTypes: string[]
-  subjectTypes: string[]
+  defaultExamTypes: string[]
+  defaultSubjectTypes: string[]
+  customExamTypes: string[]
+  customSubjectTypes: string[]
 }
 
 export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated }: EditSubjectModalProps) {
+  const { data: session, status } = useSession()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [batches, setBatches] = useState<Batch[]>([])
   const [faculty, setFaculty] = useState<Faculty[]>([])
   const [settings, setSettings] = useState<Settings>({
     creditHoursRatio: 15,
-    examTypes: ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"],
-    subjectTypes: ["CORE", "ELECTIVE"]
+    defaultExamTypes: ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"],
+    defaultSubjectTypes: ["CORE", "ELECTIVE"],
+    customExamTypes: [],
+    customSubjectTypes: []
   })
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
+  // Helper functions to get combined types
+  const getExamTypes = () => {
+    return [...(settings?.defaultExamTypes || []), ...(settings?.customExamTypes || [])]
+  }
+  
+  const getSubjectTypes = () => {
+    return [...(settings?.defaultSubjectTypes || []), ...(settings?.customSubjectTypes || [])]
+  }
+
   // Create form schema with current settings
-  const formSchema = createFormSchema(settings?.examTypes || [], settings?.subjectTypes || [])
+  const formSchema = createFormSchema(getExamTypes(), getSubjectTypes())
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -183,38 +198,101 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
 
   // Fetch initial data
   useEffect(() => {
-    if (open) {
+    if (open && session) {
       fetchData()
     }
-  }, [open])
+  }, [open, session])
 
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      const [batchesRes, facultyRes, settingsRes] = await Promise.all([
-        fetch("/api/batches?active=true"),
-        fetch("/api/faculty"),
-        fetch("/api/settings/subjects"),
+      console.log('Starting fetchData...', 'Session:', !!session, 'Status:', status)
+      
+      if (!session) {
+        throw new Error('No active session found')
+      }
+      
+      // Use Promise.allSettled to handle partial failures gracefully
+      const results = await Promise.allSettled([
+        fetch("/api/batches?active=true").then(res => {
+          console.log('Batches API response:', res.status, res.statusText)
+          return { type: 'batches', res }
+        }).catch(err => {
+          console.error('Batches API error:', err)
+          throw err
+        }),
+        fetch("/api/faculty").then(res => {
+          console.log('Faculty API response:', res.status, res.statusText)
+          return { type: 'faculty', res }
+        }).catch(err => {
+          console.error('Faculty API error:', err)
+          throw err
+        }),
+        fetch("/api/settings/subjects").then(res => {
+          console.log('Settings API response:', res.status, res.statusText)
+          return { type: 'settings', res }
+        }).catch(err => {
+          console.error('Settings API error:', err)
+          throw err
+        }),
       ])
 
-      if (!batchesRes.ok || !facultyRes.ok || !settingsRes.ok) {
-        throw new Error("Failed to fetch data")
+      let hasError = false
+      const errors: string[] = []
+
+      // Process each result individually
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          console.error('Fetch failed:', result.reason)
+          errors.push(`Network error: ${result.reason}`)
+          hasError = true
+          continue
+        }
+
+        const { type, res } = result.value
+        
+        if (!res.ok) {
+          const errorMsg = `Failed to fetch ${type}: ${res.status} ${res.statusText}`
+          console.error(errorMsg)
+          errors.push(errorMsg)
+          hasError = true
+          continue
+        }
+
+        try {
+          const data = await res.json()
+          
+          switch (type) {
+            case 'batches':
+              setBatches(data)
+              break
+            case 'faculty':
+              setFaculty(data)
+              break
+            case 'settings':
+              setSettings(data)
+              break
+          }
+        } catch (jsonError) {
+          const errorMsg = `Failed to parse ${type} response`
+          console.error(errorMsg, jsonError)
+          errors.push(errorMsg)
+          hasError = true
+        }
       }
 
-      const [batchesData, facultyData, settingsData] = await Promise.all([
-        batchesRes.json(),
-        facultyRes.json(),
-        settingsRes.json(),
-      ])
-
-      setBatches(batchesData)
-      setFaculty(facultyData)
-      setSettings(settingsData)
+      if (hasError && errors.length > 0) {
+        toast({
+          title: "Warning",
+          description: `Some data failed to load: ${errors.join(', ')}. You may continue with default values.`,
+          variant: "destructive",
+        })
+      }
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error("Unexpected error in fetchData:", error)
       toast({
         title: "Error",
-        description: "Failed to load form data",
+        description: "An unexpected error occurred while loading form data",
         variant: "destructive",
       })
     } finally {
@@ -284,9 +362,11 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoading || status === "loading" || !session ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-sm text-muted-foreground">Loading...</div>
+            <div className="text-sm text-muted-foreground">
+              {status === "loading" ? "Authenticating..." : "Loading..."}
+            </div>
           </div>
         ) : (
           <Form {...form}>
@@ -404,7 +484,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(settings?.examTypes || ["THEORY", "PRACTICAL", "JURY", "PROJECT", "VIVA"]).map((type) => (
+                          {getExamTypes().map((type) => (
                             <SelectItem key={type} value={type}>
                               {type.charAt(0) + type.slice(1).toLowerCase()}
                             </SelectItem>
@@ -429,7 +509,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(settings?.subjectTypes || ["CORE", "ELECTIVE"]).map((type) => (
+                          {getSubjectTypes().map((type) => (
                             <SelectItem key={type} value={type}>
                               {type.charAt(0) + type.slice(1).toLowerCase()}
                             </SelectItem>
@@ -459,14 +539,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                         <SelectContent>
                           {faculty.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
-                              <div className="flex items-center gap-2">
-                                <span>{member.name}</span>
-                                {member.email && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ({member.email})
-                                  </span>
-                                )}
-                              </div>
+                              {member.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -494,14 +567,7 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                             .filter((member) => member.id !== form.watch("primaryFacultyId"))
                             .map((member) => (
                               <SelectItem key={member.id} value={member.id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{member.name}</span>
-                                  {member.email && (
-                                    <span className="text-xs text-muted-foreground">
-                                      ({member.email})
-                                    </span>
-                                  )}
-                                </div>
+                                {member.name}
                               </SelectItem>
                             ))}
                         </SelectContent>
