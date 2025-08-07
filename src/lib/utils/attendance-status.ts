@@ -5,23 +5,13 @@ import { CalendarEvent, AttendanceStatusResponse, AttendanceStatus } from '@/typ
  */
 export async function fetchAttendanceStatus(timetableEntries: CalendarEvent[]): Promise<AttendanceStatus[]> {
   try {
-    console.log('🔍 fetchAttendanceStatus called with entries:', timetableEntries.length)
-    
     // Prepare data for API call - only entries with required fields
     const validEntries = timetableEntries
-      .filter(event => {
-        const isValid = event.extendedProps?.batchId && 
-          event.extendedProps?.subjectId && 
-          event.start
-        console.log('📋 Event validation:', {
-          id: event.id,
-          batchId: event.extendedProps?.batchId,
-          subjectId: event.extendedProps?.subjectId,
-          start: event.start,
-          isValid
-        })
-        return isValid
-      })
+      .filter(event => 
+        event.extendedProps?.batchId && 
+        event.extendedProps?.subjectId && 
+        event.start
+      )
       .map(event => ({
         id: event.id,
         batchId: event.extendedProps!.batchId,
@@ -29,10 +19,7 @@ export async function fetchAttendanceStatus(timetableEntries: CalendarEvent[]): 
         date: event.start.toISOString()
       }))
 
-    console.log('✅ Valid entries for API:', validEntries)
-
     if (validEntries.length === 0) {
-      console.log('⚠️ No valid entries found')
       return []
     }
 
@@ -66,15 +53,9 @@ export function mergeAttendanceWithEvents(
   events: CalendarEvent[], 
   attendanceStatus: AttendanceStatus[]
 ): CalendarEvent[] {
-  console.log('🔗 Merging attendance with events:', {
-    eventCount: events.length,
-    statusCount: attendanceStatus.length
-  })
-
   // Create a map for quick lookup
   const statusMap = new Map<string, AttendanceStatus>()
   attendanceStatus.forEach(status => {
-    console.log('📊 Mapping status:', status.timetableEntryId, status)
     statusMap.set(status.timetableEntryId, status)
   })
 
@@ -83,7 +64,6 @@ export function mergeAttendanceWithEvents(
     const status = statusMap.get(event.id)
     
     if (status) {
-      console.log('✅ Found status for event:', event.id, status)
       return {
         ...event,
         extendedProps: {
@@ -96,8 +76,6 @@ export function mergeAttendanceWithEvents(
           }
         }
       }
-    } else {
-      console.log('❌ No status found for event:', event.id)
     }
 
     return event

@@ -446,8 +446,9 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
       const batchId = event.extendedProps?.batchId
       
       if (subjectId && batchId) {
-        const today = new Date().toISOString().split('T')[0]
-        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        // Use the event's actual date, not today's date
+        const eventDate = event.start.toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${eventDate}`
         window.location.href = attendanceUrl
       }
     }
@@ -522,18 +523,26 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             {/* Left side: Attendance status indicators */}
             <div className="flex items-center gap-1">
               {/* Attendance marked checkmark */}
-              {event.extendedProps?.attendance?.isMarked && (
+              {event.extendedProps?.attendance?.isMarked ? (
                 <div className="flex items-center gap-1">
-                  <Check className="h-3 w-3 text-green-600 opacity-70" />
-                  {/* Colored indicator dot */}
-                  <div 
-                    className={cn(
-                      "h-2 w-2 rounded-full", 
-                      getAttendanceDotColor(event.extendedProps.attendance.attendancePercentage)
-                    )}
-                    title={`${event.extendedProps.attendance.presentStudents}/${event.extendedProps.attendance.totalStudents} students (${event.extendedProps.attendance.attendancePercentage}%)`}
-                  />
+                  <div className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                    event.extendedProps.attendance.attendancePercentage >= 76 ? "bg-green-100 text-green-800" :
+                    event.extendedProps.attendance.attendancePercentage >= 51 ? "bg-yellow-100 text-yellow-800" :
+                    event.extendedProps.attendance.attendancePercentage >= 26 ? "bg-orange-100 text-orange-800" :
+                    "bg-red-100 text-red-800"
+                  )}>
+                    {event.extendedProps.attendance.presentStudents}/{event.extendedProps.attendance.totalStudents}
+                  </div>
                 </div>
+              ) : (
+                event.extendedProps?.batchId && event.extendedProps?.subjectId ? (
+                  <div className="flex items-center gap-1">
+                    <div className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600">
+                      Not Marked
+                    </div>
+                  </div>
+                ) : null
               )}
             </div>
 
