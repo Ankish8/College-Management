@@ -122,6 +122,7 @@ const data = {
           title: "Attendance Reports",
           url: "/attendance/reports",
           roles: ["ADMIN", "FACULTY"],
+          disabled: true,
         },
         {
           title: "Disputes",
