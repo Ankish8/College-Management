@@ -108,13 +108,15 @@ class AttendanceApiService {
   async getStudents(filters?: { 
     batchId?: string
     subjectId?: string
-    active?: boolean 
+    active?: boolean
+    date?: string 
   }): Promise<ApiResponse<AttendanceStudent[]>> {
     const params = new URLSearchParams()
     
     if (filters?.batchId) params.append('batchId', filters.batchId)
     if (filters?.subjectId) params.append('subjectId', filters.subjectId)
     if (filters?.active !== undefined) params.append('active', filters.active.toString())
+    if (filters?.date) params.append('date', filters.date)
 
     const queryString = params.toString()
     const endpoint = `/students${queryString ? `?${queryString}` : ''}`

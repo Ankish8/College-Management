@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     const batchId = searchParams.get("batchId")
     const subjectId = searchParams.get("subjectId")
     const active = searchParams.get("active")
+    const selectedDate = searchParams.get("date") // Get the selected date for filtering
 
     // Build where clause
     const whereClause: Record<string, unknown> = {}
@@ -127,8 +128,33 @@ export async function GET(request: NextRequest) {
 
     // Transform data to attendance tracker format
     const transformedStudents = students.map(student => {
-      // Build attendance history in the format expected by attendance tracker
-      const attendanceHistory = student.attendanceRecords.map(record => ({
+      // Calculate the week range for the selected date
+      let weekAttendanceRecords = student.attendanceRecords
+      
+      if (selectedDate) {
+        const targetDate = new Date(selectedDate)
+        const dayOfWeek = targetDate.getDay()
+        const startOfWeek = new Date(targetDate)
+        const endOfWeek = new Date(targetDate)
+        
+        // Adjust to get Monday as start of week (0 = Sunday, 1 = Monday)
+        const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+        startOfWeek.setDate(targetDate.getDate() + daysToMonday)
+        startOfWeek.setHours(0, 0, 0, 0)
+        
+        // Friday as end of week (5 days from Monday)
+        endOfWeek.setDate(startOfWeek.getDate() + 4)
+        endOfWeek.setHours(23, 59, 59, 999)
+        
+        // Filter records for the current week
+        weekAttendanceRecords = student.attendanceRecords.filter(record => {
+          const recordDate = new Date(record.session.date)
+          return recordDate >= startOfWeek && recordDate <= endOfWeek
+        })
+      }
+      
+      // Build attendance history for the week (Mon-Fri)
+      const attendanceHistory = weekAttendanceRecords.map(record => ({
         date: record.session.date.toISOString().split('T')[0], // YYYY-MM-DD format
         status: record.status.toLowerCase() as 'present' | 'absent' | 'medical' // Map enum to lowercase
       }))

@@ -6,65 +6,93 @@ import type { AttendanceRecord } from "@/types/attendance"
 
 interface AttendanceHistoryProps {
   history: AttendanceRecord[]
-  days?: string[]
+  currentDate?: string
 }
 
 export function AttendanceHistory({ 
-  history, 
-  days = ['M', 'T', 'W', 'T', 'F'] 
+  history,
+  currentDate
 }: AttendanceHistoryProps) {
-  const getDotColor = (status: string) => {
-    switch (status) {
+  // Create a map of dates to attendance records for quick lookup
+  const attendanceMap = new Map<string, AttendanceRecord>()
+  history.forEach(record => {
+    attendanceMap.set(record.date, record)
+  })
+
+  // Get the current week based on currentDate or today
+  const baseDate = currentDate ? new Date(currentDate) : new Date()
+  const dayOfWeek = baseDate.getDay()
+  const startOfWeek = new Date(baseDate)
+  
+  // Adjust to get Monday as start of week
+  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  startOfWeek.setDate(baseDate.getDate() + daysToMonday)
+  
+  // Generate weekdays (Mon-Fri) with their dates
+  const weekDays = ['M', 'T', 'W', 'T', 'F']
+  const weekDates: { day: string; date: string; attendance?: AttendanceRecord }[] = []
+  
+  for (let i = 0; i < 5; i++) {
+    const date = new Date(startOfWeek)
+    date.setDate(startOfWeek.getDate() + i)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    weekDates.push({
+      day: weekDays[i],
+      date: dateStr,
+      attendance: attendanceMap.get(dateStr)
+    })
+  }
+
+  // Calculate stats only for days with classes
+  const daysWithClasses = weekDates.filter(d => d.attendance)
+  const presentCount = daysWithClasses.filter(d => 
+    d.attendance?.status === 'present' || d.attendance?.status === 'medical'
+  ).length
+  const totalDays = daysWithClasses.length
+  const percentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
+
+  const getDotColor = (attendance?: AttendanceRecord) => {
+    if (!attendance) return 'bg-gray-200' // No class
+    switch (attendance.status) {
       case 'present':
-        return 'bg-green-400'
+        return 'bg-gray-900' // Subtle black for present
       case 'absent':
-        return 'bg-red-400'
+        return 'bg-gray-400' // Light gray for absent
       case 'medical':
-        return 'bg-blue-400'
+        return 'bg-gray-600' // Medium gray for medical
       default:
-        return 'bg-gray-300'
+        return 'bg-gray-200'
     }
   }
 
-  const presentCount = history.filter(record => 
-    record.status === 'present' || record.status === 'medical'
-  ).length
-  
-  const totalDays = history.length
-  const percentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
-
   const getPercentageColor = (pct: number) => {
-    if (pct >= 75) return "text-green-600"
-    if (pct >= 50) return "text-amber-600"
-    return "text-red-600"
+    if (pct >= 75) return "text-gray-900"
+    if (pct >= 50) return "text-gray-700"
+    return "text-gray-500"
   }
 
   return (
     <div className="flex flex-col items-center space-y-3">
       <div className="flex flex-col gap-2">
-        <div className="flex justify-center gap-2 text-xs text-muted-foreground">
-          {days.map((day, index) => (
+        <div className="flex justify-center gap-2 text-xs text-gray-500">
+          {weekDates.map((item, index) => (
             <span key={index} className="w-3 text-center font-medium">
-              {day}
+              {item.day}
             </span>
           ))}
         </div>
         <div className="flex justify-center gap-2">
-          {history.slice(-5).map((record, index) => (
+          {weekDates.map((item, index) => (
             <div
               key={index}
               className={cn(
                 "w-3 h-3 rounded-full",
-                getDotColor(record.status)
+                getDotColor(item.attendance)
               )}
-              title={`${record.date}: ${record.status}`}
-            />
-          ))}
-          {/* Fill empty dots if less than 5 days */}
-          {Array.from({ length: Math.max(0, 5 - history.length) }).map((_, index) => (
-            <div
-              key={`empty-${index}`}
-              className="w-3 h-3 rounded-full bg-gray-200"
+              title={item.attendance 
+                ? `${item.date}: ${item.attendance.status}` 
+                : `${item.date}: No class`}
             />
           ))}
         </div>
@@ -72,7 +100,7 @@ export function AttendanceHistory({
       
       <Badge 
         variant="outline" 
-        className={cn("text-xs", getPercentageColor(percentage))}
+        className={cn("text-xs border-gray-300", getPercentageColor(percentage))}
       >
         {presentCount}/{totalDays} ({percentage}%)
       </Badge>

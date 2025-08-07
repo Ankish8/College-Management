@@ -12,6 +12,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { CheckCircle, XCircle, Heart, Check, X } from "lucide-react"
 import { StudentAvatar } from "./student-avatar"
 import { AttendanceStatusButton } from "./attendance-status-button"
 import { AttendanceHistory } from "./attendance-history"
@@ -28,6 +30,8 @@ interface AttendanceTableProps {
   predictions?: PredictionSummary
   onPredictionConfirm?: (studentId: string, sessionId: string | 'full-day', prediction: AttendancePrediction) => void
   focusedStudentId?: string | null
+  onBulkAction?: (action: 'present' | 'absent') => Promise<void>
+  currentDate?: string
 }
 
 export function AttendanceTable({
@@ -39,10 +43,13 @@ export function AttendanceTable({
   attendanceMode,
   predictions,
   onPredictionConfirm,
-  focusedStudentId
+  focusedStudentId,
+  onBulkAction,
+  currentDate
 }: AttendanceTableProps) {
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
   const [focusedCell, setFocusedCell] = useState<{ studentIndex: number; sessionIndex: number } | null>(null)
+  const [isBulkMarking, setIsBulkMarking] = useState(false)
 
   // Scroll focused student into view
   useEffect(() => {
@@ -108,6 +115,39 @@ export function AttendanceTable({
       onAttendanceChange(studentId, session.id, status)
     })
     onAttendanceChange(studentId, 'full-day', status)
+  }
+
+  // Bulk marking handlers
+  const handleMarkAllStudents = async (status: 'present' | 'absent') => {
+    if (!onBulkAction) return
+    
+    setIsBulkMarking(true)
+    try {
+      await onBulkAction(status)
+    } catch (error) {
+      console.error('Bulk marking failed:', error)
+    } finally {
+      setIsBulkMarking(false)
+    }
+  }
+
+  const handleBulkMarkSelected = async (status: AttendanceStatus) => {
+    if (selectedStudents.size === 0) return
+    
+    setIsBulkMarking(true)
+    try {
+      // Mark all selected students
+      for (const studentId of selectedStudents) {
+        for (const session of sessions) {
+          await onAttendanceChange(studentId, session.id, status)
+        }
+      }
+      setSelectedStudents(new Set()) // Clear selection after marking
+    } catch (error) {
+      console.error('Bulk marking failed:', error)
+    } finally {
+      setIsBulkMarking(false)
+    }
   }
 
   // Keyboard navigation handler
@@ -240,6 +280,86 @@ export function AttendanceTable({
 
   return (
     <Card className="overflow-hidden">
+      {/* Bulk Action Toolbar */}
+      {onBulkAction && (
+        <div className="p-4 border-b bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleMarkAllStudents('present')}
+                  disabled={isBulkMarking || displayStudents.length === 0}
+                  className="border-gray-300 hover:bg-gray-100"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Mark All Present
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleMarkAllStudents('absent')}
+                  disabled={isBulkMarking || displayStudents.length === 0}
+                  className="border-gray-300 hover:bg-gray-100"
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Mark All Absent
+                </Button>
+              </div>
+              
+              {/* Selection Actions */}
+              {selectedStudents.size > 0 && (
+                <>
+                  <div className="h-6 w-px bg-gray-300" />
+                  <span className="text-sm text-gray-600">
+                    {selectedStudents.size} selected
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      onClick={() => handleBulkMarkSelected('present')}
+                      disabled={isBulkMarking}
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Present
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkMarkSelected('absent')}
+                      disabled={isBulkMarking}
+                      className="border-gray-300 hover:bg-gray-100"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Absent
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkMarkSelected('medical')}
+                      disabled={isBulkMarking}
+                      className="border-gray-300 hover:bg-gray-100"
+                    >
+                      <Heart className="h-4 w-4 mr-1" />
+                      Medical
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {/* Stats */}
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-gray-600">
+                Total: <span className="font-medium text-gray-900">{displayStudents.length}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -317,7 +437,7 @@ export function AttendanceTable({
                 </TableCell>
                 
                 <TableCell className="py-6">
-                  <AttendanceHistory history={student.attendanceHistory} />
+                  <AttendanceHistory history={student.attendanceHistory} currentDate={currentDate} />
                 </TableCell>
                 
                 {sessions.map((session, sessionIndex) => {

@@ -1,14 +1,10 @@
 "use client"
 
 import { memo, useState, useEffect, useCallback, useMemo } from 'react'
-import { AttendanceHeader } from '@/components/attendance/attendance-header'
-import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'
-import { AttendanceModeToggle, AttendanceMode } from '@/components/attendance/attendance-mode-toggle'
 import { AttendanceSearchFilter } from '@/components/attendance/attendance-search-filter'
-import { LoadingState, TableLoadingState } from '@/components/ui/loading-spinner'
+import { TableLoadingState } from '@/components/ui/loading-spinner'
 import { ErrorState, NoDataState } from '@/components/ui/error-state'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -37,8 +33,7 @@ import {
 // Types
 import type { 
   AttendanceComponentProps, 
-  AttendanceStatus, 
-  ViewMode 
+  AttendanceStatus
 } from '@/types/attendance'
 
 export const AttendancePageProduction = memo(function AttendancePageProduction({ 
@@ -61,8 +56,6 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
   const [selectedDate, setSelectedDate] = useState(
     initialDate || new Date().toISOString().split('T')[0]
   )
-  const [activeView, setActiveView] = useState<ViewMode>('session')
-  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('detailed')
   const [focusedStudentId, setFocusedStudentId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
@@ -85,7 +78,8 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
   } = useStudents(hasSelection ? { 
     batchId,
     subjectId: courseId,
-    active: true
+    active: true,
+    date: selectedDate
   } : undefined)
 
   const { 
@@ -307,24 +301,18 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
       setSelectedDate(date)
     }
 
-    const handleModeChange = (event: CustomEvent) => {
-      const { mode } = event.detail
-      setAttendanceMode(mode)
-    }
 
     // Add event listeners
     window.addEventListener('markStudentAttendance', handleMarkStudentAttendance as EventListener)
     window.addEventListener('focusStudent', handleFocusStudent as EventListener)
     window.addEventListener('bulkAttendanceAction', handleBulkAttendanceAction as EventListener)
     window.addEventListener('navigateToDate', handleDateNavigation as EventListener)
-    window.addEventListener('changeAttendanceMode', handleModeChange as EventListener)
 
     return () => {
       window.removeEventListener('markStudentAttendance', handleMarkStudentAttendance as EventListener)
       window.removeEventListener('focusStudent', handleFocusStudent as EventListener)
       window.removeEventListener('bulkAttendanceAction', handleBulkAttendanceAction as EventListener)
       window.removeEventListener('navigateToDate', handleDateNavigation as EventListener)
-      window.removeEventListener('changeAttendanceMode', handleModeChange as EventListener)
     }
   }, [sessions, handleAttendanceChange, focusStudent, handleBulkAction])
 
@@ -412,67 +400,56 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
             </div>
           )}
 
-          {/* Simplified Tabs with Clean Styling */}
-          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as ViewMode)}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-6">
-                <TabsList className="bg-gray-100 p-1 rounded-lg">
-                  <TabsTrigger 
-                    value="session" 
-                    className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                  >
-                    Session View
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="weekly" 
-                    className="px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                  >
-                    Weekly View
-                  </TabsTrigger>
-                </TabsList>
-                
-                {/* Inline Stats */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div>
-                    Students: <span className="font-medium text-foreground">
-                      {hasSelection ? students.length : '—'}
+          {/* Subject and Date Information Bar */}
+          {hasSelection && course && (
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <div className="text-lg font-semibold text-gray-900">
+                    {course.name || 'Loading...'}
+                  </div>
+                  <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">
+                    {course.code}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium">
+                      {new Date(selectedDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
                     </span>
                   </div>
-                  <div>
-                    Sessions: <span className="font-medium text-foreground">
-                      {hasSelection ? sessions.length : '—'}
-                    </span>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{students.length} Students</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{sessions.length} Sessions</span>
                   </div>
                 </div>
               </div>
-
-              {/* Mode Toggle (Detailed/Fast only) - Only show for session view */}
-              {activeView === 'session' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Mode:</span>
-                  <div className="flex bg-gray-100 rounded-lg p-1">
-                    <Button
-                      variant={attendanceMode === 'detailed' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setAttendanceMode('detailed')}
-                      className="px-3 py-1 text-xs"
-                    >
-                      Detailed
-                    </Button>
-                    <Button
-                      variant={attendanceMode === 'fast' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setAttendanceMode('fast')}
-                      className="px-3 py-1 text-xs"
-                    >
-                      Fast
-                    </Button>
-                  </div>
+              
+              {/* Overall Attendance Stats */}
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Overall Attendance</div>
+                  <div className="text-2xl font-bold text-gray-900">{overallStats.percentage}%</div>
                 </div>
-              )}
+                <div className="text-sm text-gray-600">
+                  {overallStats.present}/{overallStats.total}
+                </div>
+              </div>
             </div>
+          )}
 
-            <TabsContent value="session" className="mt-0">
+          {/* Main Attendance Table */}
+          <div>
               {contentState === 'no-selection' ? (
                 <div className="p-8 text-center bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
                   <div className="mb-4">
@@ -539,76 +516,13 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
                   filteredStudents={filteredStudents}
                   attendanceData={attendanceData}
                   onAttendanceChange={handleAttendanceChange}
-                  attendanceMode={attendanceMode}
+                  attendanceMode="detailed"
                   focusedStudentId={focusedStudentId}
+                  onBulkAction={handleBulkAction}
+                  currentDate={selectedDate}
                 />
               )}
-            </TabsContent>
-
-            <TabsContent value="weekly" className="mt-0">
-              {contentState === 'no-selection' ? (
-                <div className="p-8 text-center bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
-                  <div className="mb-4">
-                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <h3 className="text-lg font-medium text-muted-foreground">Weekly Attendance View</h3>
-                    <p className="text-sm text-muted-foreground/80 mt-1">
-                      Select a batch and subject to view weekly attendance patterns
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto text-xs text-muted-foreground/60">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>Attendance trends</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3" />
-                      <span>Weekly overview</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-3 w-3" />
-                      <span>Student patterns</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-3 w-3" />
-                      <span>Visual analytics</span>
-                    </div>
-                  </div>
-                </div>
-              ) : contentState === 'loading' ? (
-                <div className="p-6">
-                  <LoadingState message="Loading weekly view..." />
-                </div>
-              ) : contentState === 'error' ? (
-                <div className="p-6">
-                  <ErrorState
-                    error={primaryError!}
-                    onRetry={handleRetry}
-                    variant="inline"
-                  />
-                </div>
-              ) : contentState === 'no-data' ? (
-                <div className="p-6">
-                  <NoDataState
-                    title="No Weekly Data"
-                    description="No attendance data available for weekly view"
-                    action={{
-                      label: "Retry Loading",
-                      onClick: handleRetry
-                    }}
-                  />
-                </div>
-              ) : (
-                <WeeklyAttendanceView
-                  students={students}
-                  sessions={sessions}
-                  selectedDate={selectedDate}
-                  onDateChange={setSelectedDate}
-                  attendanceData={attendanceData}
-                  onAttendanceChange={handleAttendanceChange}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
       </div>
     </div>

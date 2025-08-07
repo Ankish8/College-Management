@@ -56,7 +56,8 @@ interface UseAttendanceReturn {
 export function useStudents(filters?: { 
   batchId?: string
   subjectId?: string
-  active?: boolean 
+  active?: boolean
+  date?: string 
 }): UseStudentsReturn {
   const [students, setStudents] = useState<AttendanceStudent[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -92,7 +93,7 @@ export function useStudents(filters?: {
     } finally {
       setIsLoading(false)
     }
-  }, [filters?.batchId, filters?.subjectId, filters?.active])
+  }, [filters?.batchId, filters?.subjectId, filters?.active, filters?.date])
 
   useEffect(() => {
     fetchStudents()

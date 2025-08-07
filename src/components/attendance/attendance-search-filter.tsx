@@ -220,7 +220,7 @@ export function AttendanceSearchFilter({
         <div className="w-80 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search students by name, email, or ID..."
+            placeholder="Search students"
             value={filterState.searchQuery}
             onChange={handleSearchChange}
             className="pl-10 pr-10"
