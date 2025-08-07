@@ -34,6 +34,13 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { useSorting } from "@/hooks/useSorting"
+import { BatchDetailsModal } from "./batch-details-modal"
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Batch {
   id: string
@@ -67,6 +74,9 @@ interface BatchTableProps {
 
 export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; batch?: Batch }>({
+    open: false,
+  })
+  const [detailsModal, setDetailsModal] = useState<{ open: boolean; batch?: Batch }>({
     open: false,
   })
   const [isDeleting, setIsDeleting] = useState(false)
@@ -187,19 +197,16 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
               >
                 Subjects
               </SortableTableHead>
-              <SortableTableHead
-                sortKey="isActive"
-                sortDirection={getSortDirection('isActive')}
-                onSort={handleSort}
-              >
-                Status
-              </SortableTableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedData.map((batch) => (
-              <TableRow key={batch.id}>
+              <TableRow 
+                key={batch.id} 
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setDetailsModal({ open: true, batch })}
+              >
                 <TableCell className="font-medium">{batch.name}</TableCell>
                 <TableCell>
                   <div>
@@ -233,13 +240,29 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{batch._count.subjects}</TableCell>
-                <TableCell>
-                  <Badge variant={batch.isActive ? "default" : "secondary"}>
-                    {batch.isActive ? "Active" : "Inactive"}
-                  </Badge>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDetailsModal({ open: true, batch })
+                          }}
+                        >
+                          {batch._count.subjects}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click to view {batch._count.subjects} subjects in detail</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -248,11 +271,9 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/batches/${batch.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </Link>
+                      <DropdownMenuItem onClick={() => setDetailsModal({ open: true, batch })}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleStatus(batch)}>
                         <Edit className="mr-2 h-4 w-4" />
@@ -308,6 +329,15 @@ export function BatchTable({ batches, onUpdate, onDelete }: BatchTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {detailsModal.batch && (
+        <BatchDetailsModal
+          open={detailsModal.open}
+          onOpenChange={(open) => setDetailsModal({ open })}
+          batchId={detailsModal.batch.id}
+          batchName={detailsModal.batch.name}
+        />
+      )}
     </>
   )
 }
