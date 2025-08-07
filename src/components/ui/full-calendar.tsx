@@ -217,8 +217,9 @@ export function FullCalendar({
 
   return (
     <div className={cn('h-full flex flex-col', className)}>
-      {/* Conflicts Panel */}
-      {conflictResults.hasConflicts && (
+      {/* Conflicts Panel - Temporarily disabled due to false positives */}
+      {/* TODO: Fix client-side conflict detection to match server-side logic */}
+      {false && conflictResults.hasConflicts && (
         <Card className="flex-none mb-2">
           <CardContent className="pt-4">
             <ConflictSummary 

@@ -59,9 +59,7 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     isActive: true,
   }
   
-  if (data.date) {
-    whereClause.date = new Date(data.date)
-  }
+  // Don't set date here - it will be handled by dateFilter below
   
   if (excludeId) {
     whereClause.NOT = { id: excludeId }
