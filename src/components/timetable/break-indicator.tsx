@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react'
 import { BreakSlot, getBreakStyling } from '@/lib/utils/break-utils'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'

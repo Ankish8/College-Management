@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FullCalendar } from '@/components/ui/full-calendar'

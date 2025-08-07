@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useEffect } from 'react'
 import { useCommandPalette } from '@/components/attendance/command-palette-provider'
 import type { AttendanceMode } from '@/components/attendance/attendance-mode-toggle'
 import type { AttendanceStatus } from '@/types/attendance'

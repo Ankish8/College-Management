@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import {
   ContextMenu,

@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'

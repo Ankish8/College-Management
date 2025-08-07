@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState, useMemo, useCallback, memo } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'

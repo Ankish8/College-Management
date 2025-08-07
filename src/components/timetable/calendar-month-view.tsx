@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { getEventsForDate } from '@/lib/utils/calendar-utils'
 import { Button } from '@/components/ui/button'

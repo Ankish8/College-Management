@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react'
 import { EventConflict, getConflictStyling } from '@/lib/utils/conflict-detection'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'

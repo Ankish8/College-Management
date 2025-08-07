@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState } from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import { 
   getWeekDays, 

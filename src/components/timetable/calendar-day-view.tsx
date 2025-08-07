@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

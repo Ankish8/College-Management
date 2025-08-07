@@ -1,4 +1,3 @@
-import React, { useState, useRef, useEffect } from "react"
 import { X, ChevronDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

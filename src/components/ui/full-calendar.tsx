@@ -1,6 +1,5 @@
 "use client"
 
-import React, { useState, useCallback, useEffect } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { 
   CalendarEvent, 
