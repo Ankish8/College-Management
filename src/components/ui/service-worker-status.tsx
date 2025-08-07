@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useServiceWorker } from '@/lib/utils/service-worker'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -45,7 +46,14 @@ export function ServiceWorkerStatus({
     formatCacheSize
   } = useServiceWorker()
 
-  if (!isSupported) {
+  // Prevent hydration mismatch by not rendering until client-side
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted || !isSupported) {
     return null
   }
 

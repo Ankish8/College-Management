@@ -39,42 +39,7 @@ import { useRouter } from "next/navigation"
 import { canCreateStudent, isAdmin } from "@/lib/utils/permissions"
 import { StudentFilterState } from "@/types/student-filters"
 import { filterStudents, getFilterDescription } from "@/utils/student-filter-utils"
-
-interface Student {
-  id: string
-  studentId: string
-  rollNumber: string
-  guardianName?: string
-  guardianPhone?: string
-  address?: string
-  dateOfBirth?: string
-  attendancePercentage: number
-  totalAttendanceRecords: number
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    status: string
-    createdAt: string
-  }
-  batch: {
-    id: string
-    name: string
-    semester: number
-    startYear: number
-    endYear: number
-    isActive: boolean
-    program: {
-      name: string
-      shortName: string
-    }
-    specialization?: {
-      name: string
-      shortName: string
-    }
-  }
-}
+import { Student } from "@/types/student"
 
 interface Batch {
   id: string
@@ -209,11 +174,11 @@ function StudentListComponent() {
 
   // Use React Query for batches with aggressive caching
   const { data: batches = [] } = useQuery({
-    queryKey: ['batches'],
+    queryKey: ['batches', session?.user?.id],
     queryFn: fetchBatchesData,
     staleTime: 10 * 60 * 1000, // 10 minutes - batches rarely change
     gcTime: 30 * 60 * 1000, // 30 minutes
-    refetchOnMount: false,
+    refetchOnMount: true, // Always refetch on mount to ensure fresh data
     retry: (failureCount, error) => {
       // Don't retry on 401 errors
       if (error instanceof Error && error.message.includes('401')) {
@@ -221,12 +186,12 @@ function StudentListComponent() {
       }
       return failureCount < 2
     },
-    enabled: status === "authenticated"
+    enabled: status === "authenticated" && !!session?.user?.id
   })
 
   // Use React Query for students with optimized caching
-  const { data: students = [], isLoading: loading, refetch: refetchStudents } = useQuery({
-    queryKey: ['students', filterState.searchQuery, selectedBatch],
+  const { data: students = [], isLoading: loading, refetch: refetchStudents, isError } = useQuery({
+    queryKey: ['students', filterState.searchQuery, selectedBatch, session?.user?.id],
     queryFn: () => fetchStudentsData({ 
       searchQuery: filterState.searchQuery, 
       selectedBatch, 
@@ -234,7 +199,7 @@ function StudentListComponent() {
     }),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false,
+    refetchOnMount: true, // Always refetch on mount to ensure fresh data
     retry: (failureCount, error) => {
       // Don't retry on 401 errors
       if (error instanceof Error && error.message.includes('401')) {
@@ -242,7 +207,7 @@ function StudentListComponent() {
       }
       return failureCount < 2
     },
-    enabled: status === "authenticated" // Only fetch when authenticated
+    enabled: status === "authenticated" && !!session?.user?.id // Only fetch when authenticated with user ID
   })
 
   // Apply advanced filtering using the new filtering system
@@ -318,6 +283,42 @@ function StudentListComponent() {
   if (status === "unauthenticated") {
     router.push('/auth/signin')
     return null
+  }
+
+  // Handle query errors
+  if (isError && status === "authenticated") {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Students</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage student records and information
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => refetchStudents()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-2">Unable to load student data</p>
+              <Button 
+                variant="outline" 
+                onClick={() => refetchStudents()}
+              >
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
 
@@ -431,7 +432,7 @@ function StudentListComponent() {
         </Select>
         {selectedBatchData && (
           <Badge variant="secondary">
-            {selectedBatchData.program.shortName}
+            {selectedBatchData.program?.shortName || 'N/A'}
             {selectedBatchData.specialization && ` ${selectedBatchData.specialization.shortName}`}
           </Badge>
         )}
@@ -532,15 +533,15 @@ function StudentListComponent() {
           {filteredStudents.map((student) => (
             <Card key={student.id} className="p-4">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{student.user.name}</CardTitle>
+                <CardTitle className="text-lg">{student.user?.name || 'Unknown Student'}</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   {student.studentId} • {student.batch.name}
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <Badge variant={student.user.status === "ACTIVE" ? "status" : "status-secondary"}>
-                    {student.user.status}
+                  <Badge variant={student.user?.status === "ACTIVE" ? "status" : "status-secondary"}>
+                    {student.user?.status || 'Unknown'}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
                     {student.attendancePercentage}% attendance

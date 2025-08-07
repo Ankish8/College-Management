@@ -55,10 +55,10 @@ interface Subject {
   examType: string
   subjectType: string
   description?: string
-  batch: {
+  batch?: {
     name: string
     semester: number
-    program: {
+    program?: {
       name: string
       shortName: string
     }
@@ -78,7 +78,7 @@ interface Subject {
     name: string
     email: string
   }
-  _count: {
+  _count?: {
     attendanceSessions: number
   }
 }
@@ -141,12 +141,12 @@ export const SubjectList = memo(function SubjectList() {
   }, [updateViewMode])
 
   // Use React Query for subjects with proper caching and deduplication
-  const { data: subjects = [], isLoading: loading, refetch: refetchSubjects, error } = useQuery({
-    queryKey: ['subjects'],
+  const { data: subjects = [], isLoading: loading, refetch: refetchSubjects, error, isError } = useQuery({
+    queryKey: ['subjects', session?.user?.id],
     queryFn: fetchSubjectsData,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchOnMount: false,
+    refetchOnMount: true, // Always refetch on mount to ensure fresh data
     refetchOnWindowFocus: false, // Prevent refetch on window focus
     refetchOnReconnect: false, // Prevent refetch on reconnect
     retry: (failureCount, error) => {
@@ -154,9 +154,9 @@ export const SubjectList = memo(function SubjectList() {
       if (error instanceof Error && error.message.includes('401')) {
         return false
       }
-      return failureCount < 1 // Reduce retry attempts
+      return failureCount < 2 // Allow more retries than before
     },
-    enabled: status === "authenticated",
+    enabled: status === "authenticated" && !!session?.user?.id, // Only fetch when authenticated with user ID
     // Add network mode to prevent excessive requests
     networkMode: 'online'
   })
@@ -188,7 +188,7 @@ export const SubjectList = memo(function SubjectList() {
 
     // Apply batch dropdown filter first
     if (selectedBatch !== "all") {
-      filtered = filtered.filter(subject => subject.batch.name === selectedBatch)
+      filtered = filtered.filter(subject => subject.batch?.name === selectedBatch)
     }
 
     // Apply exam type filter
@@ -221,21 +221,21 @@ export const SubjectList = memo(function SubjectList() {
     // Apply batch filter
     if (filters.batches.length > 0) {
       filtered = filtered.filter(subject =>
-        filters.batches.includes(subject.batch.name)
+        subject.batch?.name && filters.batches.includes(subject.batch.name)
       )
     }
 
     // Apply program filter
     if (filters.programs.length > 0) {
       filtered = filtered.filter(subject =>
-        filters.programs.includes(subject.batch.program.shortName)
+        subject.batch?.program?.shortName && filters.programs.includes(subject.batch.program.shortName)
       )
     }
 
     // Apply semester filter
     if (filters.semesters.length > 0) {
       filtered = filtered.filter(subject =>
-        filters.semesters.includes(subject.batch.semester)
+        subject.batch?.semester && filters.semesters.includes(subject.batch.semester)
       )
     }
 
@@ -249,9 +249,9 @@ export const SubjectList = memo(function SubjectList() {
 
     // Apply classes filter
     if (filters.hasClasses === "active") {
-      filtered = filtered.filter(subject => subject._count.attendanceSessions > 0)
+      filtered = filtered.filter(subject => (subject._count?.attendanceSessions || 0) > 0)
     } else if (filters.hasClasses === "inactive") {
-      filtered = filtered.filter(subject => subject._count.attendanceSessions === 0)
+      filtered = filtered.filter(subject => (subject._count?.attendanceSessions || 0) === 0)
     }
 
     // Apply search filter
@@ -260,8 +260,8 @@ export const SubjectList = memo(function SubjectList() {
         subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (subject.primaryFaculty?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        subject.batch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        subject.batch.program.name.toLowerCase().includes(searchQuery.toLowerCase())
+        (subject.batch?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (subject.batch?.program?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 
@@ -298,17 +298,17 @@ export const SubjectList = memo(function SubjectList() {
   }
 
   // Calculate stats
-  const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0)
-  const totalHours = subjects.reduce((sum, s) => sum + s.totalHours, 0)
+  const totalCredits = subjects.reduce((sum, s) => sum + (isNaN(s.credits) ? 0 : s.credits), 0)
+  const totalHours = subjects.reduce((sum, s) => sum + (isNaN(s.totalHours) ? 0 : s.totalHours), 0)
   const coreSubjects = subjects.filter(s => s.subjectType === "CORE").length
-  const activeClasses = subjects.reduce((sum, s) => sum + s._count.attendanceSessions, 0)
+  const activeClasses = subjects.reduce((sum, s) => sum + (s._count?.attendanceSessions || 0), 0)
 
   // Extract unique values for filters
   const uniqueSubjectTypes = Array.from(new Set(subjects.map(s => s.subjectType))).sort()
-  const uniqueCredits = Array.from(new Set(subjects.map(s => s.credits))).sort((a, b) => a - b)
-  const uniqueBatches = Array.from(new Set(subjects.map(s => s.batch.name))).sort()
-  const uniquePrograms = Array.from(new Set(subjects.map(s => s.batch.program.shortName))).sort()
-  const uniqueSemesters = Array.from(new Set(subjects.map(s => s.batch.semester))).sort((a, b) => a - b)
+  const uniqueCredits = Array.from(new Set(subjects.map(s => s.credits).filter(credit => credit != null && !isNaN(credit)))).sort((a, b) => a - b)
+  const uniqueBatches = Array.from(new Set(subjects.map(s => s.batch?.name).filter(Boolean) as string[])).sort()
+  const uniquePrograms = Array.from(new Set(subjects.map(s => s.batch?.program?.shortName).filter(Boolean) as string[])).sort()
+  const uniqueSemesters = Array.from(new Set(subjects.map(s => s.batch?.semester).filter(semester => semester != null && !isNaN(semester)))).sort((a, b) => a - b)
   const uniqueFaculty = Array.from(new Set(subjects.flatMap(s => [
     s.primaryFaculty?.name,
     s.coFaculty?.name
@@ -371,6 +371,42 @@ export const SubjectList = memo(function SubjectList() {
     )
   }
 
+  // Handle query errors
+  if (isError && status === "authenticated") {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Subjects</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage academic subjects and faculty assignments
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => refetchSubjects()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-2">Unable to load subject data</p>
+              <Button 
+                variant="outline" 
+                onClick={() => refetchSubjects()}
+              >
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -421,12 +457,12 @@ export const SubjectList = memo(function SubjectList() {
         </div>
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4" />
-          <span className="font-medium text-foreground">{totalCredits}</span>
+          <span className="font-medium text-foreground">{isNaN(totalCredits) ? 0 : totalCredits}</span>
           <span>Credits</span>
         </div>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          <span className="font-medium text-foreground">{totalHours}</span>
+          <span className="font-medium text-foreground">{isNaN(totalHours) ? 0 : totalHours}</span>
           <span>Hours</span>
         </div>
         <div className="flex items-center gap-2">
@@ -597,7 +633,7 @@ export const SubjectList = memo(function SubjectList() {
                             htmlFor={`credit-${credit}`} 
                             className="font-normal cursor-pointer text-sm"
                           >
-                            {credit} Credit{credit !== 1 ? 's' : ''}
+                            {isNaN(Number(credit)) ? 'Unknown' : Number(credit)} Credit{Number(credit) !== 1 ? 's' : ''}
                           </Label>
                         </div>
                       ))}
@@ -659,7 +695,7 @@ export const SubjectList = memo(function SubjectList() {
                             htmlFor={`semester-${semester}`} 
                             className="font-normal cursor-pointer text-sm"
                           >
-                            Semester {semester}
+                            Semester {isNaN(Number(semester)) ? 'Unknown' : Number(semester)}
                           </Label>
                         </div>
                       ))}
@@ -863,7 +899,7 @@ export const SubjectList = memo(function SubjectList() {
             ))}
             {filters.credits.map(credit => (
               <Badge key={credit} variant="secondary" className="gap-1">
-                Credits: {credit}
+                Credits: {isNaN(Number(credit)) ? 'Unknown' : Number(credit)}
                 <button
                   onClick={() => setFilters(prev => ({
                     ...prev,
@@ -891,7 +927,7 @@ export const SubjectList = memo(function SubjectList() {
             ))}
             {filters.semesters.map(semester => (
               <Badge key={semester} variant="secondary" className="gap-1">
-                Semester: {semester}
+                Semester: {isNaN(Number(semester)) ? 'Unknown' : Number(semester)}
                 <button
                   onClick={() => setFilters(prev => ({
                     ...prev,

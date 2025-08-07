@@ -31,10 +31,10 @@ interface Subject {
   examType: string
   subjectType: string
   description?: string
-  batch: {
+  batch?: {
     name: string
     semester: number
-    program: {
+    program?: {
       name: string
       shortName: string
     }
@@ -42,7 +42,7 @@ interface Subject {
       name: string
       shortName: string
     }
-    _count: {
+    _count?: {
       students: number
     }
   }
@@ -54,7 +54,7 @@ interface Subject {
     name: string
     email: string
   }
-  _count: {
+  _count?: {
     attendanceSessions: number
   }
 }
@@ -200,7 +200,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                     </div>
                     {subject.coFaculty && (
                       <div className="text-xs text-muted-foreground ml-5">
-                        Co: {subject.coFaculty.name}
+                        Co: {subject.coFaculty?.name || 'Unknown'}
                       </div>
                     )}
                   </div>
@@ -210,10 +210,10 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <GraduationCap className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm font-medium">{subject.batch.name}</span>
+                      <span className="text-sm font-medium">{subject.batch?.name || 'Unassigned'}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {subject.batch.program.shortName} Sem {subject.batch.semester}
+                      {subject.batch?.program?.shortName || 'N/A'} Sem {subject.batch?.semester && !isNaN(subject.batch.semester) ? subject.batch.semester : 'N/A'}
                     </div>
                   </div>
                 </TableCell>
@@ -226,7 +226,7 @@ export function SubjectTable({ subjects, onUpdate, onDelete, onEdit }: SubjectTa
                 
                 <TableCell>
                   <Badge variant="secondary" className="text-xs">
-                    {subject._count.attendanceSessions}
+                    {subject._count?.attendanceSessions || 0}
                   </Badge>
                 </TableCell>
                 
