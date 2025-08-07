@@ -116,12 +116,40 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     }
   })
 
+  console.log('📊 Found conflicts from database:', allConflicts.map(c => ({
+    id: c.id,
+    batchId: c.batchId,
+    subjectId: c.subjectId,
+    facultyId: c.facultyId,
+    date: c.date ? c.date.toISOString().split('T')[0] : null,
+    dayOfWeek: c.dayOfWeek
+  })));
+
   // Check for exact duplicates first
-  const exactDuplicate = allConflicts.find(entry => 
-    entry.batchId === data.batchId && 
-    entry.subjectId === data.subjectId && 
-    entry.facultyId === data.facultyId
-  );
+  // For date-specific entries, also check the date
+  const exactDuplicate = allConflicts.find(entry => {
+    const sameBasicInfo = entry.batchId === data.batchId && 
+      entry.subjectId === data.subjectId && 
+      entry.facultyId === data.facultyId;
+    
+    if (!sameBasicInfo) return false;
+    
+    // If this is a date-specific entry, check the date too
+    if (data.date) {
+      const entryDateStr = entry.date ? entry.date.toISOString().split('T')[0] : null;
+      const dataDateStr = data.date;
+      return entryDateStr === dataDateStr;
+    }
+    
+    // For recurring entries, any match is a duplicate
+    return entry.date === null;
+  });
+  
+  console.log('🔍 Exact duplicate check result:', exactDuplicate ? {
+    id: exactDuplicate.id,
+    date: exactDuplicate.date ? exactDuplicate.date.toISOString().split('T')[0] : null,
+    comparing_with: data.date
+  } : 'No exact duplicate found');
   
   // Initialize variables outside the if block
   let batchConflicts: any[] = []
