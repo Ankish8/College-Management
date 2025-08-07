@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,78 +29,80 @@ export function AttendanceStatusButton({
   attendanceMode,
   disableClick = false
 }: AttendanceStatusButtonProps) {
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [clickCount, setClickCount] = useState(0)
+
   const handleMedicalSelect = () => {
     onStatusChange('medical')
   }
-  
-  // Mode 2 (Fast): Only for Full Day - single button
-  if (attendanceMode === 'fast' && isFullDay) {
-    return (
-      <div className="flex flex-col items-center gap-2">
-        <div
-          className={cn(
-            "w-8 h-8 rounded text-xs font-semibold transition-all duration-200 border flex items-center justify-center",
-            status === 'present' 
-              ? "bg-green-100 text-green-700 border-green-200 shadow-sm" 
-              : "bg-gray-100 text-gray-500 border-gray-300",
-            !disableClick && "cursor-pointer hover:bg-gray-200"
-          )}
-          onClick={disableClick ? undefined : () => onStatusChange(status === 'present' ? 'absent' : 'present')}
-        >
-          {status === 'present' ? '✓' : '○'}
-        </div>
-        
-        <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-          {status === 'present' ? 'Present' : 'Absent'}
-        </div>
-      </div>
-    )
-  }
-  
-  // Mode 1 (Detailed): P/A buttons for both sessions and Full Day
-  // Sessions: Always P/A only
-  // Full Day: P/A only (Medical will be handled via overlay/context menu later)
-  const availableStatuses: AttendanceStatus[] = ['present', 'absent']
 
-  const getButtonStyle = (buttonStatus: AttendanceStatus, isSelected: boolean) => {
-    const baseStyle = `w-6 h-6 rounded text-xs font-semibold transition-all duration-200 border flex items-center justify-center ${!disableClick ? 'cursor-pointer' : ''}`
-    
-    if (isSelected) {
-      // Selected state - subtle colors
-      switch (buttonStatus) {
-        case 'present':
-          return `${baseStyle} bg-green-100 text-green-700 border-green-200 shadow-sm`
-        case 'absent':
-          return `${baseStyle} bg-red-100 text-red-700 border-red-200 shadow-sm`
-        case 'medical':
-          return `${baseStyle} bg-blue-100 text-blue-700 border-blue-200 shadow-sm`
+  // Handle single/double click logic
+  const handleClick = () => {
+    if (disableClick) return
+
+    const newCount = clickCount + 1
+    setClickCount(newCount)
+
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current)
+    }
+
+    clickTimeoutRef.current = setTimeout(() => {
+      if (newCount === 1) {
+        // Single click - mark as present
+        onStatusChange('present')
+      } else if (newCount >= 2) {
+        // Double click - mark as absent  
+        onStatusChange('absent')
       }
-    } else {
-      // Unselected state - very subtle gray
-      const hoverClass = !disableClick ? 'hover:bg-gray-100 hover:border-gray-250' : ''
-      return `${baseStyle} bg-gray-50 text-gray-500 border-gray-200 ${hoverClass}`
+      setClickCount(0)
+    }, 400) // 400ms delay to detect double click
+  }
+
+  // Get the visual style based on current status
+  const getButtonStyle = () => {
+    const baseStyle = "w-8 h-8 rounded text-sm font-semibold transition-all duration-200 border flex items-center justify-center"
+    
+    if (disableClick) {
+      return `${baseStyle} cursor-default`
+    }
+
+    switch (status) {
+      case 'present':
+        return `${baseStyle} bg-green-100 text-green-700 border-green-200 shadow-sm cursor-pointer hover:bg-green-200`
+      case 'absent':
+        return `${baseStyle} bg-red-100 text-red-700 border-red-200 shadow-sm cursor-pointer hover:bg-red-200`
+      case 'medical':
+        return `${baseStyle} bg-blue-100 text-blue-700 border-blue-200 shadow-sm cursor-pointer hover:bg-blue-200`
+      default:
+        // Unmarked state - neutral with hover
+        return `${baseStyle} bg-gray-50 text-gray-400 border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300`
     }
   }
 
-  const getButtonText = (buttonStatus: AttendanceStatus) => {
-    switch (buttonStatus) {
+  const getButtonContent = () => {
+    switch (status) {
       case 'present':
-        return 'P'
+        return '✓'
       case 'absent':
         return 'A'
       case 'medical':
         return 'M'
+      default:
+        return '○' // Empty circle for unmarked
     }
   }
 
-  const getStatusLabel = (buttonStatus: AttendanceStatus) => {
-    switch (buttonStatus) {
+  const getStatusLabel = () => {
+    switch (status) {
       case 'present':
         return 'Present'
       case 'absent':
         return 'Absent'
       case 'medical':
         return 'Medical'
+      default:
+        return 'Mark' // Neutral label when unmarked
     }
   }
 
@@ -107,17 +110,16 @@ export function AttendanceStatusButton({
     <div className="flex flex-col items-center gap-2">
       <ContextMenu>
         <ContextMenuTrigger>
-          <div className="flex items-center justify-center gap-1">
-            {availableStatuses.map((buttonStatus) => (
-              <button
-                key={buttonStatus}
-                onClick={disableClick ? undefined : () => onStatusChange(buttonStatus)}
-                className={getButtonStyle(buttonStatus, status === buttonStatus)}
-                type="button"
-              >
-                {getButtonText(buttonStatus)}
-              </button>
-            ))}
+          <div
+            className={getButtonStyle()}
+            onClick={handleClick}
+            title={
+              status 
+                ? `${getStatusLabel()} - Single click: Present, Double click: Absent, Right click: Medical`
+                : "Single click: Present, Double click: Absent, Right click: Medical"
+            }
+          >
+            {getButtonContent()}
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -127,9 +129,11 @@ export function AttendanceStatusButton({
         </ContextMenuContent>
       </ContextMenu>
       
-      <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-        {status ? getStatusLabel(status) : 'Mark'}
-      </div>
+      {(showLabel || status) && (
+        <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+          {getStatusLabel()}
+        </div>
+      )}
     </div>
   )
 }

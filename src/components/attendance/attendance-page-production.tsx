@@ -5,6 +5,7 @@ import { AttendanceHeader } from '@/components/attendance/attendance-header'
 import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'
 import { AttendanceModeToggle, AttendanceMode } from '@/components/attendance/attendance-mode-toggle'
+import { AttendanceSearchFilter } from '@/components/attendance/attendance-search-filter'
 import { LoadingState, TableLoadingState } from '@/components/ui/loading-spinner'
 import { ErrorState, NoDataState } from '@/components/ui/error-state'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -24,7 +25,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Calendar, Users, Clock, TrendingUp, CheckCircle, BarChart3, Search, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
-import { useCommandPalette } from '@/components/attendance/command-palette-provider'
 
 // Custom hooks
 import { 
@@ -54,19 +54,19 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
   availableBatches = [],
   availableSubjects = [],
   subjects = [],
-  department
-}: AttendanceComponentProps) {
+  department,
+  breadcrumb
+}: AttendanceComponentProps & { breadcrumb?: React.ReactNode }) {
   // State
   const [selectedDate, setSelectedDate] = useState(
     initialDate || new Date().toISOString().split('T')[0]
   )
   const [activeView, setActiveView] = useState<ViewMode>('session')
-  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('fast')
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('detailed')
   const [focusedStudentId, setFocusedStudentId] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   
-  // Command palette for search functionality
-  const { openPalette } = useCommandPalette()
-
   // Student focusing functionality
   const focusStudent = useCallback((studentId: string) => {
     setFocusedStudentId(studentId)
@@ -145,6 +145,13 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
       percentage
     }
   }, [students, sessions, attendanceData])
+
+  // Initialize filtered students when students change
+  useEffect(() => {
+    if (students && students.length > 0) {
+      setFilteredStudents(students)
+    }
+  }, [students])
 
   // Handle attendance change
   const handleAttendanceChange = useCallback(async (
@@ -349,9 +356,14 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
-        {/* Clean Header */}
+        {/* Clean Header with Breadcrumb */}
         <div className="flex items-center justify-between mb-6">
-          <div>
+          <div className="space-y-2">
+            {breadcrumb && (
+              <div className="mb-2">
+                {breadcrumb}
+              </div>
+            )}
             <h1 className="text-2xl font-bold">Mark Attendance</h1>
             <p className="text-muted-foreground">Track and manage student attendance across sessions</p>
           </div>
@@ -359,66 +371,46 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
 
         {/* Main Content Area */}
         <div className="space-y-6">
-          {/* Enhanced Top Bar with Required Selectors */}
-          <div className="space-y-4">
-            {/* Primary Action Bar - Date, Batch and Subject Selection */}
+          {/* Search and Filter Bar */}
+          {hasSelection && students.length > 0 && (
             <div className="flex items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg border">
-              <div className="flex items-center gap-6">
-                <div className="text-sm font-medium text-foreground">Select Course:</div>
-                {dateSelector && (
-                  <div className="flex items-center gap-3">
-                    {dateSelector}
-                  </div>
-                )}
-                {batchSelector && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">Batch:</span>
-                    {batchSelector}
-                  </div>
-                )}
-                {subjectSelector && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">Subject:</span>
-                    {subjectSelector}
-                  </div>
-                )}
+              <div className="flex-1">
+                <AttendanceSearchFilter
+                  students={students}
+                  onFilteredStudentsChange={setFilteredStudents}
+                  onSearchChange={setSearchTerm}
+                  searchTerm={searchTerm}
+                />
               </div>
               <div className="flex items-center gap-2">
-                {!hasSelection ? (
-                  <div className="text-xs text-muted-foreground px-4 py-2">
-                    Choose batch and subject to begin
-                  </div>
-                ) : (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="gap-2">
-                        <RotateCcw className="h-4 w-4" />
-                        Reset
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Reset Attendance</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to reset all attendance records for this session? This action cannot be undone and will clear all marked attendance for {selectedDate}.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleResetAttendance}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Reset Attendance
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="gap-2">
+                      <RotateCcw className="h-4 w-4" />
+                      Reset
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reset Attendance</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to reset all attendance records for this session? This action cannot be undone and will clear all marked attendance for {selectedDate}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleResetAttendance}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Reset Attendance
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
-
-          </div>
+          )}
 
           {/* Simplified Tabs with Clean Styling */}
           <Tabs value={activeView} onValueChange={(value) => setActiveView(value as ViewMode)}>
@@ -452,22 +444,6 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
                     </span>
                   </div>
                 </div>
-                
-                {/* Search Button */}
-                {hasSelection && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openPalette}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <Search className="h-4 w-4" />
-                    Search Students
-                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                      <span className="text-xs">⌘</span>K
-                    </kbd>
-                  </Button>
-                )}
               </div>
 
               {/* Mode Toggle (Detailed/Fast only) - Only show for session view */}
@@ -560,7 +536,7 @@ export const AttendancePageProduction = memo(function AttendancePageProduction({
                 <AttendanceTable
                   students={students}
                   sessions={sessions}
-                  searchTerm=""
+                  filteredStudents={filteredStudents}
                   attendanceData={attendanceData}
                   onAttendanceChange={handleAttendanceChange}
                   attendanceMode={attendanceMode}

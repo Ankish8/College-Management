@@ -7,6 +7,7 @@ import { AttendancePageContent } from "@/components/attendance/attendance-page-c
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { GraduationCap } from "lucide-react"
 
 /**
@@ -15,7 +16,11 @@ import { GraduationCap } from "lucide-react"
  * This page serves as the primary interface for marking attendance.
  * It integrates the attendance tracker system with the main dashboard.
  */
-export default async function AttendancePage() {
+export default async function AttendancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   // Get user session and verify authentication
   const session = await getServerSession(authOptions)
   const user = session?.user as any
@@ -143,6 +148,31 @@ export default async function AttendancePage() {
     attendanceSessionsCount: subject._count.attendanceSessions,
   }))
 
+  // Create breadcrumb items based on URL parameters
+  const resolvedSearchParams = await searchParams
+  const selectedBatchId = resolvedSearchParams?.batch as string
+  const selectedSubjectId = resolvedSearchParams?.subject as string
+  const selectedDate = resolvedSearchParams?.date as string
+
+  let selectedBatch: any = null
+  let selectedSubject: any = null
+
+  if (selectedBatchId && selectedSubjectId) {
+    selectedSubject = transformedSubjects.find(s => s.id === selectedSubjectId)
+    selectedBatch = selectedSubject?.batch
+  }
+
+  const breadcrumbItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Timetable", href: "/timetable" },
+    {
+      label: selectedBatch && selectedSubject 
+        ? `Mark Attendance - ${selectedSubject.name} (${selectedBatch.name})`
+        : "Mark Attendance",
+      current: true
+    }
+  ]
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -173,6 +203,7 @@ export default async function AttendancePage() {
               subjects={transformedSubjects}
               currentUser={user}
               department={userWithDepartment?.department || null}
+              breadcrumbItems={breadcrumbItems}
             />
           )}
         </div>

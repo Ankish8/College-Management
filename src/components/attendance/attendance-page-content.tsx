@@ -5,8 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { AttendancePageProduction } from '@/components/attendance/attendance-page-production'
-import { CommandPaletteProvider } from '@/components/attendance/command-palette-provider'
-import { createCommandActions } from '@/utils/command-actions'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
 
 interface Subject {
   id: string
@@ -67,6 +66,11 @@ interface AttendancePageContentProps {
     name: string
     shortName: string
   } | null
+  breadcrumbItems?: Array<{
+    label: string
+    href?: string
+    current?: boolean
+  }>
 }
 
 // Helper function to get day of week from date
@@ -89,7 +93,8 @@ const filterSubjectsByDate = (subjects: Subject[], selectedDate: string): Subjec
 export function AttendancePageContent({ 
   subjects, 
   currentUser, 
-  department 
+  department,
+  breadcrumbItems 
 }: AttendancePageContentProps) {
   const searchParams = useSearchParams()
   
@@ -161,45 +166,9 @@ export function AttendancePageContent({
     console.log('Attendance loading state:', loading)
   }
 
-  // Create search context data for command palette
-  const searchContextData = useMemo(() => {
-    if (!selectedBatch || !selectedSubject) return undefined
-    
-    return {
-      students: [], // Will be populated by the attendance page
-      sessions: [],
-      attendanceData: {},
-      selectedDate,
-      currentMode: 'fast'
-    }
-  }, [selectedBatch, selectedSubject, selectedDate])
-
-  // Create command actions for the command palette
-  const commandActions = useMemo(() => {
-    return createCommandActions(
-      setSelectedDate,
-      () => {}, // setAttendanceMode - will be handled by events
-      () => {}, // handleBulkAction - will be handled by events
-      () => ({ present: 0, total: 0, percentage: 0 }), // calculateOverallStats
-      (studentId: string) => {
-        // Focus student callback - dispatch event
-        window.dispatchEvent(new CustomEvent('focusStudent', { 
-          detail: { studentId }
-        }))
-      },
-      (status) => {
-        // Filter students callback
-        console.log('Filter by attendance status:', status)
-      }
-    )
-  }, [setSelectedDate])
-
   return (
-    <CommandPaletteProvider 
-      searchContextData={searchContextData}
-      actions={commandActions}
-    >
-      {/* Always show the main attendance interface */}
+    <>
+      {/* Main attendance interface */}
       <AttendancePageProduction 
         courseId={selectedSubject}
         batchId={selectedBatch}
@@ -266,7 +235,8 @@ export function AttendancePageContent({
         availableSubjects={availableSubjects}
         subjects={subjects}
         department={department}
+        breadcrumb={breadcrumbItems ? <Breadcrumb items={breadcrumbItems} /> : undefined}
       />
-    </CommandPaletteProvider>
+    </>
   )
 }
