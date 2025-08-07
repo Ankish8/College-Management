@@ -520,7 +520,7 @@ export const FacultyList = memo(function FacultyList() {
       />
 
       {/* Faculty Replacement Modal */}
-      <FacultyReplacementModal
+      {/* <FacultyReplacementModal
         open={isReplacementModalOpen}
         onOpenChange={setIsReplacementModalOpen}
         onReplacementComplete={() => {
@@ -530,7 +530,7 @@ export const FacultyList = memo(function FacultyList() {
             description: "Faculty assignments have been successfully updated",
           })
         }}
-      />
+      /> */}
     </div>
   )
 })

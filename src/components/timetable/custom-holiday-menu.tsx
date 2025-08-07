@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef } from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import { Info, Pencil, Trash2, Calendar, AlertTriangle, ChevronRight, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'

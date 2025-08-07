@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useState, useEffect, useRef } from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import { 
   getWeekDays, 
@@ -191,10 +192,10 @@ export function CalendarWeekView({
       >
         <div
           className={cn(
-            "p-2 rounded text-xs cursor-pointer transition-all hover:shadow-sm hover:scale-105 mb-1 relative",
+            "p-2 rounded text-xs transition-all hover:shadow-sm hover:scale-105 mb-1 relative",
             event.className
           )}
-          onClick={() => handleEventClick(event)}
+          // onClick removed - no card click action needed
         >
           <div className="font-medium truncate">
             {event.extendedProps?.subjectName || event.extendedProps?.subjectCode}

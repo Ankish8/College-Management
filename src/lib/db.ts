@@ -21,7 +21,9 @@ class ConnectionPool {
     this.maxConnections = parseInt(process.env.DB_MAX_CONNECTIONS || '10', 10)
     this.connectionTimeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000', 10)
     
-    console.log(`📊 Database connection pool initialized with ${this.poolSize} connections`)
+    if (process.env.NODE_ENV === 'development' && process.env.DEBUG_DB_POOL === 'true') {
+      console.log(`📊 Database connection pool initialized with ${this.poolSize} connections`)
+    }
   }
 
   private createClient(): PrismaClient {
@@ -45,7 +47,9 @@ class ConnectionPool {
   }
 
   private async initializePool(): Promise<void> {
-    console.log('🔄 Initializing database connection pool...')
+    if (process.env.DEBUG_DB_POOL === 'true') {
+      console.log('🔄 Initializing database connection pool...')
+    }
     
     for (let i = 0; i < this.poolSize; i++) {
       try {
@@ -56,14 +60,18 @@ class ConnectionPool {
         this.clients.push(client)
         this.activeConnections++
         
-        console.log(`✅ Connection ${i + 1}/${this.poolSize} established`)
+        if (process.env.DEBUG_DB_POOL === 'true') {
+          console.log(`✅ Connection ${i + 1}/${this.poolSize} established`)
+        }
       } catch (error) {
         console.error(`❌ Failed to create connection ${i + 1}:`, error)
         throw new Error(`Failed to initialize connection pool: ${error}`)
       }
     }
     
-    console.log(`🎉 Connection pool ready with ${this.clients.length} active connections`)
+    if (process.env.DEBUG_DB_POOL === 'true') {
+      console.log(`🎉 Connection pool ready with ${this.clients.length} active connections`)
+    }
   }
 
   async getClient(): Promise<PrismaClient> {

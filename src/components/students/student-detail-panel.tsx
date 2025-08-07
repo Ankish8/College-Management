@@ -15,42 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-
-interface Student {
-  id: string
-  studentId: string
-  rollNumber: string
-  guardianName?: string
-  guardianPhone?: string
-  address?: string
-  dateOfBirth?: string
-  attendancePercentage: number
-  totalAttendanceRecords: number
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    status: string
-    createdAt: string
-  }
-  batch: {
-    id: string
-    name: string
-    semester: number
-    startYear: number
-    endYear: number
-    isActive: boolean
-    program: {
-      name: string
-      shortName: string
-    }
-    specialization?: {
-      name: string
-      shortName: string
-    }
-  }
-}
+import { Student } from "@/types/student"
 
 interface DetailedStudent extends Student {
   attendanceStats?: {
@@ -162,7 +127,7 @@ export function StudentDetailPanel({
             </Button>
           </div>
           <SheetDescription>
-            Complete information for {student.user.name}
+            Complete information for {student.user?.name || 'Unknown Student'}
           </SheetDescription>
         </SheetHeader>
 
@@ -186,13 +151,13 @@ export function StudentDetailPanel({
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="text-sm font-medium">
-                      {getInitials(student.user.name)}
+                      {student.user?.name ? getInitials(student.user.name) : '??'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
-                    <h3 className="font-semibold">{student.user.name}</h3>
+                    <h3 className="font-semibold">{student.user?.name || 'Unknown Student'}</h3>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(student.user.status)}
+                      {student.user ? getStatusBadge(student.user.status) : <Badge variant="secondary">Unknown</Badge>}
                     </div>
                   </div>
                 </div>
@@ -211,12 +176,12 @@ export function StudentDetailPanel({
                 <div className="grid grid-cols-1 gap-3">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm">{student.user.email}</p>
+                    <p className="text-sm">{student.user?.email || 'N/A'}</p>
                   </div>
-                  {student.user.phone && (
+                  {student.user?.phone && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                      <p className="text-sm">{student.user.phone}</p>
+                      <p className="text-sm">{student.user?.phone}</p>
                     </div>
                   )}
                   {student.address && (
@@ -228,7 +193,7 @@ export function StudentDetailPanel({
                   {student.dateOfBirth && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
-                      <p className="text-sm">{formatDate(student.dateOfBirth)}</p>
+                      <p className="text-sm">{formatDate(typeof student.dateOfBirth === 'string' ? student.dateOfBirth : student.dateOfBirth.toISOString())}</p>
                     </div>
                   )}
                 </div>
@@ -383,12 +348,12 @@ export function StudentDetailPanel({
               <CardContent className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Enrolled On</label>
-                  <p className="text-sm">{formatDate(student.user.createdAt)}</p>
+                  <p className="text-sm">{student.user?.createdAt ? formatDate(student.user.createdAt) : 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">User ID</label>
                   <Badge variant="status-outline" className="font-mono text-xs">
-                    {student.user.id}
+                    {student.user?.id || 'N/A'}
                   </Badge>
                 </div>
               </CardContent>

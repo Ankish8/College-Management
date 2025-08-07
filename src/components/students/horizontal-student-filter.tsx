@@ -13,42 +13,7 @@ import {
   FilterFieldType,
   LogicalOperator
 } from "@/types/student-filters"
-
-interface Student {
-  id: string
-  studentId: string
-  rollNumber: string
-  guardianName?: string
-  guardianPhone?: string
-  address?: string
-  dateOfBirth?: string
-  attendancePercentage: number
-  totalAttendanceRecords: number
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    status: string
-    createdAt: string
-  }
-  batch: {
-    id: string
-    name: string
-    semester: number
-    startYear: number
-    endYear: number
-    isActive: boolean
-    program: {
-      name: string
-      shortName: string
-    }
-    specialization?: {
-      name: string
-      shortName: string
-    }
-  }
-}
+import { Student } from "@/types/student"
 
 interface Batch {
   id: string

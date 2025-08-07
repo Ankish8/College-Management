@@ -66,15 +66,8 @@ class ServiceWorkerManager {
         }
       })
 
-      // Register for background sync
-      if ('sync' in registration) {
-        try {
-          await (registration as any).sync.register('jlu-background-sync')
-          console.log('Background sync registered')
-        } catch (error) {
-          console.error('Failed to register background sync:', error)
-        }
-      }
+      // Register for background sync after service worker is active
+      this.registerBackgroundSync(registration)
 
       console.log('Service worker registered successfully')
       return registration
@@ -82,6 +75,43 @@ class ServiceWorkerManager {
     } catch (error) {
       console.error('Service worker registration failed:', error)
       return null
+    }
+  }
+
+  private async registerBackgroundSync(registration: ServiceWorkerRegistration): Promise<void> {
+    if (!('sync' in registration)) {
+      return
+    }
+
+    try {
+      // Wait for the service worker to be active
+      if (registration.active) {
+        await (registration as any).sync.register('jlu-background-sync')
+        console.log('Background sync registered')
+      } else {
+        // Wait for the service worker to become active
+        const waitForActive = new Promise<void>((resolve) => {
+          const checkState = () => {
+            if (registration.active) {
+              resolve()
+            } else if (registration.installing || registration.waiting) {
+              const worker = registration.installing || registration.waiting
+              worker!.addEventListener('statechange', () => {
+                if (worker!.state === 'activated') {
+                  resolve()
+                }
+              })
+            }
+          }
+          checkState()
+        })
+
+        await waitForActive
+        await (registration as any).sync.register('jlu-background-sync')
+        console.log('Background sync registered after activation')
+      }
+    } catch (error) {
+      console.error('Failed to register background sync:', error)
     }
   }
 

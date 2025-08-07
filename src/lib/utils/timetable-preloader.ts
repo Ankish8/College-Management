@@ -33,11 +33,15 @@ class TimetablePreloader {
     // Check if data already exists in cache
     const existing = this.queryClient.getQueryData(queryKey)
     if (existing) {
-      console.log('⚡ Timetable data already cached for current week')
+      if (process.env.DEBUG_PRELOADER === 'true') {
+        console.log('⚡ Timetable data already cached for current week')
+      }
       return existing
     }
 
-    console.log('🔄 Preloading timetable data for current week...')
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log('🔄 Preloading timetable data for current week...')
+    }
     
     return this.queryClient.prefetchQuery({
       queryKey,
@@ -60,7 +64,9 @@ class TimetablePreloader {
       fields: options.fields || 'calendar'
     }]
 
-    console.log('🔄 Preloading timetable data for next week...')
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log('🔄 Preloading timetable data for next week...')
+    }
 
     return this.queryClient.prefetchQuery({
       queryKey,
@@ -71,7 +77,9 @@ class TimetablePreloader {
 
   // Preload user-specific data
   async preloadUserTimetables(userId: string, userRole: 'FACULTY' | 'STUDENT') {
-    console.log(`🔄 Preloading ${userRole.toLowerCase()} timetable data...`)
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log(`🔄 Preloading ${userRole.toLowerCase()} timetable data...`)
+    }
 
     const promises = []
 
@@ -84,7 +92,9 @@ class TimetablePreloader {
     } else if (userRole === 'STUDENT') {
       // For students, we'd need to get their batch first
       // This would require a separate API call or context
-      console.log('Student timetable preloading requires batch information')
+      if (process.env.DEBUG_PRELOADER === 'true') {
+        console.log('Student timetable preloading requires batch information')
+      }
     }
 
     return Promise.all(promises)
@@ -92,7 +102,9 @@ class TimetablePreloader {
 
   // Background preloading for commonly accessed data
   async preloadCommonData() {
-    console.log('🔄 Background preloading common timetable data...')
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log('🔄 Background preloading common timetable data...')
+    }
 
     const promises = [
       // Preload current week for all batches (minimal data)
@@ -101,7 +113,7 @@ class TimetablePreloader {
       // Preload time slots (rarely change)
       this.queryClient.prefetchQuery({
         queryKey: ['timeSlots'],
-        queryFn: () => fetch('/api/settings/timeslots').then(r => r.json()),
+        queryFn: () => fetch('/api/timeslots').then(r => r.json()),
         staleTime: 30 * 60 * 1000, // 30 minutes
       }),
 
@@ -118,7 +130,9 @@ class TimetablePreloader {
 
   // Intelligent preloading based on navigation patterns
   async smartPreload(currentPath: string, userRole: string) {
-    console.log(`🧠 Smart preloading for ${currentPath}...`)
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log(`🧠 Smart preloading for ${currentPath}...`)
+    }
 
     const preloadPromises = []
 
@@ -171,7 +185,9 @@ class TimetablePreloader {
 
   // Clear stale cache data
   clearStaleData() {
-    console.log('🧹 Clearing stale timetable cache data...')
+    if (process.env.DEBUG_PRELOADER === 'true') {
+      console.log('🧹 Clearing stale timetable cache data...')
+    }
     
     // Remove queries older than 1 hour
     this.queryClient.getQueryCache().findAll().forEach(query => {

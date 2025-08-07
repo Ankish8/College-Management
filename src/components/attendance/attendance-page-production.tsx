@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useState, useEffect, useCallback, useMemo } from 'react'
 import { AttendanceHeader } from '@/components/attendance/attendance-header'
 import { WeeklyAttendanceView } from '@/components/attendance/weekly-attendance-view'
 import { AttendanceTable } from '@/components/attendance/attendance-table'

@@ -472,7 +472,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             isPastDate && "opacity-75", // Subtle indication for past events but still interactive
             isDragging && "opacity-50 z-50"
           )}
-          onClick={() => handleEventClick(event)}
+          // onClick removed - no card click action needed
           title={
             isSampleEvent 
               ? "Sample data - you can drag but changes won't save" 
@@ -541,7 +541,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleMarkAttendance()
+                handleMarkAttendance(e)
               }}
               className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
               title="Mark Attendance"

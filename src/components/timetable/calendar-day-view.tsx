@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useState, useEffect, useRef } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -232,12 +233,12 @@ export function CalendarDayView({
       >
         <Card 
           className={cn(
-            "cursor-pointer transition-all hover:shadow-md",
+            "transition-all hover:shadow-md",
             event.className
           )}
-          onClick={() => handleEventClick(event)}
+          // onClick removed - no card click action needed
         >
-          <CardContent className="p-3">
+          <CardContent className="p-3 pointer-events-none">
             <div className="space-y-2">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
@@ -314,7 +315,7 @@ export function CalendarDayView({
                 <div className="flex justify-end">
                   <button
                     onClick={handleMarkAttendance}
-                    className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                    className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer pointer-events-auto"
                     title="Mark Attendance"
                   >
                     Mark Attendance

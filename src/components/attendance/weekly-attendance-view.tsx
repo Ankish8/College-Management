@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -225,8 +226,8 @@ export function WeeklyAttendanceView({
   
   const [focusedCell, setFocusedCell] = useState<FocusedCell | null>(null)
 
-  const processor = React.useMemo(() => new WeeklyAttendanceProcessor(students, sessions), [students, sessions])
-  const weeklyData = React.useMemo(() => {
+  const processor = useMemo(() => new WeeklyAttendanceProcessor(students, sessions), [students, sessions])
+  const weeklyData = useMemo(() => {
     return processor.generateWeeklyData(selectedDate, attendanceData)
   }, [processor, selectedDate, attendanceData])
   

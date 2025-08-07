@@ -25,8 +25,10 @@ import {
   CheckCircle,
   Settings,
   Target,
-  Timer
+  Timer,
+  Image as ImageIcon
 } from 'lucide-react'
+import { useImagePerformance } from '@/components/ui/optimized-image'
 import { toast } from 'sonner'
 
 interface PerformanceData {
@@ -117,6 +119,9 @@ export function PerformanceDashboard() {
   const [timeWindow, setTimeWindow] = useState<string>('3600') // 1 hour default
   const [trendBucket, setTrendBucket] = useState<string>('300') // 5 minutes default
   const queryClient = useQueryClient()
+  
+  // Image performance monitoring
+  const { stats: imageStats, metrics: imageMetrics, refresh: refreshImageStats } = useImagePerformance()
 
   const { data: performanceData, isLoading, error, refetch } = useQuery({
     queryKey: ['performance-data', timeWindow],
@@ -243,7 +248,7 @@ export function PerformanceDashboard() {
 
       {/* Overview Cards */}
       {performanceData && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -284,10 +289,26 @@ export function PerformanceDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Errors</p>
+                  <p className="text-sm font-medium text-muted-foreground">Query Errors</p>
                   <p className="text-2xl font-bold text-red-600">{performanceData.overview.errorCount}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Image Performance Card */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Images</p>
+                  <p className="text-2xl font-bold">{imageStats?.totalImages || 0}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {imageStats?.averageLoadTime ? `${imageStats.averageLoadTime}ms avg` : 'No data'}
+                  </p>
+                </div>
+                <ImageIcon className="h-8 w-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
@@ -343,9 +364,10 @@ export function PerformanceDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="queries">Query Details</TabsTrigger>
+          <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="breakdown">Breakdown</TabsTrigger>
         </TabsList>
@@ -462,6 +484,125 @@ export function PerformanceDashboard() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="images" className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              onClick={refreshImageStats}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Images
+            </Button>
+          </div>
+
+          {imageStats ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Image Performance Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    Image Performance Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{imageStats.totalImages}</div>
+                      <div className="text-sm text-gray-600">Total Images</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{imageStats.successful}</div>
+                      <div className="text-sm text-gray-600">Successful</div>
+                    </div>
+                    <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600">{imageStats.slowLoads}</div>
+                      <div className="text-sm text-gray-600">Slow Loads (&gt;2s)</div>
+                    </div>
+                    <div className="text-center p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">{imageStats.failed}</div>
+                      <div className="text-sm text-gray-600">Failed</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex justify-between text-sm">
+                      <span>Average Load Time:</span>
+                      <Badge variant="outline">{imageStats.averageLoadTime}ms</Badge>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span>Fast Loads (&lt;500ms):</span>
+                      <Badge variant="outline" className="text-green-600">{imageStats.fastLoads}</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Image Loads */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Recent Image Loads
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-2">
+                      {imageMetrics.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                          No image loads recorded yet
+                        </p>
+                      ) : (
+                        imageMetrics.slice(-15).reverse().map((metric, index) => (
+                          <div key={index} className="border rounded p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={metric.success ? "default" : "destructive"} className="text-xs">
+                                  {metric.success ? '✓' : '✗'}
+                                </Badge>
+                                <span className="text-sm font-medium truncate">{metric.name}</span>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {formatDuration(metric.loadTime)}
+                              </Badge>
+                            </div>
+                            
+                            {metric.size && (
+                              <div className="text-xs text-muted-foreground">
+                                Size: {metric.size.width}x{metric.size.height}
+                              </div>
+                            )}
+                            
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(metric.timestamp).toLocaleTimeString()}
+                            </div>
+                            
+                            {metric.error && (
+                              <div className="text-xs text-red-600 mt-1 truncate">
+                                Error: {metric.error}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-muted-foreground">
+                  No image performance data available yet. Use OptimizedImage components to start tracking.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-4">

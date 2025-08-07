@@ -20,42 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
-
-interface Student {
-  id: string
-  studentId: string
-  rollNumber: string
-  guardianName?: string
-  guardianPhone?: string
-  address?: string
-  dateOfBirth?: string
-  attendancePercentage: number
-  totalAttendanceRecords: number
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    status: string
-    createdAt: string
-  }
-  batch: {
-    id: string
-    name: string
-    semester: number
-    startYear: number
-    endYear: number
-    isActive: boolean
-    program: {
-      name: string
-      shortName: string
-    }
-    specialization?: {
-      name: string
-      shortName: string
-    }
-  }
-}
+import { Student } from '@/types/student'
 
 interface VirtualStudentTableProps {
   students: Student[]
@@ -115,13 +80,13 @@ export function VirtualStudentTable({
     >
       {/* Student Info */}
       <div className="col-span-2 space-y-1">
-        <div className="font-medium">{student.user.name}</div>
+        <div className="font-medium">{student.user?.name || 'Unknown Student'}</div>
         <div 
           className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-          onClick={() => copyToClipboard(student.user.email, 'Email', student.id)}
+          onClick={() => student.user?.email && copyToClipboard(student.user.email, 'Email', student.id)}
           title="Click to copy email"
         >
-          {student.user.email}
+          {student.user?.email || 'N/A'}
           {copiedId === student.id && (
             <span className="ml-1 text-green-600">✓</span>
           )}
@@ -153,9 +118,9 @@ export function VirtualStudentTable({
       {/* Status */}
       <div className="flex items-center">
         <Badge 
-          variant={student.user.status === "ACTIVE" ? "default" : "secondary"}
+          variant={student.user?.status === "ACTIVE" ? "default" : "secondary"}
         >
-          {student.user.status}
+          {student.user?.status || 'Unknown'}
         </Badge>
       </div>
 
@@ -177,14 +142,14 @@ export function VirtualStudentTable({
 
       {/* Contact */}
       <div className="space-y-1">
-        {student.user.phone && (
+        {student.user?.phone && (
           <div 
             className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-            onClick={() => copyToClipboard(student.user.phone!, 'Phone', student.id)}
+            onClick={() => student.user?.phone && copyToClipboard(student.user.phone, 'Phone', student.id)}
             title="Click to copy phone"
           >
             <Phone className="h-3 w-3" />
-            {student.user.phone}
+            {student.user?.phone}
           </div>
         )}
         {student.guardianPhone && (
@@ -209,14 +174,14 @@ export function VirtualStudentTable({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem
-              onClick={() => copyToClipboard(student.user.email, 'Email', student.id)}
+              onClick={() => student.user?.email && copyToClipboard(student.user.email, 'Email', student.id)}
             >
               <Copy className="mr-2 h-4 w-4" />
               Copy Email
             </DropdownMenuItem>
-            {student.user.phone && (
+            {student.user?.phone && (
               <DropdownMenuItem
-                onClick={() => copyToClipboard(student.user.phone!, 'Phone', student.id)}
+                onClick={() => student.user?.phone && copyToClipboard(student.user.phone, 'Phone', student.id)}
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Phone

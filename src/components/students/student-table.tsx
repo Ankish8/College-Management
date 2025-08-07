@@ -42,42 +42,7 @@ const EditStudentModal = dynamic(() => import("./edit-student-modal").then(mod =
 import { useToast } from "@/hooks/use-toast"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { useSorting } from "@/hooks/useSorting"
-
-interface Student {
-  id: string
-  studentId: string
-  rollNumber: string
-  guardianName?: string
-  guardianPhone?: string
-  address?: string
-  dateOfBirth?: string
-  attendancePercentage: number
-  totalAttendanceRecords: number
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    status: string
-    createdAt: string
-  }
-  batch: {
-    id: string
-    name: string
-    semester: number
-    startYear: number
-    endYear: number
-    isActive: boolean
-    program: {
-      name: string
-      shortName: string
-    }
-    specialization?: {
-      name: string
-      shortName: string
-    }
-  }
-}
+import { Student } from "@/types/student"
 
 interface StudentTableProps {
   students: Student[]
@@ -102,6 +67,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const { toast } = useToast()
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
     student: true,
     studentId: true,
@@ -110,7 +76,6 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
     status: true,
     attendance: true,
   })
-  const { toast } = useToast()
   const { sortedData, handleSort, getSortDirection } = useSorting({
     data: students,
     defaultSort: { key: 'user.name', direction: 'asc' }
@@ -139,14 +104,19 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
         method: "DELETE",
         credentials: 'include'
       })
-
+      
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || "Failed to delete student")
       }
-
+      
       onDelete(student.id)
       setDeletingStudent(null)
+      
+      toast({
+        title: "Student Deleted",
+        description: `${student.user?.name || 'Student'} has been deleted successfully`,
+      })
     } catch (error) {
       console.error("Error deleting student:", error)
       toast({
@@ -154,6 +124,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
         description: (error as Error).message || "Failed to delete student",
         variant: "destructive",
       })
+      setDeletingStudent(null)
     }
   }
 
@@ -320,33 +291,33 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="text-xs font-medium">
-                          {getInitials(student.user.name)}
+                          {student.user?.name ? getInitials(student.user.name) : '??'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-1">
-                        <p className="font-medium leading-none">{student.user.name}</p>
+                        <p className="font-medium leading-none">{student.user?.name || 'N/A'}</p>
                         <div className="group flex items-center gap-1 text-xs text-muted-foreground relative">
                           <Mail className="h-3 w-3" />
-                          <span className="pr-5">{student.user.email}</span>
+                          <span className="pr-5">{student.user?.email || 'N/A'}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              copyToClipboard(student.user.email, "Email")
+                              student.user?.email && copyToClipboard(student.user.email, "Email")
                             }}
                             className="absolute right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-muted rounded-sm"
                             title="Copy email"
                           >
-                            {copiedField === `Email-${student.user.email}` ? (
+                            {copiedField === `Email-${student.user?.email}` ? (
                               <Check className="h-3 w-3 text-green-600" />
                             ) : (
                               <Copy className="h-3 w-3 text-muted-foreground" />
                             )}
                           </button>
                         </div>
-                        {student.user.phone && (
+                        {student.user?.phone && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="h-3 w-3" />
-                            {student.user.phone}
+                            {student.user?.phone}
                           </div>
                         )}
                       </div>
@@ -405,7 +376,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
                       <div className="flex items-center gap-1">
                         <GraduationCap className="h-3 w-3 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          {student.batch.program.shortName}
+                          {student.batch.program?.shortName || 'N/A'}
                           {student.batch.specialization && ` ${student.batch.specialization.shortName}`}
                         </span>
                       </div>
@@ -417,7 +388,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
                 )}
                 {columnVisibility.status && (
                   <TableCell>
-                    {getStatusBadge(student.user.status)}
+                    {student.user ? getStatusBadge(student.user.status) : <Badge variant="secondary">Unknown</Badge>}
                   </TableCell>
                 )}
                 {columnVisibility.attendance && (
@@ -526,7 +497,7 @@ export const StudentTable = memo(function StudentTable({ students, onUpdate, onD
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Student</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{deletingStudent?.user.name}</strong>?
+              Are you sure you want to delete <strong>{deletingStudent?.user?.name || 'Unknown Student'}</strong>?
               <br /><br />
               <strong>This action cannot be undone.</strong> This will permanently delete:
               <ul className="list-disc list-inside mt-2 space-y-1">

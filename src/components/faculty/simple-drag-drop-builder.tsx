@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -372,7 +373,7 @@ export function SimpleDragDropBuilder({
   )
 
   // Debug logging
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('Faculty count:', facultyList.length)
     console.log('Filtered faculty count:', filteredFaculty.length)
     console.log('Unassigned subjects count:', localUnassignedSubjects.length)
@@ -526,7 +527,7 @@ export function SimpleDragDropBuilder({
   }
 
   // Expose save handler to parent
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).handleBuilderSave = handleSaveWithCurrentData
     }

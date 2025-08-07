@@ -50,7 +50,9 @@ async function fetchTimetableEntries(filters: TimetableFilters = {}) {
 
   // Fetch timetable entries with filters
 
-  const response = await fetch(`/api/timetable/entries?${searchParams.toString()}`)
+  const response = await fetch(`/api/timetable/entries?${searchParams.toString()}`, {
+    credentials: 'include'
+  })
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch timetable entries' }))
@@ -768,6 +770,7 @@ export default function TimetableClient() {
       const response = await fetch('/api/timetable/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(createData),
       })
       
@@ -821,6 +824,7 @@ export default function TimetableClient() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody),
       })
 
@@ -874,7 +878,9 @@ export default function TimetableClient() {
         params.append('excludeEventId', excludeEventId)
       }
       
-      const response = await fetch(`/api/timetable/conflicts?${params.toString()}`)
+      const response = await fetch(`/api/timetable/conflicts?${params.toString()}`, {
+        credentials: 'include'
+      })
       
       if (!response.ok) {
         console.error('Conflict check failed:', response.status)
@@ -959,6 +965,7 @@ export default function TimetableClient() {
 
       const response = await fetch(deleteUrl, {
         method: 'DELETE',
+        credentials: 'include',
       })
       
 
@@ -972,7 +979,6 @@ export default function TimetableClient() {
       // Invalidate and refetch the timetable data to get fresh data
       queryClient.invalidateQueries({ queryKey: ['timetable-entries'] })
       queryClient.removeQueries({ queryKey: ['timetable-entries'] }) // Force remove cached data
-      await refetch()
       
       // Force calendar re-render
       setForceRefreshKey(Date.now())

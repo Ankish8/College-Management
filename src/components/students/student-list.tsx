@@ -174,7 +174,7 @@ function StudentListComponent() {
 
   // Use React Query for batches with aggressive caching
   const { data: batches = [] } = useQuery({
-    queryKey: ['batches', session?.user?.id],
+    queryKey: ['batches', (session?.user as any)?.id],
     queryFn: fetchBatchesData,
     staleTime: 10 * 60 * 1000, // 10 minutes - batches rarely change
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -186,12 +186,12 @@ function StudentListComponent() {
       }
       return failureCount < 2
     },
-    enabled: status === "authenticated" && !!session?.user?.id
+    enabled: status === "authenticated" && !!(session?.user as any)?.id
   })
 
   // Use React Query for students with optimized caching
   const { data: students = [], isLoading: loading, refetch: refetchStudents, isError } = useQuery({
-    queryKey: ['students', filterState.searchQuery, selectedBatch, session?.user?.id],
+    queryKey: ['students', filterState.searchQuery, selectedBatch, (session?.user as any)?.id],
     queryFn: () => fetchStudentsData({ 
       searchQuery: filterState.searchQuery, 
       selectedBatch, 
@@ -207,7 +207,7 @@ function StudentListComponent() {
       }
       return failureCount < 2
     },
-    enabled: status === "authenticated" && !!session?.user?.id // Only fetch when authenticated with user ID
+    enabled: status === "authenticated" && !!(session?.user as any)?.id // Only fetch when authenticated with user ID
   })
 
   // Apply advanced filtering using the new filtering system

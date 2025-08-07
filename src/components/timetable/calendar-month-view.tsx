@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useState, useEffect } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { getEventsForDate } from '@/lib/utils/calendar-utils'
 import { Button } from '@/components/ui/button'
@@ -138,10 +139,10 @@ export function CalendarMonthView({
       >
         <div
           className={cn(
-            "text-xs p-1 rounded mb-1 cursor-pointer transition-all hover:shadow-sm truncate relative group",
+            "text-xs p-1 rounded mb-1 transition-all hover:shadow-sm truncate relative group",
             event.className
           )}
-          onClick={(e) => handleEventClick(event, e)}
+          // onClick removed - no card click action needed
           title={`${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName} at ${format(event.start, 'HH:mm')}`}
         >
           <div className="font-medium truncate">

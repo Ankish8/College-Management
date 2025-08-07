@@ -146,7 +146,7 @@ export const SubjectList = memo(function SubjectList() {
 
   // Use React Query for subjects with proper caching and deduplication
   const { data: subjects = [], isLoading: loading, refetch: refetchSubjects, error, isError } = useQuery({
-    queryKey: ['subjects', session?.user?.id],
+    queryKey: ['subjects', (session?.user as any)?.id],
     queryFn: fetchSubjectsData,
     staleTime: 0, // No cache - always fetch fresh data
     gcTime: 0, // No cache retention
@@ -160,7 +160,7 @@ export const SubjectList = memo(function SubjectList() {
       }
       return failureCount < 2 // Allow more retries than before
     },
-    enabled: status === "authenticated" && !!session?.user?.id, // Only fetch when authenticated with user ID
+    enabled: status === "authenticated" && !!(session?.user as any)?.id, // Only fetch when authenticated with user ID
     // Add network mode to prevent excessive requests
     networkMode: 'online'
   })
@@ -239,7 +239,7 @@ export const SubjectList = memo(function SubjectList() {
     // Apply semester filter
     if (filters.semesters.length > 0) {
       filtered = filtered.filter(subject =>
-        subject.batch?.semester && filters.semesters.includes(subject.batch.semester)
+        subject.batch?.semester !== undefined && filters.semesters.includes(subject.batch.semester)
       )
     }
 
@@ -309,10 +309,10 @@ export const SubjectList = memo(function SubjectList() {
 
   // Extract unique values for filters
   const uniqueSubjectTypes = Array.from(new Set(subjects.map(s => s.subjectType))).sort()
-  const uniqueCredits = Array.from(new Set(subjects.map(s => s.credits).filter(credit => credit != null && !isNaN(credit)))).sort((a, b) => a - b)
+  const uniqueCredits = Array.from(new Set(subjects.map(s => s.credits).filter(credit => credit != null && !isNaN(credit)))).sort((a, b) => (a || 0) - (b || 0))
   const uniqueBatches = Array.from(new Set(subjects.map(s => s.batch?.name).filter(Boolean) as string[])).sort()
   const uniquePrograms = Array.from(new Set(subjects.map(s => s.batch?.program?.shortName).filter(Boolean) as string[])).sort()
-  const uniqueSemesters = Array.from(new Set(subjects.map(s => s.batch?.semester).filter(semester => semester != null && !isNaN(semester)))).sort((a, b) => a - b)
+  const uniqueSemesters = Array.from(new Set(subjects.map(s => s.batch?.semester).filter(semester => semester != null && !isNaN(semester)))).sort((a, b) => (a || 0) - (b || 0))
   const uniqueFaculty = Array.from(new Set(subjects.flatMap(s => [
     s.primaryFaculty?.name,
     s.coFaculty?.name
@@ -685,12 +685,12 @@ export const SubjectList = memo(function SubjectList() {
                         <div key={semester} className="flex items-center space-x-2">
                           <Checkbox
                             id={`semester-${semester}`}
-                            checked={filters.semesters.includes(semester)}
+                            checked={filters.semesters.includes(semester || 0)}
                             onCheckedChange={(checked) => {
                               setFilters(prev => ({
                                 ...prev,
                                 semesters: checked 
-                                  ? [...prev.semesters, semester]
+                                  ? [...prev.semesters, semester || 0]
                                   : prev.semesters.filter(s => s !== semester)
                               }))
                             }}

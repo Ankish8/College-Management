@@ -21,10 +21,10 @@ interface Subject {
   examType: string
   subjectType: string
   description?: string
-  batch: {
+  batch?: {
     name: string
     semester: number
-    program: {
+    program?: {
       name: string
       shortName: string
     }
@@ -32,11 +32,11 @@ interface Subject {
       name: string
       shortName: string
     }
-    _count: {
+    _count?: {
       students: number
     }
   }
-  primaryFaculty: {
+  primaryFaculty?: {
     name: string
     email: string
   }
@@ -44,7 +44,7 @@ interface Subject {
     name: string
     email: string
   }
-  _count: {
+  _count?: {
     attendanceSessions: number
   }
 }
@@ -112,7 +112,7 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
               </div>
               <div className="flex items-center gap-1">
                 <GraduationCap className="h-3 w-3" />
-                <span>{subject.batch.program.shortName} S{subject.batch.semester}</span>
+                <span>{subject.batch?.program?.shortName || 'N/A'} S{subject.batch?.semester || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -143,7 +143,7 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Users className="h-3 w-3 text-muted-foreground" />
-            <span className="text-sm font-medium">{subject.primaryFaculty.name}</span>
+            <span className="text-sm font-medium">{subject.primaryFaculty?.name || 'No faculty'}</span>
           </div>
           {subject.coFaculty && (
             <div className="text-xs text-muted-foreground ml-5">
@@ -154,7 +154,7 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
 
         {/* Batch name - truncated */}
         <div className="text-xs text-muted-foreground truncate">
-          {subject.batch.name}
+          {subject.batch?.name || 'No batch'}
         </div>
 
         {/* Footer - two rows for stats */}
@@ -162,13 +162,13 @@ export function SubjectCard({ subject, onUpdate, onDelete, onEdit }: SubjectCard
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Students Enrolled</span>
             <Badge variant="outline" className="text-xs h-5 text-blue-600 border-blue-200">
-              {subject.batch._count.students}
+              {subject.batch?._count?.students || 0}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Classes Conducted</span>
             <Badge variant="secondary" className="text-xs h-5">
-              {subject._count.attendanceSessions}
+              {subject._count?.attendanceSessions || 0}
             </Badge>
           </div>
         </div>

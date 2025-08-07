@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from 'react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -83,6 +84,7 @@ export function TimetableEntryContextMenu({
 
         const response = await fetch(endpoint, {
           method: 'DELETE',
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -90,13 +92,14 @@ export function TimetableEntryContextMenu({
         }
 
         toast({
-          title: "Entry Deleted",
-          description: `${event.title || event.extendedProps?.subjectName || 'Entry'} has been deleted successfully`,
+          title: "Success",
+          description: `${eventType === 'holiday' ? 'Holiday' : eventType === 'custom' ? 'Event' : 'Class'} deleted successfully`,
         })
 
         // Refresh the page to show updated data
         router.refresh()
       } catch (error) {
+        console.error('Delete operation failed:', error)
         toast({
           title: "Error",
           description: "Failed to delete entry. Please try again.",

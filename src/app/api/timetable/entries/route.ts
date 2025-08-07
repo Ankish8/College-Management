@@ -395,18 +395,20 @@ export async function GET(request: NextRequest) {
       db.timetableEntry.count({ where: whereClause })
     ])
 
-    // Debug logging to understand what's being returned
-    console.log(`📊 Timetable query results:`)
-    console.log(`   Total entries found: ${entries.length}`)
-    console.log(`   Recurring entries (date=null): ${entries.filter(e => !e.date).length}`)
-    console.log(`   Date-specific entries: ${entries.filter(e => e.date).length}`)
-    
-    entries.forEach((entry, index) => {
-      if (index < 10) { // Only log first 10 for brevity
-        const title = entry.subject?.name || entry.customEventTitle || 'No title'
-        console.log(`   ${index + 1}. ${entry.id} ${title} ${entry.date ? entry.date.toISOString().split('T')[0] : 'null'} ${entry.dayOfWeek}`)
-      }
-    })
+    // Debug logging only when explicitly enabled
+    if (process.env.DEBUG_TIMETABLE_QUERIES === 'true') {
+      console.log(`📊 Timetable query results:`)
+      console.log(`   Total entries found: ${entries.length}`)
+      console.log(`   Recurring entries (date=null): ${entries.filter(e => !e.date).length}`)
+      console.log(`   Date-specific entries: ${entries.filter(e => e.date).length}`)
+      
+      entries.forEach((entry, index) => {
+        if (index < 10) { // Only log first 10 for brevity
+          const title = entry.subject?.name || entry.customEventTitle || 'No title'
+          console.log(`   ${index + 1}. ${entry.id} ${title} ${entry.date ? entry.date.toISOString().split('T')[0] : 'null'} ${entry.dayOfWeek}`)
+        }
+      })
+    }
 
     const response = {
       entries,
@@ -431,7 +433,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !isAdmin(session.user as any)) {
+    if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

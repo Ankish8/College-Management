@@ -25,13 +25,6 @@ export const metadata: Metadata = {
   title: "JLU College Management System",
   description: "Timetable and Attendance Management for Jagran Lakecity University",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: "/favicon.ico",
     apple: "/icon-192x192.png",
@@ -41,6 +34,14 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "JLU CMS",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#3b82f6",
 };
 
 export default function RootLayout({
@@ -55,13 +56,13 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ServiceWorkerProvider>
-          <QueryProvider>
-            <OfflineProvider>
-              <Providers>
+          <Providers>
+            <QueryProvider>
+              <OfflineProvider>
                 {children}
-              </Providers>
-            </OfflineProvider>
-          </QueryProvider>
+              </OfflineProvider>
+            </QueryProvider>
+          </Providers>
         </ServiceWorkerProvider>
         <Toaster />
       </body>

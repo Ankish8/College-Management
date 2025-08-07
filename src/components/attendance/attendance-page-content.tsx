@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
@@ -102,7 +103,7 @@ export function AttendancePageContent({
   const [selectedDate, setSelectedDate] = useState<string>(initialDate)
 
   // Get unique batches from all subjects (don't filter by date for batches)
-  const availableBatches = React.useMemo(() => {
+  const availableBatches = useMemo(() => {
     const batchMap = new Map<string, Batch>()
     subjects.forEach(subject => {
       if (!batchMap.has(subject.batch.id)) {
@@ -113,7 +114,7 @@ export function AttendancePageContent({
   }, [subjects])
 
   // Filter subjects by selected batch AND selected date
-  const availableSubjects = React.useMemo(() => {
+  const availableSubjects = useMemo(() => {
     if (!selectedBatch) return []
     const batchSubjects = subjects.filter(subject => subject.batch.id === selectedBatch)
     return filterSubjectsByDate(batchSubjects, selectedDate)
@@ -161,7 +162,7 @@ export function AttendancePageContent({
   }
 
   // Create search context data for command palette
-  const searchContextData = React.useMemo(() => {
+  const searchContextData = useMemo(() => {
     if (!selectedBatch || !selectedSubject) return undefined
     
     return {
@@ -174,7 +175,7 @@ export function AttendancePageContent({
   }, [selectedBatch, selectedSubject, selectedDate])
 
   // Create command actions for the command palette
-  const commandActions = React.useMemo(() => {
+  const commandActions = useMemo(() => {
     return createCommandActions(
       setSelectedDate,
       () => {}, // setAttendanceMode - will be handled by events

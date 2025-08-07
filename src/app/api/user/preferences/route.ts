@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("GET preferences - returning defaults (no user_preferences table)")
+    if (process.env.DEBUG_USER_PREFERENCES === 'true') {
+      console.log("GET preferences - returning defaults (no user_preferences table)")
+    }
     return NextResponse.json({
       viewModes: defaultPreferences.viewModes,
       updatedAt: new Date().toISOString(),

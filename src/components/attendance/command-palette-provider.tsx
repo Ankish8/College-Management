@@ -1,5 +1,6 @@
 "use client"
 
+import { createContext, useState, useContext, useCallback, useEffect } from 'react'
 import { CommandPalette } from './command-palette'
 import { SearchContext } from '@/utils/search-context'
 import type { AppContext } from '@/types/command-palette'

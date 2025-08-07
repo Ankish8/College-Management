@@ -35,7 +35,7 @@ const PREFETCH_CONFIGS: Record<string, () => Promise<any>> = {
     return fetch(`/api/timetable/entries?${params}`).then(r => r.json())
   },
   '/settings': () => Promise.all([
-    fetch('/api/settings/timeslots').then(r => r.json()),
+    fetch('/api/timeslots').then(r => r.json()),
     fetch('/api/batches?fields=minimal').then(r => r.json())
   ]),
 }
@@ -88,7 +88,9 @@ export function PrefetchLink({
       }
 
       try {
-        console.log(`🔄 Prefetching data for ${href}...`)
+        if (process.env.DEBUG_PRELOADER === 'true') {
+          console.log(`🔄 Prefetching data for ${href}...`)
+        }
         
         // Prefetch the route
         router.prefetch(href)
@@ -127,10 +129,14 @@ export function PrefetchLink({
         }
         
         setHasPrefetched(true)
-        console.log(`✅ Successfully prefetched ${href}`)
+        if (process.env.DEBUG_PRELOADER === 'true') {
+          console.log(`✅ Successfully prefetched ${href}`)
+        }
         
       } catch (error) {
-        console.warn(`Failed to prefetch ${href}:`, error)
+        if (process.env.DEBUG_PRELOADER === 'true') {
+          console.warn(`Failed to prefetch ${href}:`, error)
+        }
         // Still mark as prefetched to avoid repeated attempts
         setHasPrefetched(true)
       }

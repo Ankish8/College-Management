@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef } from 'react'
 import { CalendarEvent } from '@/types/timetable'
 import { 
   Pencil, 

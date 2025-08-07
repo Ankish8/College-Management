@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { Search, Command } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UniversalSearch } from "./universal-search"

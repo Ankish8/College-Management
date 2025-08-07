@@ -22,7 +22,7 @@ const CRITICAL_API_ENDPOINTS = [
   '/api/subjects?fields=minimal',
   '/api/batches?fields=minimal',
   '/api/timetable/entries?fields=calendar',
-  '/api/settings/time-slots',
+  '/api/timeslots',
   '/api/settings/academic-calendar',
   '/api/user/preferences'
 ]
