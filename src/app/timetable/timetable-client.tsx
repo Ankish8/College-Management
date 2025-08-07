@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FullCalendar } from '@/components/ui/full-calendar'
@@ -308,10 +309,10 @@ export default function TimetableClient() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // Today's date
   const [selectedBatchId, setSelectedBatchId] = useState<string>('')
   const [forceRefreshKey, setForceRefreshKey] = useState<number>(Date.now())
-  const hasInitializedBatch = React.useRef(false)
+  const hasInitializedBatch = useRef(false)
 
   // Initialize "don't ask again" state from session storage
-  React.useEffect(() => {
+  useEffect(() => {
     const skipConfirmation = sessionStorage.getItem('skipDeleteConfirmation')
     if (skipConfirmation === 'true') {
       setSkipDeleteConfirmation(true)
@@ -345,7 +346,7 @@ export default function TimetableClient() {
   }, [batchesData])
 
   // Create stable filters object
-  const filters = React.useMemo(() => {
+  const filters = useMemo(() => {
     return selectedBatchId ? { batchId: selectedBatchId } : {}
   }, [selectedBatchId])
 
@@ -383,7 +384,7 @@ export default function TimetableClient() {
 
 
   // Format batch display text
-  const formatBatchDisplay = React.useCallback((batch: any) => {
+  const formatBatchDisplay = useCallback((batch: any) => {
     if (!batch) return ''
     
     const parts = []
@@ -407,7 +408,7 @@ export default function TimetableClient() {
   }, [])
 
   // Convert entries to calendar events - INCLUDES HOLIDAYS
-  const events: CalendarEvent[] = React.useMemo(() => {
+  const events: CalendarEvent[] = useMemo(() => {
     
     
     // Get the current visible week range for timetable entries
@@ -582,7 +583,7 @@ export default function TimetableClient() {
   }, [timetableData, holidaysData, selectedDate])
   
   // DEBUG: Log what data we're actually getting
-  React.useEffect(() => {
+  useEffect(() => {
     if (timetableData?.entries) {
       const allDates = [...new Set(timetableData.entries.map((entry: any) => 
         entry.date ? new Date(entry.date).toDateString() : 'NO DATE'
@@ -624,7 +625,7 @@ export default function TimetableClient() {
   })
 
   // Transform subjects data for quick creation popup
-  const realSubjects = React.useMemo(() => {
+  const realSubjects = useMemo(() => {
     if (!subjectsData || !Array.isArray(subjectsData)) {
       return []
     }
@@ -644,7 +645,13 @@ export default function TimetableClient() {
   const handleEventClick = (event: CalendarEvent) => {
     // Allow editing all events - past date restriction removed
     
-    toast.info(`Clicked: ${event.extendedProps?.subjectName} - ${event.extendedProps?.facultyName}`)
+    // Only show toast if we have valid subject and faculty names
+    const subjectName = event.extendedProps?.subjectName
+    const facultyName = event.extendedProps?.facultyName
+    
+    if (subjectName && facultyName) {
+      toast.info(`Clicked: ${subjectName} - ${facultyName}`)
+    }
   }
 
   const handleEventEdit = (event: CalendarEvent) => {
@@ -1156,7 +1163,7 @@ export default function TimetableClient() {
         onClose={() => setIsCreateModalOpen(false)}
         defaultDate={selectedDate}
         defaultBatchId={selectedBatchId}
-        onSuccess={(newEntry) => {
+        onSuccess={(newEntry: any) => {
           toast.success("Timetable entry created successfully!")
           setIsCreateModalOpen(false)
           refetch() // Refresh the timetable data

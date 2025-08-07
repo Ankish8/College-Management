@@ -1,5 +1,6 @@
 "use client"
 
+import React, { memo, useState, useEffect, useMemo, useRef } from 'react'
 import { CalendarEvent, CalendarView } from '@/types/timetable'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
@@ -538,7 +539,10 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
 
             {/* Right side: Mark Attendance Button */}
             <button
-              onClick={handleMarkAttendance}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleMarkAttendance()
+              }}
               className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
               title="Mark Attendance"
             >

@@ -10,8 +10,6 @@ import SignOutButton from "@/components/auth/sign-out-button"
 import { useSession } from "next-auth/react"
 import { Bell } from "lucide-react"
 import { UniversalSearchTrigger } from "./universal-search-trigger"
-import { ServiceWorkerStatusMini } from "./ui/service-worker-status"
-import { OfflineStatusMini } from "./ui/offline-status"
 
 export function SiteHeader() {
   const { data: session } = useSession()
@@ -41,12 +39,6 @@ export function SiteHeader() {
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">
-        {/* Offline Status */}
-        <OfflineStatusMini />
-        
-        {/* Service Worker Status */}
-        <ServiceWorkerStatusMini />
-        
         <Separator orientation="vertical" className="h-4" />
         
         {/* Notifications */}
