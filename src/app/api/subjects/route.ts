@@ -75,6 +75,9 @@ export async function GET(request: NextRequest) {
         examType: true,
         subjectType: true,
         description: true,
+        batchId: true,
+        primaryFacultyId: true,
+        coFacultyId: true,
         createdAt: true,
         batch: {
           select: {
@@ -123,7 +126,14 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" }
     })
 
-    return NextResponse.json(subjects)
+    const response = NextResponse.json(subjects)
+    
+    // Prevent any caching to ensure fresh data
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    
+    return response
   } catch (error) {
     console.error("Error fetching subjects:", error)
     return NextResponse.json(

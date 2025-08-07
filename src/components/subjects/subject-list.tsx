@@ -55,6 +55,9 @@ interface Subject {
   examType: string
   subjectType: string
   description?: string
+  batchId: string
+  primaryFacultyId: string
+  coFacultyId?: string | null
   batch?: {
     name: string
     semester: number
@@ -98,8 +101,9 @@ interface SubjectFilters {
 
 // API fetch function with better error handling
 const fetchSubjectsData = async (): Promise<Subject[]> => {
-  const response = await fetch("/api/subjects", {
-    credentials: 'include'
+  const response = await fetch(`/api/subjects?t=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store'
   })
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: Failed to fetch subjects`)
@@ -144,10 +148,10 @@ export const SubjectList = memo(function SubjectList() {
   const { data: subjects = [], isLoading: loading, refetch: refetchSubjects, error, isError } = useQuery({
     queryKey: ['subjects', session?.user?.id],
     queryFn: fetchSubjectsData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchOnMount: true, // Always refetch on mount to ensure fresh data
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    staleTime: 0, // No cache - always fetch fresh data
+    gcTime: 0, // No cache retention
+    refetchOnMount: 'always', // Always refetch on mount to ensure fresh data
+    refetchOnWindowFocus: true, // Refetch on window focus
     refetchOnReconnect: false, // Prevent refetch on reconnect
     retry: (failureCount, error) => {
       // Don't retry on 401 errors

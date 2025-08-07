@@ -179,10 +179,19 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
     },
   })
 
-  // Update form when subject changes
+  // Update form when subject changes and data is loaded
   useEffect(() => {
-    if (subject && open) {
-      form.reset({
+    if (subject && open && !isLoading && batches.length > 0 && faculty.length > 0) {
+      console.log('=== FORM RESET DEBUG ===')
+      console.log('Subject:', subject.name)
+      console.log('BatchID:', subject.batchId)
+      console.log('PrimaryFacultyID:', subject.primaryFacultyId)
+      console.log('ExamType:', subject.examType)
+      console.log('SubjectType:', subject.subjectType)
+      console.log('Available batches:', batches.map(b => ({ id: b.id, name: b.name })))
+      console.log('Available faculty:', faculty.map(f => ({ id: f.id, name: f.name })))
+      
+      const formData = {
         name: subject.name,
         code: subject.code,
         credits: subject.credits,
@@ -192,9 +201,27 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
         examType: subject.examType,
         subjectType: subject.subjectType,
         description: subject.description || "",
-      })
+      }
+      
+      console.log('Form data being set:', formData)
+      
+      // Use setValue instead of reset for better control with Select components
+      form.setValue('name', subject.name)
+      form.setValue('code', subject.code)
+      form.setValue('credits', subject.credits)
+      form.setValue('batchId', subject.batchId)
+      form.setValue('primaryFacultyId', subject.primaryFacultyId)
+      form.setValue('coFacultyId', subject.coFacultyId || "none")
+      form.setValue('examType', subject.examType)
+      form.setValue('subjectType', subject.subjectType)
+      form.setValue('description', subject.description || "")
+      
+      // Check form values after setValue
+      setTimeout(() => {
+        console.log('Form values after setValue:', form.getValues())
+      }, 100)
     }
-  }, [subject, open, form])
+  }, [subject, open, isLoading, batches.length, faculty.length, form])
 
   // Fetch initial data
   useEffect(() => {
@@ -394,10 +421,20 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                 <FormField
                   control={form.control}
                   name="batchId"
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    console.log('BatchId field render:', { 
+                      fieldValue: field.value, 
+                      subjectId: subject?.id, 
+                      availableBatches: batches.map(b => ({ id: b.id, name: b.name }))
+                    });
+                    return (
                     <FormItem className="space-y-1.5">
                       <FormLabel>Batch</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        key={`select-${field.name}-${subject?.id}-${field.value}`}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select batch" />
@@ -418,7 +455,8 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                       </Select>
                       <FormMessage />
                     </FormItem>
-                  )}
+                    )
+                  }}
                 />
               </div>
 
@@ -477,7 +515,11 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
                       <FormLabel>Exam Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        key={`select-${field.name}-${subject?.id}-${field.value}`}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select exam type" />
@@ -502,7 +544,11 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
                       <FormLabel>Subject Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        key={`select-${field.name}-${subject?.id}-${field.value}`}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select subject type" />
@@ -530,7 +576,11 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
                       <FormLabel>Primary Faculty</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        key={`select-${field.name}-${subject?.id}-${field.value}`}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select primary faculty" />
@@ -555,7 +605,11 @@ export function EditSubjectModal({ open, onOpenChange, subject, onSubjectUpdated
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
                       <FormLabel>Co-Faculty (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        key={`select-${field.name}-${subject?.id}-${field.value}`}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-9 w-full">
                             <SelectValue placeholder="Select co-faculty (optional)" />

@@ -79,8 +79,9 @@ export function BatchList() {
   const fetchBatches = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/batches", {
-        credentials: 'include'
+      const response = await fetch(`/api/batches?t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-store'
       })
       if (!response.ok) {
         const errorData = await response.json()
