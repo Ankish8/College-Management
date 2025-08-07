@@ -25,18 +25,15 @@ const updateDepartmentSettingsSchema = z.object({
   conflictRules: z.any().optional(),
 })
 
-interface RouteProps {
-  params: Promise<{ id: string }>
-}
-
-export async function PUT(request: NextRequest, { params }: RouteProps) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: departmentId } = await params
+    const params = await context.params
+    const { id: departmentId } = params
     const body = await request.json()
     const validatedData = updateDepartmentSettingsSchema.parse(body)
 
@@ -119,14 +116,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
   }
 }
 
-export async function GET(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: departmentId } = await params
+    const params = await context.params
+    const { id: departmentId } = params
 
     // Verify department exists and user has access
     const user = await db.user.findUnique({

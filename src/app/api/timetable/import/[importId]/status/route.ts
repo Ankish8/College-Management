@@ -21,7 +21,7 @@ if (!global.importStatus) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ importId: string }> }
+  context: { params: Promise<{ importId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -29,7 +29,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { importId } = await params
+    const params = await context.params
+    const { importId } = params
 
     if (!importId) {
       return NextResponse.json({ 
@@ -117,7 +118,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ importId: string }> }
+  context: { params: Promise<{ importId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -125,7 +126,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { importId } = await params
+    const params = await context.params
+    const { importId } = params
 
     if (!importId) {
       return NextResponse.json({ 

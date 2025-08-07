@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await getServerSession(authOptions)
     
@@ -20,7 +21,7 @@ export async function PATCH(
     const { cancelled } = await request.json()
 
     // Update the timetable entry
-    const updatedEntry = await prisma.timetableEntry.update({
+    const updatedEntry = await db.timetableEntry.update({
       where: {
         id: params.id
       },

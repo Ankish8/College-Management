@@ -94,7 +94,7 @@ async function checkConflicts(data: any, excludeId: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -102,7 +102,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const entry = await db.timetableEntry.findUnique({
       where: { id },
 
@@ -164,7 +165,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -172,7 +173,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const body = await request.json()
     const validatedData = updateTimetableEntrySchema.parse(body)
 
@@ -344,7 +346,7 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -352,7 +354,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const body = await request.json()
     
     // For drag and drop, we expect timeSlotName instead of timeSlotId
@@ -473,7 +476,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   console.log(`🗑️ DELETE request received`)
   
@@ -484,7 +487,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     console.log(`🗑️ DELETE request for timetable entry: ${id}`)
     const url = new URL(request.url)
     const specificDate = url.searchParams.get('date') // Get specific date if provided

@@ -21,9 +21,10 @@ const updateStudentSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const params = await context.params
+  const { id } = params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
@@ -178,9 +179,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const params = await context.params
+  const { id } = params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
@@ -374,9 +376,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const params = await context.params
+  const { id } = params
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {

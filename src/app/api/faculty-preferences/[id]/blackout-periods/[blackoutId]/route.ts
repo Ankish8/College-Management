@@ -4,18 +4,15 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isFaculty, isAdmin } from "@/lib/utils/permissions"
 
-interface RouteProps {
-  params: Promise<{ id: string; blackoutId: string }>
-}
-
-export async function DELETE(request: NextRequest, { params }: RouteProps) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; blackoutId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId, blackoutId } = await params
+    const params = await context.params
+    const { id: facultyId, blackoutId } = params
 
     // Check if user can delete blackout periods for this faculty
     const currentUser = session.user as any
@@ -60,14 +57,15 @@ export async function DELETE(request: NextRequest, { params }: RouteProps) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteProps) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string; blackoutId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId, blackoutId } = await params
+    const params = await context.params
+    const { id: facultyId, blackoutId } = params
     const body = await request.json()
 
     // Check if user can update blackout periods for this faculty

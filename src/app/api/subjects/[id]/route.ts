@@ -19,10 +19,11 @@ const updateSubjectSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const session = await getServerSession(authOptions)
     if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -83,10 +84,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -213,10 +215,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const session = await getServerSession(authOptions)
     if (!session?.user || !isAdmin(session.user as any)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

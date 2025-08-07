@@ -18,18 +18,15 @@ const updateFacultyPreferencesSchema = z.object({
   }).optional(),
 })
 
-interface RouteProps {
-  params: Promise<{ id: string }>
-}
-
-export async function PUT(request: NextRequest, { params }: RouteProps) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId } = await params
+    const params = await context.params
+    const { id: facultyId } = params
     const body = await request.json()
     const validatedData = updateFacultyPreferencesSchema.parse(body)
 
@@ -95,14 +92,15 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
   }
 }
 
-export async function GET(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId } = await params
+    const params = await context.params
+    const { id: facultyId } = params
 
     // Check if user can view these preferences
     const currentUser = session.user as any

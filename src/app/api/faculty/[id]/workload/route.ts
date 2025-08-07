@@ -5,18 +5,15 @@ import { db } from "@/lib/db"
 import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { calculateFacultyWorkload } from "@/lib/utils/workload-calculator"
 
-interface RouteProps {
-  params: Promise<{ id: string }>
-}
-
-export async function GET(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || (!isAdmin(session.user as any) && !isFaculty(session.user as any))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId } = await params
+    const params = await context.params
+    const { id: facultyId } = params
 
     // Verify faculty exists
     const faculty = await db.user.findUnique({

@@ -6,7 +6,7 @@ import { canViewAttendance } from "@/lib/utils/permissions"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ studentId: string }> }
+  context: { params: Promise<{ studentId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -21,8 +21,8 @@ export async function GET(
 
     const { searchParams } = new URL(request.url)
     const batchId = searchParams.get("batchId")
-    const resolvedParams = await params
-    const studentId = resolvedParams.studentId
+    const params = await context.params
+    const studentId = params.studentId
 
     if (!studentId) {
       return NextResponse.json({

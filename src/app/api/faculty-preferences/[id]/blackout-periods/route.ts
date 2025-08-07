@@ -12,18 +12,15 @@ const createBlackoutPeriodSchema = z.object({
   isRecurring: z.boolean().default(false),
 })
 
-interface RouteProps {
-  params: Promise<{ id: string }>
-}
-
-export async function POST(request: NextRequest, { params }: RouteProps) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId } = await params
+    const params = await context.params
+    const { id: facultyId } = params
     const body = await request.json()
     const validatedData = createBlackoutPeriodSchema.parse(body)
 
@@ -130,14 +127,15 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
   }
 }
 
-export async function GET(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: facultyId } = await params
+    const params = await context.params
+    const { id: facultyId } = params
 
     // Check if user can view blackout periods for this faculty
     const currentUser = session.user as any

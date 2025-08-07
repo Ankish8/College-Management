@@ -11,10 +11,11 @@ const updateProgramSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
     const session = await getServerSession(authOptions)
     
     if (!session?.user || !isAdmin(session.user as any)) {
