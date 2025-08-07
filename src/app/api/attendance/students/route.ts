@@ -131,50 +131,75 @@ export async function GET(request: NextRequest) {
       ]
     })
 
+    // First, get the actual sessions that were scheduled for this subject in the selected week
+    let scheduledSessions: any[] = []
+    if (selectedDate && subjectId) {
+      const targetDate = new Date(selectedDate)
+      const dayOfWeek = targetDate.getDay()
+      const startOfWeek = new Date(targetDate)
+      const endOfWeek = new Date(targetDate)
+      
+      // Adjust to get Monday as start of week
+      const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+      startOfWeek.setDate(targetDate.getDate() + daysToMonday)
+      startOfWeek.setHours(0, 0, 0, 0)
+      
+      // Friday as end of week
+      endOfWeek.setDate(startOfWeek.getDate() + 4)
+      endOfWeek.setHours(23, 59, 59, 999)
+      
+      // Get actual sessions that were scheduled for this subject in this week
+      scheduledSessions = await db.attendanceSession.findMany({
+        where: {
+          subjectId: subjectId,
+          date: {
+            gte: startOfWeek,
+            lte: endOfWeek
+          }
+        },
+        orderBy: {
+          date: 'asc'
+        }
+      })
+    }
+
     // Transform data to attendance tracker format
     const transformedStudents = students.map(student => {
-      // Calculate the week range for the selected date
-      let weekAttendanceRecords = student.attendanceRecords
-      
-      if (selectedDate) {
-        const targetDate = new Date(selectedDate)
-        const dayOfWeek = targetDate.getDay()
-        const startOfWeek = new Date(targetDate)
-        const endOfWeek = new Date(targetDate)
+      // Only build attendance history for dates when sessions were actually scheduled
+      const attendanceHistory = scheduledSessions.map(session => {
+        // Find if this student has an attendance record for this session
+        const attendanceRecord = student.attendanceRecords.find(
+          record => record.sessionId === session.id
+        )
         
-        // Adjust to get Monday as start of week (0 = Sunday, 1 = Monday)
-        const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-        startOfWeek.setDate(targetDate.getDate() + daysToMonday)
-        startOfWeek.setHours(0, 0, 0, 0)
-        
-        // Friday as end of week (5 days from Monday)
-        endOfWeek.setDate(startOfWeek.getDate() + 4)
-        endOfWeek.setHours(23, 59, 59, 999)
-        
-        // Filter records for the current week
-        weekAttendanceRecords = student.attendanceRecords.filter(record => {
-          const recordDate = new Date(record.session.date)
-          return recordDate >= startOfWeek && recordDate <= endOfWeek
-        })
-      }
-      
-      // Build attendance history for the week (Mon-Fri)
-      const attendanceHistory = weekAttendanceRecords.map(record => ({
-        date: record.session.date.toISOString().split('T')[0], // YYYY-MM-DD format
-        status: record.status.toLowerCase() as 'present' | 'absent' | 'medical' // Map enum to lowercase
-      }))
+        // If no attendance record exists for a scheduled session, it means it wasn't marked yet
+        return {
+          date: session.date.toISOString().split('T')[0],
+          status: attendanceRecord 
+            ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
+            : 'absent' as const // Default to absent if not marked
+        }
+      }).filter(record => record !== null) // Remove any null entries
 
-      // Build session-specific attendance history
-      const sessionAttendanceHistory = student.attendanceRecords.map(record => ({
-        date: record.session.date.toISOString().split('T')[0],
-        sessionId: record.sessionId,
-        status: record.status.toLowerCase() as 'present' | 'absent' | 'medical'
-      }))
+      // Build session-specific attendance history (only for scheduled sessions)
+      const sessionAttendanceHistory = scheduledSessions.map(session => {
+        const attendanceRecord = student.attendanceRecords.find(
+          record => record.sessionId === session.id
+        )
+        
+        return {
+          date: session.date.toISOString().split('T')[0],
+          sessionId: session.id,
+          status: attendanceRecord 
+            ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
+            : 'absent' as const
+        }
+      })
 
-      // Calculate attendance statistics
-      const totalRecords = student.attendanceRecords.length
-      const presentRecords = student.attendanceRecords.filter(
-        record => record.status === "PRESENT" || record.status === "LATE"
+      // Calculate attendance statistics (only for scheduled sessions)
+      const totalRecords = attendanceHistory.length
+      const presentRecords = attendanceHistory.filter(
+        record => record.status === 'present' || record.status === 'medical'
       ).length
 
       return {
