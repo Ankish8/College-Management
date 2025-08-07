@@ -131,8 +131,8 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    // First, get the actual sessions that were scheduled for this subject in the selected week
-    let scheduledSessions: any[] = []
+    // First, get the timetable entries to see which days have scheduled classes for this subject
+    let scheduledClasses: any[] = []
     if (selectedDate && subjectId) {
       const targetDate = new Date(selectedDate)
       const dayOfWeek = targetDate.getDay()
@@ -148,53 +148,87 @@ export async function GET(request: NextRequest) {
       endOfWeek.setDate(startOfWeek.getDate() + 4)
       endOfWeek.setHours(23, 59, 59, 999)
       
-      // Get actual sessions that were scheduled for this subject in this week
-      scheduledSessions = await db.attendanceSession.findMany({
+      // Get timetable entries for this subject that are active
+      const timetableEntries = await db.timetableEntry.findMany({
         where: {
           subjectId: subjectId,
-          date: {
-            gte: startOfWeek,
-            lte: endOfWeek
-          }
+          isActive: true
         },
-        orderBy: {
-          date: 'asc'
+        include: {
+          timeSlot: {
+            select: {
+              startTime: true,
+              endTime: true
+            }
+          }
         }
       })
+      
+      // Convert timetable entries to actual dates for the current week
+      const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+      
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startOfWeek)
+        currentDate.setDate(startOfWeek.getDate() + i)
+        const dayName = dayNames[currentDate.getDay()]
+        
+        // Check if there's a timetable entry for this day
+        const entryForDay = timetableEntries.find(entry => entry.dayOfWeek === dayName)
+        
+        if (entryForDay && currentDate >= startOfWeek && currentDate <= endOfWeek) {
+          scheduledClasses.push({
+            date: currentDate,
+            dayOfWeek: dayName,
+            timeSlot: entryForDay.timeSlot,
+            timetableEntryId: entryForDay.id
+          })
+        }
+      }
+      
+      console.log('📅 Found scheduled classes for week:', scheduledClasses.map(c => ({ date: c.date.toISOString().split('T')[0], day: c.dayOfWeek })))
     }
 
     // Transform data to attendance tracker format
     const transformedStudents = students.map(student => {
-      // Only build attendance history for dates when sessions were actually scheduled
-      const attendanceHistory = scheduledSessions.map(session => {
-        // Find if this student has an attendance record for this session
+      // Only build attendance history for dates when classes were actually scheduled
+      const attendanceHistory = scheduledClasses.map(scheduledClass => {
+        const dateStr = scheduledClass.date.toISOString().split('T')[0]
+        
+        // Find if this student has an attendance record for this date
         const attendanceRecord = student.attendanceRecords.find(
-          record => record.sessionId === session.id
+          record => {
+            const recordDate = new Date(record.session.date).toISOString().split('T')[0]
+            return recordDate === dateStr
+          }
         )
         
-        // If no attendance record exists for a scheduled session, it means it wasn't marked yet
         return {
-          date: session.date.toISOString().split('T')[0],
+          date: dateStr,
           status: attendanceRecord 
             ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
-            : 'absent' as const // Default to absent if not marked
+            : null // null if not marked yet (don't show anything)
         }
-      }).filter(record => record !== null) // Remove any null entries
+      }).filter(record => record.status !== null) // Only show records that have been marked
 
-      // Build session-specific attendance history (only for scheduled sessions)
-      const sessionAttendanceHistory = scheduledSessions.map(session => {
+      // Build session-specific attendance history (only for scheduled classes)
+      const sessionAttendanceHistory = scheduledClasses.map(scheduledClass => {
+        const dateStr = scheduledClass.date.toISOString().split('T')[0]
+        
         const attendanceRecord = student.attendanceRecords.find(
-          record => record.sessionId === session.id
+          record => {
+            const recordDate = new Date(record.session.date).toISOString().split('T')[0]
+            return recordDate === dateStr
+          }
         )
         
         return {
-          date: session.date.toISOString().split('T')[0],
-          sessionId: session.id,
+          date: dateStr,
+          sessionId: attendanceRecord?.sessionId || null,
           status: attendanceRecord 
             ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
-            : 'absent' as const
+            : null
         }
-      })
+      }).filter(record => record.status !== null)
 
       // Calculate attendance statistics (only for scheduled sessions)
       const totalRecords = attendanceHistory.length
