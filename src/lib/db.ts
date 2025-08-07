@@ -160,6 +160,19 @@ export async function getPooledDB(): Promise<PrismaClient> {
   }
 }
 
+// Enhanced database client with query monitoring
+export async function getMonitoredDB(userId?: string): Promise<PrismaClient> {
+  const client = await getPooledDB()
+  
+  // Add query monitoring middleware if enabled
+  if (process.env.ENABLE_QUERY_MONITORING === 'true' || process.env.NODE_ENV === 'development') {
+    const { createQueryMonitorMiddleware } = await import('@/lib/utils/query-monitor')
+    client.$use(createQueryMonitorMiddleware(userId))
+  }
+  
+  return client
+}
+
 // Export connection pool for advanced usage and monitoring
 export const dbPool = connectionPool
 
