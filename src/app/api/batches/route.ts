@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const isActive = searchParams.get("active")
     const search = searchParams.get("search")
+    const fields = searchParams.get("fields") // Optional field selection
 
     const whereClause: Record<string, unknown> = {}
     
@@ -36,9 +37,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Optimize query based on requested fields
+    const isMinimal = fields === 'minimal'
+    
     const batches = await db.batch.findMany({
       where: whereClause,
-      include: {
+      select: isMinimal ? {
+        id: true,
+        name: true,
+        program: {
+          select: {
+            shortName: true,
+          }
+        },
+        _count: {
+          select: {
+            students: true,
+          }
+        }
+      } : {
+        id: true,
+        name: true,
+        semester: true,
+        startYear: true,
+        endYear: true,
+        maxCapacity: true,
+        isActive: true,
         program: {
           select: {
             name: true,

@@ -235,6 +235,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const rawParams = Object.fromEntries(searchParams.entries())
+    const fields = searchParams.get("fields") // Optional field selection for optimization
     
     // Convert parameters to correct types for schema validation
     const queryParams: any = {}
@@ -287,11 +288,58 @@ export async function GET(request: NextRequest) {
 
     const skip = (filters.page - 1) * filters.limit
 
+    // Optimize query based on requested fields
+    const isMinimal = fields === 'minimal'
+    const isCalendarView = fields === 'calendar'
+    
     const [entries, totalCount] = await Promise.all([
       db.timetableEntry.findMany({
         where: whereClause,
-        select: {
-          // Include all main fields
+        select: isMinimal ? {
+          id: true,
+          dayOfWeek: true,
+          date: true,
+          customEventTitle: true,
+          timeSlot: {
+            select: {
+              name: true,
+              startTime: true,
+              endTime: true,
+            }
+          },
+          subject: {
+            select: {
+              name: true,
+            }
+          }
+        } : isCalendarView ? {
+          id: true,
+          batchId: true,
+          dayOfWeek: true,
+          date: true,
+          entryType: true,
+          customEventTitle: true,
+          customEventColor: true,
+          timeSlot: {
+            select: {
+              name: true,
+              startTime: true,
+              endTime: true,
+            }
+          },
+          subject: {
+            select: {
+              name: true,
+              code: true,
+            }
+          },
+          faculty: {
+            select: {
+              name: true,
+            }
+          },
+        } : {
+          // Full data for admin/management views
           id: true,
           batchId: true,
           subjectId: true,
@@ -304,10 +352,8 @@ export async function GET(request: NextRequest) {
           isActive: true,
           createdAt: true,
           updatedAt: true,
-          // Custom event fields - IMPORTANT!
           customEventTitle: true,
           customEventColor: true,
-          // Related data
           batch: {
             select: {
               name: true,

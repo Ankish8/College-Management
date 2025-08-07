@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const batchId = searchParams.get("batchId")
     const search = searchParams.get("search")
     const isActive = searchParams.get("active")
+    const fields = searchParams.get("fields") // Optional field selection for optimization
 
     const whereClause: Record<string, unknown> = {}
     
@@ -57,9 +58,35 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Optimize query based on requested fields
+    const isMinimal = fields === 'minimal'
+    
     const students = await db.student.findMany({
       where: whereClause,
-      include: {
+      select: isMinimal ? {
+        id: true,
+        studentId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+          }
+        },
+        batch: {
+          select: {
+            id: true,
+            name: true,
+          }
+        }
+      } : {
+        id: true,
+        studentId: true,
+        rollNumber: true,
+        guardianName: true,
+        guardianPhone: true,
+        address: true,
+        dateOfBirth: true,
         user: {
           select: {
             id: true,
@@ -71,7 +98,13 @@ export async function GET(request: NextRequest) {
           }
         },
         batch: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            semester: true,
+            startYear: true,
+            endYear: true,
+            isActive: true,
             program: {
               select: {
                 name: true,
