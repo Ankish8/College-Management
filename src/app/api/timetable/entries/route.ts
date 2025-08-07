@@ -78,19 +78,16 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
   }
 
   // Single optimized query to check both batch and faculty conflicts
-  // Only conflict with recurring entries or different dates
+  // For date-specific entries, only check conflicts on the same date
+  // For recurring entries, check against all entries
   let dateFilter = {}
   if (data.date) {
-    // For date-specific entries, only conflict with recurring entries or different dates
+    // For date-specific entries, only check conflicts on the same specific date
+    // or with recurring entries (which apply to all dates)
     dateFilter = {
       OR: [
         { date: null }, // Recurring entries always conflict
-        { 
-          AND: [
-            { date: { not: null } }, // Date-specific entries
-            { date: { not: new Date(data.date) } } // But not the same date
-          ]
-        }
+        { date: new Date(data.date) } // Same specific date conflicts
       ]
     }
   } else {

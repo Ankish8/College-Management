@@ -1,4 +1,4 @@
-export type AttendanceStatus = 'present' | 'absent' | 'medical'
+export type AttendanceStatus = 'present' | 'absent' | 'medical' | 'unmarked'
 export type AttendanceMode = 'detailed' | 'fast' | 'predictive'
 
 export type PredictionConfidence = 'high' | 'medium' | 'low'

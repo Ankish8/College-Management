@@ -134,19 +134,19 @@ export async function GET(request: NextRequest) {
     // First, get the timetable entries to see which days have scheduled classes for this subject
     let scheduledClasses: any[] = []
     if (selectedDate && subjectId) {
-      const targetDate = new Date(selectedDate)
-      const dayOfWeek = targetDate.getDay()
+      const targetDate = new Date(selectedDate + 'T00:00:00.000Z') // Ensure UTC to avoid timezone issues
+      const dayOfWeek = targetDate.getUTCDay() // Use UTC to avoid timezone shifts
       const startOfWeek = new Date(targetDate)
       const endOfWeek = new Date(targetDate)
       
       // Adjust to get Monday as start of week
       const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-      startOfWeek.setDate(targetDate.getDate() + daysToMonday)
-      startOfWeek.setHours(0, 0, 0, 0)
+      startOfWeek.setUTCDate(targetDate.getUTCDate() + daysToMonday)
+      startOfWeek.setUTCHours(0, 0, 0, 0)
       
-      // Friday as end of week
-      endOfWeek.setDate(startOfWeek.getDate() + 4)
-      endOfWeek.setHours(23, 59, 59, 999)
+      // Friday as end of week  
+      endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 4)
+      endOfWeek.setUTCHours(23, 59, 59, 999)
       
       // Get timetable entries for this subject that are active
       const timetableEntries = await db.timetableEntry.findMany({
@@ -167,24 +167,34 @@ export async function GET(request: NextRequest) {
       // Convert timetable entries to actual dates for the current week
       const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
       
-      for (let i = 0; i < 7; i++) {
+      // Only process weekdays (Monday to Friday) 
+      for (let i = 0; i < 5; i++) { // Only Monday-Friday
         const currentDate = new Date(startOfWeek)
-        currentDate.setDate(startOfWeek.getDate() + i)
-        const dayName = dayNames[currentDate.getDay()]
+        currentDate.setUTCDate(startOfWeek.getUTCDate() + i) // startOfWeek is Monday
+        const dayName = dayNames[currentDate.getUTCDay()]
+        
+        console.log(`🔍 Day ${i}: ${currentDate.toISOString().split('T')[0]} (${dayName})`)
         
         // Check if there's a timetable entry for this day
         const entryForDay = timetableEntries.find(entry => entry.dayOfWeek === dayName)
         
-        if (entryForDay && currentDate >= startOfWeek && currentDate <= endOfWeek) {
+        if (entryForDay) {
+          console.log(`✅ Found entry for ${dayName}: ${entryForDay.dayOfWeek}`)
           scheduledClasses.push({
-            date: currentDate,
+            date: new Date(currentDate), // Create new date object to avoid reference issues
             dayOfWeek: dayName,
             timeSlot: entryForDay.timeSlot,
             timetableEntryId: entryForDay.id
           })
+        } else {
+          console.log(`❌ No entry found for ${dayName}`)
         }
       }
       
+      console.log('🔍 DEBUG: selectedDate:', selectedDate)
+      console.log('🔍 DEBUG: targetDate:', targetDate.toISOString().split('T')[0], 'dayOfWeek:', dayOfWeek)
+      console.log('🔍 DEBUG: startOfWeek:', startOfWeek.toISOString().split('T')[0])
+      console.log('🔍 DEBUG: endOfWeek:', endOfWeek.toISOString().split('T')[0])
       console.log('📅 Found scheduled classes for week:', scheduledClasses.map(c => ({ date: c.date.toISOString().split('T')[0], day: c.dayOfWeek })))
     }
 
@@ -206,9 +216,9 @@ export async function GET(request: NextRequest) {
           date: dateStr,
           status: attendanceRecord 
             ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
-            : null // null if not marked yet (don't show anything)
+            : 'unmarked' // Show unmarked for scheduled classes without attendance
         }
-      }).filter(record => record.status !== null) // Only show records that have been marked
+      }) // Show ALL scheduled classes, whether marked or not
 
       // Build session-specific attendance history (only for scheduled classes)
       const sessionAttendanceHistory = scheduledClasses.map(scheduledClass => {
@@ -226,13 +236,14 @@ export async function GET(request: NextRequest) {
           sessionId: attendanceRecord?.sessionId || null,
           status: attendanceRecord 
             ? attendanceRecord.status.toLowerCase() as 'present' | 'absent' | 'medical'
-            : null
+            : 'unmarked'
         }
-      }).filter(record => record.status !== null)
+      }) // Show ALL scheduled classes
 
-      // Calculate attendance statistics (only for scheduled sessions)
-      const totalRecords = attendanceHistory.length
-      const presentRecords = attendanceHistory.filter(
+      // Calculate attendance statistics (only for scheduled sessions with marked attendance)
+      const markedRecords = attendanceHistory.filter(record => record.status !== 'unmarked')
+      const totalRecords = markedRecords.length
+      const presentRecords = markedRecords.filter(
         record => record.status === 'present' || record.status === 'medical'
       ).length
 

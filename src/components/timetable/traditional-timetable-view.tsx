@@ -248,12 +248,21 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   const checkLocalConflict = (draggedEvent: CalendarEvent, targetDayKey: string, targetTimeSlot: string) => {
     if (!draggedEvent) return null
     
+    // Find the actual date for this dayKey in the current week
+    const dayData = weekDays.find(day => day.key === targetDayKey)
+    if (!dayData) return null
+    
     // Find any event already in the target slot (in current view)
-    const existingEvent = eventsWithAttendance.find(event => 
-      event.id !== draggedEvent.id && // Don't conflict with self
-      event.extendedProps?.dayOfWeek === targetDayKey &&
-      event.extendedProps?.timeSlotName === targetTimeSlot
-    )
+    const existingEvent = eventsWithAttendance.find(event => {
+      if (event.id === draggedEvent.id) return false // Don't conflict with self
+      
+      // Check if the event is on the same date as the target slot
+      const eventDateStr = event.start.toDateString()
+      const slotDateStr = dayData.fullDate.toDateString()
+      
+      return eventDateStr === slotDateStr &&
+        event.extendedProps?.timeSlotName === targetTimeSlot
+    })
     
     if (!existingEvent) return null
     
@@ -279,10 +288,18 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   }
   // Get events for a specific day and time slot
   const getEventForSlot = (dayKey: string, timeSlot: string) => {
-    return eventsWithAttendance.find(event => 
-      event.extendedProps?.dayOfWeek === dayKey &&
-      event.extendedProps?.timeSlotName === timeSlot
-    )
+    // Find the actual date for this dayKey in the current week
+    const dayData = weekDays.find(day => day.key === dayKey)
+    if (!dayData) return undefined
+    
+    return eventsWithAttendance.find(event => {
+      // Check if the event is on the same date as this slot
+      const eventDateStr = event.start.toDateString()
+      const slotDateStr = dayData.fullDate.toDateString()
+      
+      return eventDateStr === slotDateStr &&
+        event.extendedProps?.timeSlotName === timeSlot
+    })
   }
 
   const handleEventClick = (event: CalendarEvent) => {
@@ -405,12 +422,14 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
         return
       }
       
-      // Calculate the new date
-      const dayIndex = WEEKDAYS.findIndex(d => d.key === dayKey)
-      const newDate = new Date(date)
-      newDate.setDate(newDate.getDate() - newDate.getDay() + 1 + dayIndex) // Monday = 1
+      // Calculate the new date using the weekDays array which has the correct dates
+      const targetDay = weekDays.find(d => d.key === dayKey)
+      if (!targetDay) {
+        setActiveEvent(null)
+        return
+      }
       
-      onEventDrop(eventId, newDate, timeSlot, dayKey)
+      onEventDrop(eventId, targetDay.fullDate, timeSlot, dayKey)
     }
     
     setActiveEvent(null)
@@ -582,7 +601,12 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     const event = getEventForSlot(dayKey, timeSlot)
     const conflict = activeEvent ? checkDropConflict(activeEvent, dayKey, timeSlot) : null
     const isValidDrop = !conflict && !event // No conflict and slot is empty
-    const isCurrentSlot = activeEvent?.extendedProps?.dayOfWeek === dayKey && activeEvent?.extendedProps?.timeSlotName === timeSlot
+    
+    // Check if this is the current slot of the dragged event
+    const dayData = weekDays.find(day => day.key === dayKey)
+    const isCurrentSlot = activeEvent && dayData ? 
+      activeEvent.start.toDateString() === dayData.fullDate.toDateString() &&
+      activeEvent.extendedProps?.timeSlotName === timeSlot : false
     
     const { isOver, setNodeRef } = useDroppable({
       id: `${dayKey}-${timeSlot}`,

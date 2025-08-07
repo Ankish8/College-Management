@@ -67,16 +67,19 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
     })
   }
 
-  // Check faculty conflicts (same faculty, same time) - only for recurring entries or different dates
+  // Check faculty conflicts (same faculty, same time)
   const facultyConflicts = await db.timetableEntry.findMany({
     where: {
       ...whereClause,
       facultyId: data.facultyId,
-      // Only conflict if it's a recurring entry (no date) or different dates
-      OR: [
-        { date: null }, // Recurring entry
-        ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
-      ]
+      // For date-specific entries, only conflict with same date or recurring entries
+      // For recurring entries, conflict with all entries
+      ...(data.date ? {
+        OR: [
+          { date: null }, // Recurring entries always conflict
+          { date: new Date(data.date) } // Same specific date conflicts
+        ]
+      } : {})
     },
     include: {
       batch: { 
@@ -191,11 +194,13 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
           timeSlotId: timeSlot.id,
           dayOfWeek: data.dayOfWeek,
           isActive: true,
-          // Only conflict with recurring entries or different dates
-          OR: [
-            { date: null }, // Recurring entry
-            ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
-          ],
+          // For date-specific entries, only conflict with same date or recurring entries
+          ...(data.date ? {
+            OR: [
+              { date: null }, // Recurring entries always conflict
+              { date: new Date(data.date) } // Same specific date conflicts
+            ]
+          } : {}),
           ...(data.excludeId ? { NOT: { id: data.excludeId } } : {}),
         }
       })
@@ -236,11 +241,13 @@ async function checkConflictsWithAlternatives(data: z.infer<typeof conflictCheck
             timeSlotId: data.timeSlotId,
             dayOfWeek: day,
             isActive: true,
-            // Only conflict with recurring entries or different dates
-            OR: [
-              { date: null }, // Recurring entry
-              ...(data.date ? [{ date: { not: new Date(data.date) } }] : []) // Different specific dates
-            ],
+            // For date-specific entries, only conflict with same date or recurring entries
+            ...(data.date ? {
+              OR: [
+                { date: null }, // Recurring entries always conflict
+                { date: new Date(data.date) } // Same specific date conflicts
+              ]
+            } : {}),
             ...(data.excludeId ? { NOT: { id: data.excludeId } } : {}),
           }
         })
