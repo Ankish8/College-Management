@@ -5,7 +5,17 @@ import { isAdmin, isFaculty } from "@/lib/utils/permissions"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { FacultyList } from "@/components/faculty/faculty-list"
+import dynamic from "next/dynamic"
+import { TableSkeleton } from "@/components/ui/skeletons"
+
+// Dynamic import for heavy faculty components
+const FacultyList = dynamic(
+  () => import("@/components/faculty/faculty-list").then(mod => ({ default: mod.FacultyList })),
+  {
+    loading: () => <TableSkeleton rows={8} columns={7} />,
+    ssr: false
+  }
+)
 
 export default async function FacultyPage() {
   const session = await getServerSession(authOptions)
