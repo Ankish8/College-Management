@@ -12,8 +12,7 @@ import { TableSkeleton } from "@/components/ui/skeletons"
 const FacultyList = dynamic(
   () => import("@/components/faculty/faculty-list").then(mod => ({ default: mod.FacultyList })),
   {
-    loading: () => <TableSkeleton rows={8} columns={7} />,
-    ssr: false
+    loading: () => <TableSkeleton rows={8} columns={7} />
   }
 )
 

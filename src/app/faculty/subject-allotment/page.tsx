@@ -23,8 +23,7 @@ const SubjectAllotmentContent = dynamic(
           <Skeleton className="h-96 w-full" />
         </div>
       </div>
-    ),
-    ssr: false
+    )
   }
 )
 

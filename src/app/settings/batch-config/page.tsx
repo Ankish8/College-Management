@@ -25,7 +25,7 @@ const BatchConfiguration = dynamic(
         </div>
       </div>
     ),
-    ssr: false
+
   }
 )
 

@@ -95,15 +95,13 @@ export function VirtualStudentTable({
       setTimeout(() => setCopiedId(null), 2000)
       
       toast({
-        description: `${type} copied to clipboard`,
-        duration: 2000,
+        description: `${type} copied to clipboard`
       })
     } catch (error) {
       console.error('Failed to copy:', error)
       toast({
         description: `Failed to copy ${type.toLowerCase()}`,
-        variant: "destructive",
-        duration: 2000,
+        variant: "destructive"
       })
     }
   }

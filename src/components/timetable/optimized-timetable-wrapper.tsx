@@ -80,10 +80,10 @@ export function OptimizedTimetableWrapper({
   const timetableEntries = useMemo(() => {
     return events.map(event => ({
       id: event.id,
-      dayOfWeek: event.dayOfWeek || 'MONDAY',
+      dayOfWeek: event.extendedProps?.dayOfWeek || 'MONDAY',
       date: event.start ? new Date(event.start) : undefined,
       timeSlot: {
-        name: event.timeSlotName || 'Unknown',
+        name: event.extendedProps?.timeSlotName || 'Unknown',
         startTime: event.start ? new Date(event.start).toLocaleTimeString('en-US', { 
           hour12: false, 
           hour: '2-digit', 
@@ -95,20 +95,20 @@ export function OptimizedTimetableWrapper({
           minute: '2-digit' 
         }) : '10:00',
       },
-      subject: event.subjectName ? {
-        name: event.subjectName,
-        code: event.subjectCode || ''
+      subject: event.extendedProps?.subjectName ? {
+        name: event.extendedProps.subjectName,
+        code: event.extendedProps.subjectCode || ''
       } : undefined,
-      faculty: event.facultyName ? {
-        name: event.facultyName
+      faculty: event.extendedProps?.facultyName ? {
+        name: event.extendedProps.facultyName
       } : undefined,
-      batch: event.batchName ? {
-        name: event.batchName
+      batch: event.extendedProps?.batchName ? {
+        name: event.extendedProps.batchName
       } : undefined,
       customEventTitle: event.title,
       customEventColor: event.backgroundColor,
-      entryType: event.entryType || 'REGULAR',
-      notes: event.notes
+      entryType: event.extendedProps?.entryType || 'REGULAR',
+      notes: event.extendedProps?.notes
     }))
   }, [events])
 

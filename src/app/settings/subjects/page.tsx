@@ -25,7 +25,7 @@ const SubjectConfiguration = dynamic(
         </div>
       </div>
     ),
-    ssr: false
+
   }
 )
 

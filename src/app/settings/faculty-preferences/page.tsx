@@ -24,7 +24,7 @@ const FacultyPreferencesForm = dynamic(
         <Skeleton className="h-32 w-full" />
       </div>
     ),
-    ssr: false
+
   }
 )
 

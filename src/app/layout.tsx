@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ServiceWorkerProvider } from "@/components/providers/service-worker-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -22,6 +23,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JLU College Management System",
   description: "Timetable and Attendance Management for Jagran Lakecity University",
+  manifest: "/manifest.json",
+  themeColor: "#3b82f6",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-192x192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "JLU CMS",
+  },
 };
 
 export default function RootLayout({
@@ -35,11 +53,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <QueryProvider>
-          <Providers>
-            {children}
-          </Providers>
-        </QueryProvider>
+        <ServiceWorkerProvider>
+          <QueryProvider>
+            <Providers>
+              {children}
+            </Providers>
+          </QueryProvider>
+        </ServiceWorkerProvider>
         <Toaster />
       </body>
     </html>

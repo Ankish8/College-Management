@@ -13,7 +13,7 @@ const StudentList = dynamic(
   () => import("@/components/students/student-list").then(mod => ({ default: mod.StudentList })),
   {
     loading: () => <StudentListSkeleton count={8} />,
-    ssr: false
+
   }
 )
 

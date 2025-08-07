@@ -27,7 +27,7 @@ const DepartmentSettingsForm = dynamic(
         </div>
       </div>
     ),
-    ssr: false
+
   }
 )
 

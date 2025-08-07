@@ -13,7 +13,27 @@ const nextConfig: NextConfig = {
   typescript: {
     // Enable TypeScript error checking to fix all type issues
     ignoreBuildErrors: false,
-  }
+  },
+  // Service Worker and PWA configuration
+  headers: async () => [
+    {
+      source: '/sw.js',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'no-cache, no-store, must-revalidate',
+        },
+        {
+          key: 'Service-Worker-Allowed',
+          value: '/',
+        },
+      ],
+    },
+  ],
+  // Enable experimental features for better performance
+  experimental: {
+    optimizePackageImports: ['@/components', '@/lib'],
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

@@ -218,7 +218,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <span className="truncate font-semibold">JLU College</span>
                     <span className="truncate text-xs">Please Sign In</span>
                   </div>
-                </Link>
+                </PrefetchLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -241,7 +241,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="truncate font-semibold">JLU College</span>
                   <span className="truncate text-xs">Management System</span>
                 </div>
-              </Link>
+              </PrefetchLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

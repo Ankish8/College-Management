@@ -50,7 +50,7 @@ export function PrefetchLink({
 }: PrefetchLinkProps) {
   const [isHovering, setIsHovering] = useState(false)
   const [hasPrefetched, setHasPrefetched] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const queryClient = useQueryClient()
   const router = useRouter()
 
@@ -97,7 +97,7 @@ export function PrefetchLink({
         const data = await prefetchFn()
         
         // Determine the cache key based on the route
-        let cacheKey: string[] = []
+        let cacheKey: any[] = []
         
         if (href.startsWith('/students')) {
           cacheKey = ['students', '', 'all']

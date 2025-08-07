@@ -13,7 +13,7 @@ const SubjectList = dynamic(
   () => import("@/components/subjects/subject-list").then(mod => ({ default: mod.SubjectList })),
   {
     loading: () => <TableSkeleton rows={8} columns={6} />,
-    ssr: false
+
   }
 )
 

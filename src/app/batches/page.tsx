@@ -18,8 +18,7 @@ const BatchList = dynamic(
           <CardSkeleton key={i} />
         ))}
       </div>
-    ),
-    ssr: false
+    )
   }
 )
 

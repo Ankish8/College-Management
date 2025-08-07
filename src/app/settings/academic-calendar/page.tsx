@@ -22,8 +22,7 @@ const AcademicCalendarSettings = dynamic(
         </div>
         <Skeleton className="h-96 w-full" />
       </div>
-    ),
-    ssr: false
+    )
   }
 )
 
