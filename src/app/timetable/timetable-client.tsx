@@ -735,6 +735,12 @@ export default function TimetableClient() {
       }
       const dayOfWeek = dayOfWeekMap[data.date.getDay() as keyof typeof dayOfWeekMap]
       
+      console.log('🔍 Quick Create Debug:');
+      console.log('Selected Date:', data.date);
+      console.log('Date String:', data.date.toDateString());
+      console.log('Day of Week:', dayOfWeek);
+      console.log('Time Slot:', data.timeSlot);
+      
       // Map time slot names to actual IDs from database
       let timeSlotId = null
       const timeSlotsList = timeSlotsData?.timeSlots || timeSlotsData
@@ -766,6 +772,8 @@ export default function TimetableClient() {
         createData.subjectId = data.subjectId!
         createData.facultyId = data.facultyId!
       }
+      
+      console.log('📤 Sending to API:', createData);
       
       const response = await fetch('/api/timetable/entries', {
         method: 'POST',

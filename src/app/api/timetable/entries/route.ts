@@ -93,12 +93,16 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     dateFilter = {}
   }
   
+  const queryWhere = {
+    ...whereClause,
+    ...dateFilter,
+    OR: orConditions
+  };
+  
+  console.log('🔍 Conflict query where clause:', JSON.stringify(queryWhere, null, 2));
+  
   const allConflicts = await db.timetableEntry.findMany({
-    where: {
-      ...whereClause,
-      ...dateFilter,
-      OR: orConditions
-    },
+    where: queryWhere,
     include: {
       subject: { select: { name: true } },
       faculty: { select: { name: true } },
@@ -506,9 +510,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for conflicts
+    console.log('🔍 Checking conflicts for:', {
+      batchId: validatedData.batchId,
+      facultyId: validatedData.facultyId,
+      timeSlotId: validatedData.timeSlotId,
+      dayOfWeek: validatedData.dayOfWeek,
+      date: validatedData.date,
+    });
+    
     const conflicts = await checkConflicts(validatedData)
     
+    console.log('⚠️ Conflicts found:', conflicts);
+    
     if (conflicts.length > 0) {
+      console.log('🚨 Returning 409 due to conflicts:', conflicts);
       return NextResponse.json(
         { 
           error: "Scheduling conflicts detected", 

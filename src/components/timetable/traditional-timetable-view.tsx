@@ -947,10 +947,9 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
         onCreateEvent={handleQuickCreate}
         position={popupPosition}
         date={selectedDay ? (() => {
-          const dayIndex = WEEKDAYS.findIndex(d => d.key === selectedDay)
-          const clickDate = new Date(date)
-          clickDate.setDate(clickDate.getDate() - clickDate.getDay() + 1 + dayIndex)
-          return clickDate
+          // Use the pre-calculated weekDays array for correct dates
+          const targetDay = weekDays.find(day => day.key === selectedDay)
+          return targetDay ? targetDay.fullDate : new Date()
         })() : new Date()}
         timeSlot={selectedTimeSlot}
         batchId={batchId || eventsWithAttendance[0]?.extendedProps?.batchId || ''}
