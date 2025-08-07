@@ -185,7 +185,7 @@ class UndoManager {
       case 'TIMESLOT':
         return `time slot "${name}"`
       default:
-        return `${entityType.toLowerCase()} "${name}"`
+        return `${String(entityType).toLowerCase() || 'item'} "${name}"`
     }
   }
 

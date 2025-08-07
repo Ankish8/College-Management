@@ -179,8 +179,9 @@ export function CalendarWeekView({
       const batchId = event.extendedProps?.batchId
       
       if (subjectId && batchId) {
-        const today = new Date().toISOString().split('T')[0]
-        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${today}`
+        // Use the event's actual date, not today's date
+        const eventDate = event.start.toISOString().split('T')[0]
+        const attendanceUrl = `/attendance?batch=${batchId}&subject=${subjectId}&date=${eventDate}`
         window.location.href = attendanceUrl
       }
     }
@@ -211,20 +212,27 @@ export function CalendarWeekView({
                 <span>
                   {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
                 </span>
-                {/* Attendance status indicators */}
-                {event.extendedProps?.attendance?.isMarked && (
-                  <div className="flex items-center gap-1 ml-1">
-                    <Check className="h-3 w-3 text-green-600 opacity-70" />
-                    <div 
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full", 
-                        getAttendanceDotColor(event.extendedProps.attendance.attendancePercentage)
-                      )}
-                      title={`${event.extendedProps.attendance.presentStudents}/${event.extendedProps.attendance.totalStudents} students (${event.extendedProps.attendance.attendancePercentage}%)`}
-                    />
-                  </div>
-                )}
               </div>
+              {/* Attendance status indicators */}
+              {event.extendedProps?.attendance?.isMarked ? (
+                <div className="flex items-center gap-1">
+                  <div className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                    event.extendedProps.attendance.attendancePercentage >= 76 ? "bg-green-100 text-green-800" :
+                    event.extendedProps.attendance.attendancePercentage >= 51 ? "bg-yellow-100 text-yellow-800" :
+                    event.extendedProps.attendance.attendancePercentage >= 26 ? "bg-orange-100 text-orange-800" :
+                    "bg-red-100 text-red-800"
+                  )}>
+                    {event.extendedProps.attendance.presentStudents}/{event.extendedProps.attendance.totalStudents}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <div className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600">
+                    Not Marked
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Mark Attendance Button Row */}

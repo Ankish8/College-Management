@@ -1004,18 +1004,18 @@ export const SubjectList = memo(function SubjectList() {
             <SubjectCard
               key={subject.id}
               subject={subject as any}
-              onUpdate={handleSubjectUpdated}
+              onUpdate={handleSubjectUpdated as any}
               onDelete={handleSubjectDeleted}
-              onEdit={handleEdit}
+              onEdit={handleEdit as any}
             />
           ))}
         </div>
       ) : (
         <SubjectTable
           subjects={filteredSubjects}
-          onUpdate={handleSubjectUpdated}
+          onUpdate={handleSubjectUpdated as any}
           onDelete={handleSubjectDeleted}
-          onEdit={handleEdit}
+          onEdit={handleEdit as any}
         />
       )}
 

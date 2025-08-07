@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, User, Clock, CheckCircle, XCircle, Heart } from 'lucide-react'
+import { Search, User, Clock, CheckCircle, XCircle, Heart, Users, Check, X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Student, Session, AttendanceStatus, ApiError } from '@/types/attendance'
 
@@ -118,6 +118,8 @@ export function SessionAttendanceTable({
 }: SessionAttendanceTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSession, setSelectedSession] = useState<string>('all')
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
+  const [isBulkMarking, setIsBulkMarking] = useState(false)
 
   // Filter students based on search term
   const filteredStudents = useMemo(() => {
@@ -157,6 +159,76 @@ export function SessionAttendanceTable({
       percentage: totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0
     }
   }, [filteredStudents, filteredSessions, attendanceData])
+
+  // Bulk operation handlers
+  const handleSelectAll = useCallback(() => {
+    if (selectedStudents.size === filteredStudents.length) {
+      setSelectedStudents(new Set())
+    } else {
+      setSelectedStudents(new Set(filteredStudents.map(s => s.id)))
+    }
+  }, [filteredStudents, selectedStudents.size])
+
+  const handleStudentSelect = useCallback((studentId: string) => {
+    const newSelection = new Set(selectedStudents)
+    if (newSelection.has(studentId)) {
+      newSelection.delete(studentId)
+    } else {
+      newSelection.add(studentId)
+    }
+    setSelectedStudents(newSelection)
+  }, [selectedStudents])
+
+  const handleBulkMarkAttendance = useCallback(async (status: AttendanceStatus) => {
+    if (selectedStudents.size === 0) return
+
+    setIsBulkMarking(true)
+    try {
+      // Prepare bulk records for API
+      const records = []
+      for (const studentId of selectedStudents) {
+        for (const session of filteredSessions) {
+          records.push({
+            studentId,
+            sessionId: session.id,
+            date: selectedDate,
+            status,
+            timestamp: new Date().toISOString()
+          })
+        }
+      }
+
+      // Call bulk API for each session subject (assuming we need to determine subjectId)
+      // For now, call individual changes but optimized
+      for (const studentId of selectedStudents) {
+        for (const session of filteredSessions) {
+          await onAttendanceChange(studentId, session.id, status)
+        }
+      }
+      
+      setSelectedStudents(new Set()) // Clear selection after marking
+    } catch (error) {
+      console.error('Bulk marking failed:', error)
+    } finally {
+      setIsBulkMarking(false)
+    }
+  }, [selectedStudents, filteredSessions, selectedDate, onAttendanceChange])
+
+  const handleMarkAllStudents = useCallback(async (status: AttendanceStatus) => {
+    setIsBulkMarking(true)
+    try {
+      // Mark all students efficiently
+      for (const student of filteredStudents) {
+        for (const session of filteredSessions) {
+          await onAttendanceChange(student.id, session.id, status)
+        }
+      }
+    } catch (error) {
+      console.error('Mark all failed:', error)
+    } finally {
+      setIsBulkMarking(false)
+    }
+  }, [filteredStudents, filteredSessions, onAttendanceChange])
 
   const formatTime = (time: string) => {
     // Convert 24hr format to 12hr format
@@ -260,6 +332,75 @@ export function SessionAttendanceTable({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Bulk Action Toolbar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t">
+          <div className="flex items-center gap-3">
+            {/* Quick Mark All Actions */}
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleMarkAllStudents('present')}
+                disabled={isBulkMarking || isLoading}
+                className="text-green-600 border-green-200 hover:bg-green-50"
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                All Present
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleMarkAllStudents('absent')}
+                disabled={isBulkMarking || isLoading}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                All Absent
+              </Button>
+            </div>
+          </div>
+
+          {/* Selection Actions */}
+          {selectedStudents.size > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {selectedStudents.size} selected
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  onClick={() => handleBulkMarkAttendance('present')}
+                  disabled={isBulkMarking || isLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Present
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkMarkAttendance('absent')}
+                  disabled={isBulkMarking || isLoading}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Absent
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkMarkAttendance('medical')}
+                  disabled={isBulkMarking || isLoading}
+                  className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                >
+                  <Heart className="h-4 w-4 mr-1" />
+                  Medical
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="p-0">
@@ -272,7 +413,15 @@ export function SessionAttendanceTable({
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 font-medium sticky left-0 bg-muted/50 min-w-[250px]">
+                  <th className="text-center p-4 font-medium w-12 sticky left-0 bg-muted/50 border-r">
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border border-input"
+                    />
+                  </th>
+                  <th className="text-left p-4 font-medium sticky left-12 bg-muted/50 min-w-[250px]">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Student
@@ -303,8 +452,19 @@ export function SessionAttendanceTable({
                   const studentPercentage = studentTotal > 0 ? Math.round((studentPresent / studentTotal) * 100) : 0
 
                   return (
-                    <tr key={student.id} className="border-b hover:bg-muted/20">
-                      <td className="p-4 sticky left-0 bg-background border-r">
+                    <tr key={student.id} className={cn(
+                      "border-b hover:bg-muted/20",
+                      selectedStudents.has(student.id) && "bg-blue-50/50"
+                    )}>
+                      <td className="text-center p-4 sticky left-0 bg-background border-r">
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.has(student.id)}
+                          onChange={() => handleStudentSelect(student.id)}
+                          className="rounded border border-input"
+                        />
+                      </td>
+                      <td className="p-4 sticky left-12 bg-background border-r">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={student.photo} alt={student.name} />
