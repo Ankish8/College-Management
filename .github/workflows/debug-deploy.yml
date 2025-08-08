@@ -1,0 +1,41 @@
+name: Debug Deployment
+
+on:
+  workflow_dispatch: # Manual trigger only
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Debug SSH Connection
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
+          echo "=== CONNECTION SUCCESSFUL ==="
+          echo "Current directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo "Date: $(date)"
+          
+          echo "=== CHECKING /opt/college-management ==="
+          ls -la /opt/college-management/
+          
+          echo "=== CHECKING DOCKER COMPOSE FILES ==="
+          ls -la /opt/college-management/docker-compose*
+          
+          echo "=== CHECKING ENV FILES ==="
+          ls -la /opt/college-management/.env*
+          
+          echo "=== CHECKING DOCKER CONTAINERS ==="
+          docker ps
+          
+          echo "=== CHECKING GIT STATUS ==="
+          cd /opt/college-management
+          git status
+          git remote -v
+          
+          echo "=== DEBUG COMPLETE ==="
