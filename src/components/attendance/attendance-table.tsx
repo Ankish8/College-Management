@@ -52,6 +52,18 @@ export function AttendanceTable({
   const [focusedCell, setFocusedCell] = useState<{ studentIndex: number; sessionIndex: number } | null>(null)
   const [isBulkMarking, setIsBulkMarking] = useState(false)
 
+  // Helper function to format time from 24-hour to 12-hour format
+  const formatTime = (time: string | undefined) => {
+    if (!time) return 'N/A'
+    const parts = time.split(':')
+    if (parts.length < 2) return time
+    const [hours, minutes] = parts
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const hour12 = hour % 12 || 12
+    return `${hour12}:${minutes} ${ampm}`
+  }
+
   // Scroll focused student into view
   useEffect(() => {
     if (focusedStudentId) {
@@ -364,11 +376,14 @@ export function AttendanceTable({
                 <TableHead key={session.id} className="text-center w-40">
                   <div className="flex flex-col items-center gap-1">
                     <div className="text-xs text-muted-foreground">
-                      {session.startTime}-{session.endTime}
+                      {formatTime(session.startTime)}-{formatTime(session.endTime)}
                     </div>
-                    <div className="text-sm font-medium">
-                      {session.name}
-                    </div>
+                    {/* Only display session name if it's not just a time format */}
+                    {session.name && !session.name.match(/^\d{2}:\d{2}-\d{2}:\d{2}$/) && (
+                      <div className="text-sm font-medium">
+                        {session.name}
+                      </div>
+                    )}
                   </div>
                 </TableHead>
               ))}
@@ -422,7 +437,11 @@ export function AttendanceTable({
                 </TableCell>
                 
                 <TableCell className="py-6">
-                  <AttendanceHistory history={student.attendanceHistory} currentDate={currentDate} />
+                  <AttendanceHistory 
+                    history={student.attendanceHistory} 
+                    sessionHistory={student.sessionAttendanceHistory}
+                    currentDate={currentDate} 
+                  />
                 </TableCell>
                 
                 {sessions.map((session, sessionIndex) => {

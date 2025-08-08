@@ -24,6 +24,7 @@ const simpleConflictCheckSchema = z.object({
   dayOfWeek: z.enum(DayOfWeekValues),
   timeSlotName: z.string(),
   excludeEventId: z.string().optional(),
+  date: z.string().optional(), // Add date for date-specific conflict checks
 })
 
 // Enhanced conflict detection with alternative suggestions
@@ -287,13 +288,25 @@ async function checkSimpleConflict(data: z.infer<typeof simpleConflictCheckSchem
     return { hasConflict: false, reason: "Time slot not found" }
   }
 
-  // Check for faculty conflicts across all batches - only for recurring entries
+  // Check for faculty conflicts across all batches
   const whereClause: any = {
     isActive: true,
     facultyId: data.facultyId,
     dayOfWeek: data.dayOfWeek,
     timeSlotId: timeSlot.id,
-    date: null, // Only check recurring entries for drag and drop conflicts
+  }
+
+  // If a specific date is provided, check for conflicts on that date
+  // Otherwise, only check recurring entries (for general availability checks)
+  if (data.date) {
+    // For date-specific checks, look for conflicts on that specific date OR recurring entries
+    whereClause.OR = [
+      { date: null }, // Recurring entries always conflict
+      { date: new Date(data.date) } // Specific date conflicts
+    ]
+  } else {
+    // For general checks (no specific date), only check recurring entries
+    whereClause.date = null
   }
 
   // Exclude the current event if provided

@@ -241,8 +241,8 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
           const studentData = dataWithFullDay[studentId]
           const sessionIds = Object.keys(studentData).filter(id => id !== 'full-day')
           
-          // Only calculate if full-day is not already set
-          if (!studentData['full-day'] && sessionIds.length > 0) {
+          // Always recalculate full-day status from sessions to ensure mixed status is detected
+          if (sessionIds.length > 0) {
             dataWithFullDay[studentId] = {
               ...studentData,
               'full-day': calculateFullDayStatus(studentData, sessionIds)
@@ -277,14 +277,31 @@ export function useAttendance(courseId: string, selectedDate: string): UseAttend
     
     if (sessionStatuses.length === 0) return 'absent'
     
-    // If all sessions are present, full day is present
-    if (sessionStatuses.every(status => status === 'present')) return 'present'
+    // Get unique statuses to check for mixed attendance
+    const uniqueStatuses = [...new Set(sessionStatuses)]
     
-    // If any session is medical, full day is medical
-    if (sessionStatuses.some(status => status === 'medical')) return 'medical'
+    // If only one unique status, return it (all sessions have same status)
+    if (uniqueStatuses.length === 1) {
+      return uniqueStatuses[0]
+    }
     
-    // Otherwise, full day is absent
-    return 'absent'
+    // If there are multiple different statuses, return mixed
+    // Exception: If any session is medical and others are different, prioritize medical
+    if (sessionStatuses.some(status => status === 'medical')) {
+      // If medical is mixed with other statuses, still return medical as priority
+      const nonMedicalStatuses = sessionStatuses.filter(status => status !== 'medical')
+      const uniqueNonMedical = [...new Set(nonMedicalStatuses)]
+      
+      // If medical is the only status, return medical
+      if (nonMedicalStatuses.length === 0) return 'medical'
+      
+      // If medical is mixed with only one other status type, could still be mixed
+      // But for UX purposes, prioritize medical for full day
+      return 'medical'
+    }
+    
+    // For other mixed combinations (present/absent, present/unmarked, etc.), return mixed
+    return 'mixed'
   }
 
   const markAttendance = useCallback(async (

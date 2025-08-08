@@ -11,7 +11,7 @@ const markAttendanceSchema = z.object({
   studentId: z.string().min(1, "Student ID is required"),
   sessionId: z.string().min(1, "Session ID is required"), 
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  status: z.enum(['present', 'absent', 'medical']),
+  status: z.enum(['present', 'absent', 'medical', 'unmarked', 'mixed']),
   timestamp: z.string().optional()
 })
 
@@ -163,9 +163,23 @@ export async function GET(
     const attendanceData: Record<string, Record<string, string>> = {}
 
     // Create a consistent sessionId mapping strategy
-    // Since attendance is marked per date regardless of specific time slot,
-    // we'll map all attendance for this date to ALL available time slots for this subject
     const timeSlots = Array.from(timeSlotMap.values())
+    
+    // Initialize attendance data structure for all students who have ANY attendance record
+    // This ensures we have a proper baseline
+    const allStudentIds = new Set<string>()
+    attendanceSessions.forEach(session => {
+      session.attendanceRecords.forEach(record => {
+        allStudentIds.add(record.student.userId)
+      })
+    })
+    
+    // Initialize empty attendance data for all students
+    allStudentIds.forEach(studentId => {
+      if (!attendanceData[studentId]) {
+        attendanceData[studentId] = {}
+      }
+    })
     
     // For each attendance session, process the records
     attendanceSessions.forEach(attendanceSession => {
@@ -190,20 +204,70 @@ export async function GET(
           case 'EXCUSED':
             status = 'medical'
             break
+          case 'UNMARKED':
+            status = 'unmarked'
+            break
           default:
+            console.warn('⚠️ Unknown database status:', record.status)
             status = 'absent'
         }
         
-        // Apply this attendance status to ALL time slots for this subject
-        // This ensures that marking attendance in any session applies to all sessions for that day
-        if (timeSlots.length > 0) {
-          timeSlots.forEach(timeSlot => {
-            attendanceData[studentId][timeSlot.id] = status
-          })
+        // Check if record has session-specific data in notes field
+        if (record.notes) {
+          try {
+            // Parse session-specific statuses from JSON
+            const sessionStatuses = JSON.parse(record.notes)
+            
+            // ONLY apply the sessions that are explicitly stored in JSON
+            // Do NOT apply any fallback logic that might override with "unmarked"
+            Object.keys(sessionStatuses).forEach(sessionKey => {
+              const sessionStatus = sessionStatuses[sessionKey]
+              let mappedStatus: string
+              
+              // Map the status from the JSON (which stores client format)
+              switch (sessionStatus?.toLowerCase()) {
+                case 'present':
+                  mappedStatus = 'present'
+                  break
+                case 'absent':
+                  mappedStatus = 'absent'
+                  break
+                case 'medical':
+                  mappedStatus = 'medical'
+                  break
+                case 'unmarked':
+                  mappedStatus = 'unmarked'
+                  break
+                default:
+                  mappedStatus = 'absent'
+              }
+              
+              attendanceData[studentId][sessionKey] = mappedStatus
+            })
+            
+            // Do not set any other sessions - leave them undefined
+            // The client will handle undefined as "no attendance marked yet"
+            
+          } catch (e) {
+            // If notes is not JSON, fall back to legacy behavior
+            console.warn('⚠️ Could not parse session data from notes field:', record.notes)
+            if (timeSlots.length > 0) {
+              timeSlots.forEach(timeSlot => {
+                attendanceData[studentId][timeSlot.id] = status
+              })
+            }
+          }
         } else {
-          // Fallback: Create a synthetic session ID
-          const fallbackSessionId = `session-${subjectId}-${attendanceSession.date.toISOString().split('T')[0]}`
-          attendanceData[studentId][fallbackSessionId] = status
+          // No session-specific data - apply to all time slots (legacy behavior)
+          if (timeSlots.length > 0) {
+            timeSlots.forEach(timeSlot => {
+              attendanceData[studentId][timeSlot.id] = status
+            })
+          } else {
+            // Final fallback: Create a synthetic session ID
+            const fallbackSessionId = `session-${subjectId}-${attendanceSession.date.toISOString().split('T')[0]}`
+            attendanceData[studentId][fallbackSessionId] = status
+          }
         }
       })
     })
@@ -385,7 +449,16 @@ export async function POST(
       case 'medical':
         dbStatus = 'EXCUSED'
         break
+      case 'unmarked':
+        dbStatus = 'UNMARKED' // Handle unmarked status
+        break
+      case 'mixed':
+        // Mixed status shouldn't be saved at session level - this indicates a logic error
+        console.warn('⚠️ Attempting to save mixed status at session level:', { studentId, sessionId, status })
+        dbStatus = 'ABSENT' // Fallback for mixed status
+        break
       default:
+        console.warn('⚠️ Unknown attendance status:', status)
         dbStatus = 'ABSENT'
     }
 
@@ -424,7 +497,48 @@ export async function POST(
       })
     }
 
-    // Create or update attendance record
+    // Get or create attendance record for this student
+    const existingRecord = await db.attendanceRecord.findUnique({
+      where: {
+        sessionId_studentId: {
+          sessionId: attendanceSession.id,
+          studentId: student.id
+        }
+      }
+    })
+
+    let sessionStatuses: Record<string, string> = {}
+    
+    if (existingRecord && existingRecord.notes) {
+      // Parse existing session statuses from notes field (JSON format)
+      try {
+        sessionStatuses = JSON.parse(existingRecord.notes) || {}
+      } catch (e) {
+        // If notes is not JSON, treat it as legacy data
+        sessionStatuses = {}
+      }
+    }
+    
+    // Update the status for this specific session
+    sessionStatuses[sessionId] = status
+    
+    // Determine the overall status for the attendance record
+    // This will be used for backward compatibility and reporting
+    const statuses = Object.values(sessionStatuses)
+    const uniqueStatuses = [...new Set(statuses)]
+    let overallStatus = dbStatus
+    
+    if (uniqueStatuses.length > 1) {
+      // Mixed statuses - use the most restrictive (absent > present > medical)
+      if (statuses.some(s => s === 'absent')) {
+        overallStatus = 'ABSENT'
+      } else if (statuses.some(s => s === 'present')) {
+        overallStatus = 'PRESENT' 
+      } else {
+        overallStatus = 'EXCUSED' // All medical/excused
+      }
+    }
+
     const attendanceRecord = await db.attendanceRecord.upsert({
       where: {
         sessionId_studentId: {
@@ -433,14 +547,16 @@ export async function POST(
         }
       },
       update: {
-        status: dbStatus,
+        status: overallStatus,
+        notes: JSON.stringify(sessionStatuses), // Store session-specific statuses as JSON
         markedAt: new Date(),
         lastModifiedBy: user.id,
       },
       create: {
         sessionId: attendanceSession.id,
         studentId: student.id,
-        status: dbStatus,
+        status: overallStatus,
+        notes: JSON.stringify(sessionStatuses), // Store session-specific statuses as JSON
         markedAt: new Date(),
         lastModifiedBy: user.id,
       }

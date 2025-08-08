@@ -74,6 +74,8 @@ export function AttendanceStatusButton({
         return `${baseStyle} bg-red-100 text-red-700 border-red-200 shadow-sm cursor-pointer hover:bg-red-200`
       case 'medical':
         return `${baseStyle} bg-blue-100 text-blue-700 border-blue-200 shadow-sm cursor-pointer hover:bg-blue-200`
+      case 'mixed':
+        return `${baseStyle} bg-gradient-to-r from-green-100 to-red-100 text-gray-700 border-gray-300 shadow-sm cursor-pointer hover:from-green-200 hover:to-red-200`
       default:
         // Unmarked state - neutral with hover
         return `${baseStyle} bg-gray-50 text-gray-400 border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300`
@@ -88,6 +90,8 @@ export function AttendanceStatusButton({
         return 'A'
       case 'medical':
         return 'M'
+      case 'mixed':
+        return '−' // Dash for mixed attendance
       default:
         return '○' // Empty circle for unmarked
     }
@@ -101,6 +105,8 @@ export function AttendanceStatusButton({
         return 'Absent'
       case 'medical':
         return 'Medical'
+      case 'mixed':
+        return 'Mixed'
       default:
         return 'Mark' // Neutral label when unmarked
     }

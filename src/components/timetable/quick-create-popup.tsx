@@ -40,7 +40,7 @@ interface QuickCreatePopupProps {
     facultyId: string
     facultyName: string
   }>
-  onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
+  onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string, date?: Date) => Promise<boolean>
 }
 
 interface SubjectOption {
@@ -112,7 +112,7 @@ export function QuickCreatePopup({
         const conflictResults = await Promise.all(
           subjects.map(async (subject) => {
             try {
-              const hasConflict = await onCheckConflicts(subject.facultyId, dayOfWeek, timeSlot)
+              const hasConflict = await onCheckConflicts(subject.facultyId, dayOfWeek, timeSlot, undefined, date)
               return {
                 ...subject,
                 isAvailable: !hasConflict,

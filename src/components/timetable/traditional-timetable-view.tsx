@@ -172,7 +172,23 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
 
       setIsLoadingAttendance(true)
       try {
+        console.log('🎉 Loading attendance for events:', events.map(e => ({
+          id: e.id,
+          title: e.title,
+          start: e.start ? (e.start instanceof Date ? e.start.toDateString() : new Date(e.start).toDateString()) : 'No start',
+          batchId: e.extendedProps?.batchId?.slice(-8),
+          subjectId: e.extendedProps?.subjectId?.slice(-8)
+        })));
+        
         const attendanceStatus = await fetchAttendanceStatus(events)
+        
+        console.log('📊 Received attendance status:', attendanceStatus.map(s => ({
+          entryId: s.timetableEntryId,
+          isMarked: s.isMarked,
+          percentage: s.attendancePercentage,
+          count: `${s.presentStudents}/${s.totalStudents}`
+        })));
+        
         const eventsWithAttendanceData = mergeAttendanceWithEvents(events, attendanceStatus)
         setEventsWithAttendance(eventsWithAttendanceData)
       } catch (error) {

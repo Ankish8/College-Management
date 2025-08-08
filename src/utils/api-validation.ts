@@ -138,7 +138,7 @@ export const validateCourse = (data: any): Course => {
 }
 
 export const validateAttendanceStatus = (status: any): AttendanceStatus => {
-  const validStatuses: AttendanceStatus[] = ['present', 'absent', 'medical']
+  const validStatuses: AttendanceStatus[] = ['present', 'absent', 'medical', 'unmarked', 'mixed']
   
   if (!validStatuses.includes(status)) {
     throw new ApiValidationError(

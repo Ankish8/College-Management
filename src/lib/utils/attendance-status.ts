@@ -16,12 +16,22 @@ export async function fetchAttendanceStatus(timetableEntries: CalendarEvent[]): 
         id: event.id,
         batchId: event.extendedProps!.batchId,
         subjectId: event.extendedProps!.subjectId,
-        date: event.start.toISOString()
+        date: (() => {
+          const eventDate = event.start instanceof Date ? event.start : new Date(event.start);
+          return `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+        })()
       }))
 
     if (validEntries.length === 0) {
       return []
     }
+    
+    console.log('📅 Fetching attendance status for entries:', validEntries.map(e => ({
+      id: e.id,
+      date: e.date,
+      batchId: e.batchId?.slice(-8) || '',
+      subjectId: e.subjectId?.slice(-8) || ''
+    })));
 
     const response = await fetch('/api/timetable/attendance-status', {
       method: 'POST',

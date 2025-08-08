@@ -135,7 +135,9 @@ function DayAttendanceCell({
     const variants = {
       'present': 'bg-green-100 text-green-800 border-green-200',
       'absent': 'bg-red-100 text-red-800 border-red-200',
-      'medical': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      'medical': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'unmarked': 'bg-gray-100 text-gray-800 border-gray-200',
+      'mixed': 'bg-gradient-to-r from-green-100 to-red-100 text-gray-800 border-gray-300'
     }
 
     return (
@@ -143,7 +145,11 @@ function DayAttendanceCell({
         variant="outline" 
         className={cn("text-xs font-medium border", variants[status])}
       >
-        {status === 'present' ? 'P' : status === 'absent' ? 'A' : 'M'}
+        {status === 'present' ? 'P' : 
+         status === 'absent' ? 'A' : 
+         status === 'medical' ? 'M' : 
+         status === 'unmarked' ? '?' :
+         status === 'mixed' ? '−' : 'M'}
       </Badge>
     )
   }

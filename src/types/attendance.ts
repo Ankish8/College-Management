@@ -1,4 +1,4 @@
-export type AttendanceStatus = 'present' | 'absent' | 'medical' | 'unmarked'
+export type AttendanceStatus = 'present' | 'absent' | 'medical' | 'unmarked' | 'mixed'
 export type AttendanceMode = 'detailed' | 'fast' | 'predictive'
 
 export type PredictionConfidence = 'high' | 'medium' | 'low'
@@ -21,7 +21,14 @@ export interface AttendanceRecord {
 export interface SessionAttendanceRecord {
   date: string
   sessionId: string
+  sessionName: string
+  startTime: string
+  endTime: string
   status: AttendanceStatus
+}
+
+export interface DailyAttendanceRecord extends AttendanceRecord {
+  sessions: SessionAttendanceRecord[]
 }
 
 export interface AttendancePrediction {

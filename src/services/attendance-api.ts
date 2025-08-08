@@ -18,13 +18,16 @@ export interface AttendanceStudent {
 
 export interface AttendanceRecord {
   date: string
-  status: 'present' | 'absent' | 'medical'
+  status: AttendanceStatus
 }
 
 export interface SessionAttendanceRecord {
   date: string
   sessionId: string
-  status: 'present' | 'absent' | 'medical'
+  sessionName: string
+  startTime: string
+  endTime: string
+  status: AttendanceStatus
 }
 
 export interface AttendanceCourse {
@@ -50,7 +53,7 @@ export interface ApiResponse<T> {
   meta?: any
 }
 
-export type AttendanceStatus = 'present' | 'absent' | 'medical'
+export type AttendanceStatus = 'present' | 'absent' | 'medical' | 'unmarked' | 'mixed'
 
 class AttendanceApiService {
   private baseURL: string
