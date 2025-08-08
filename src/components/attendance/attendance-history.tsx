@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { AttendanceRecord } from "@/types/attendance"
 
@@ -16,7 +17,8 @@ export function AttendanceHistory({
   // If no history, show empty state
   if (!history || history.length === 0) {
     return (
-      <div className="flex flex-col items-center space-y-3">
+      <TooltipProvider>
+        <div className="flex flex-col items-center space-y-3">
         <div className="flex flex-col gap-2">
           <div className="flex justify-center gap-2 text-xs text-gray-500">
             {['M', 'T', 'W', 'T', 'F'].map((day, index) => (
@@ -27,14 +29,22 @@ export function AttendanceHistory({
           </div>
           <div className="flex justify-center gap-2">
             {[...Array(5)].map((_, index) => (
-              <div key={index} className="w-3 h-3 rounded-full bg-gray-200" />
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="w-3 h-3 rounded-full bg-gray-200 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-sm">No attendance data available</p>
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </div>
         <Badge variant="outline" className="text-xs border-gray-300 text-gray-500">
           No data
         </Badge>
-      </div>
+        </div>
+      </TooltipProvider>
     )
   }
 
@@ -103,6 +113,24 @@ export function AttendanceHistory({
     }
   }
 
+  const getTooltipText = (date: string, attendance?: AttendanceRecord) => {
+    if (!attendance) {
+      return `${date}: No class scheduled`
+    }
+    
+    const status = attendance.status?.toLowerCase()
+    const statusMap = {
+      'present': 'Present',
+      'absent': 'Absent',
+      'medical': 'Medical Leave',
+      'excused': 'Excused',
+      'unmarked': 'Class scheduled but attendance not marked'
+    }
+    
+    const statusText = statusMap[status as keyof typeof statusMap] || attendance.status
+    return `${date}: ${statusText}`
+  }
+
   const getPercentageColor = (pct: number) => {
     if (pct >= 75) return "text-green-600"
     if (pct >= 50) return "text-amber-600"
@@ -110,7 +138,8 @@ export function AttendanceHistory({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-3">
+    <TooltipProvider>
+      <div className="flex flex-col items-center space-y-3">
       <div className="flex flex-col gap-2">
         <div className="flex justify-center gap-2 text-xs text-gray-500">
           {weekDates.map((item, index) => (
@@ -121,16 +150,19 @@ export function AttendanceHistory({
         </div>
         <div className="flex justify-center gap-2">
           {weekDates.map((item, index) => (
-            <div
-              key={index}
-              className={cn(
-                "w-3 h-3 rounded-full",
-                getDotColor(item.attendance)
-              )}
-              title={item.attendance 
-                ? `${item.date}: ${item.attendance.status}` 
-                : `${item.date}: No class`}
-            />
+            <Tooltip key={index}>
+              <TooltipTrigger asChild>
+                <div
+                  className={cn(
+                    "w-3 h-3 rounded-full cursor-help",
+                    getDotColor(item.attendance)
+                  )}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">{getTooltipText(item.date, item.attendance)}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -141,6 +173,7 @@ export function AttendanceHistory({
       >
         {presentCount}/{totalDays} ({percentage}%)
       </Badge>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }
