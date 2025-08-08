@@ -104,6 +104,12 @@ export function FullCalendar({
     selectedEvent: undefined,
     filters: filters || {}
   })
+
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1)
+  }
   
   // Update view when mobile state changes
   useEffect(() => {
@@ -307,6 +313,7 @@ export function FullCalendar({
                   onDateSelect={handleDateChange}
                   onFiltersToggle={() => setShowFilters(!showFilters)}
                   showFilters={showFilters}
+                  onRefresh={handleRefresh}
                 />
               )}
               

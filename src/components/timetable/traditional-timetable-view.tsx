@@ -73,6 +73,7 @@ interface TraditionalTimetableViewProps {
   onFiltersToggle?: () => void
   showFilters?: boolean
   onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
+  onRefresh?: () => void
 }
 
 // Default time slots matching database
@@ -112,7 +113,8 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   onDateSelect,
   onFiltersToggle,
   showFilters,
-  onCheckConflicts
+  onCheckConflicts,
+  onRefresh
 }: TraditionalTimetableViewProps) {
   const [activeEvent, setActiveEvent] = React.useState<CalendarEvent | null>(null)
   const [conflictCache, setConflictCache] = React.useState<Record<string, boolean>>({})
@@ -504,6 +506,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
         canEdit={!isPastDate && !isSampleEvent}
         canDelete={!isPastDate && !isSampleEvent}
         onDelete={onEventDelete ? () => onEventDelete(event.id) : undefined}
+        onRefresh={onRefresh}
       >
         <div
           ref={setNodeRef}

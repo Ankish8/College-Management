@@ -599,10 +599,23 @@ export default function TimetableClient() {
     queryKey: ['subjects-for-creation', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return []
-      const response = await fetch(`/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty`, {
-        credentials: 'include'
+      
+      const url = `/api/subjects?batchId=${selectedBatchId}&include=primaryFaculty&_t=${Date.now()}`
+      
+      const response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-cache', // Force fresh data, bypass offline cache
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       })
-      if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch subjects`)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`HTTP ${response.status}: Failed to fetch subjects - ${errorText}`)
+      }
+      
       const data = await response.json()
       return data
     },
@@ -1119,7 +1132,7 @@ export default function TimetableClient() {
           <div className="flex gap-2">
             <Button 
               onClick={() => setIsCreateModalOpen(true)}
-              disabled={!selectedBatchId}
+              disabled={true}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Class

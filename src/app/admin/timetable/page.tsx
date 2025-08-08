@@ -203,7 +203,7 @@ export default function AdminTimetablePage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button disabled onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Class
           </Button>

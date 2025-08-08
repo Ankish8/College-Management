@@ -14,7 +14,9 @@ import {
   Calendar,
   Info,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Users,
+  UserX
 } from 'lucide-react'
 import { CalendarEvent } from '@/types/timetable'
 import { useToast } from '@/hooks/use-toast'
@@ -27,7 +29,7 @@ interface TimetableEntryContextMenuProps {
   children: React.ReactNode
   onEdit?: (event: CalendarEvent) => void
   onDelete?: (event: CalendarEvent) => void
-  onMarkAttendance?: (event: CalendarEvent) => void
+  onRefresh?: () => void
   canEdit?: boolean
   canDelete?: boolean
   canMarkAttendance?: boolean
@@ -38,7 +40,7 @@ export function TimetableEntryContextMenu({
   children,
   onEdit,
   onDelete,
-  onMarkAttendance,
+  onRefresh,
   canEdit = true,
   canDelete = true,
   canMarkAttendance = false
@@ -109,13 +111,49 @@ export function TimetableEntryContextMenu({
     }
   }
 
-  const handleMarkAttendance = () => {
-    if (onMarkAttendance) {
-      onMarkAttendance(event)
-    } else if (eventType === 'class' && event.extendedProps?.subjectId && event.extendedProps?.batchId) {
-      // Navigate to attendance page for this specific class
+  const handleBulkAttendance = async (status: 'present' | 'absent', scope: 'slot' | 'fullday') => {
+    if (eventType !== 'class' || !event.extendedProps?.subjectId || !event.extendedProps?.batchId) {
+      return
+    }
+
+    try {
       const dateStr = new Date(event.start).toISOString().split('T')[0]
-      router.push(`/dashboard/attendance?batchId=${event.extendedProps.batchId}&subjectId=${event.extendedProps.subjectId}&date=${dateStr}`)
+      const response = await fetch('/api/timetable/bulk-attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchId: event.extendedProps.batchId,
+          subjectId: event.extendedProps.subjectId,
+          date: dateStr,
+          status,
+          scope,
+          timeSlotId: event.extendedProps.timeSlotId
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        })
+        
+        // Refresh the calendar view
+        if (onRefresh) {
+          onRefresh()
+        } else {
+          router.refresh()
+        }
+      } else {
+        throw new Error(result.error || 'Failed to mark attendance')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -185,13 +223,37 @@ export function TimetableEntryContextMenu({
             <>
               <ContextMenuSeparator />
               {canMarkAttendance && (
-                <ContextMenuItem 
-                  onClick={handleMarkAttendance}
-                  className="flex items-center gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Mark Attendance
-                </ContextMenuItem>
+                <>
+                  <ContextMenuItem 
+                    onClick={() => handleBulkAttendance('present', 'slot')}
+                    className="flex items-center gap-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    Mark All Present
+                  </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleBulkAttendance('absent', 'slot')}
+                    className="flex items-center gap-2"
+                  >
+                    <UserX className="h-4 w-4" />
+                    Mark All Absent
+                  </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleBulkAttendance('present', 'fullday')}
+                    className="flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    All Present - Full Day
+                  </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleBulkAttendance('absent', 'fullday')}
+                    className="flex items-center gap-2"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    All Absent - Full Day
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                </>
               )}
               <ContextMenuItem 
                 onClick={handleCancelClass}
