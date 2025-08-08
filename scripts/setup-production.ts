@@ -1,11 +1,34 @@
 import { PrismaClient } from '@prisma/client'
+import { getDatabaseAdapter } from '../src/lib/utils/database-adapter'
 
 const prisma = new PrismaClient()
+const dbAdapter = getDatabaseAdapter(prisma)
 
 async function setupProduction() {
   console.log('Setting up production database...')
+  console.log(`Database Provider: ${dbAdapter.getProvider()}`)
   
   try {
+    // Check database health first
+    const health = await dbAdapter.getConnectionStatus()
+    if (!health.healthy) {
+      throw new Error('Database connection is not healthy')
+    }
+    console.log(`✅ Database connection healthy (${health.provider} ${health.version || 'unknown version'})`)
+
+    // PostgreSQL-specific initialization
+    if (dbAdapter.isPostgreSQL()) {
+      console.log('🐘 Setting up PostgreSQL-specific configurations...')
+      
+      // Enable required extensions
+      try {
+        await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
+        await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`
+        console.log('✅ PostgreSQL extensions enabled')
+      } catch (error) {
+        console.warn('⚠️ Could not create extensions (may already exist):', error)
+      }
+    }
     // 1. Create University
     let university = await prisma.university.findFirst({
       where: { shortName: 'JLU' }
@@ -15,10 +38,7 @@ async function setupProduction() {
       university = await prisma.university.create({
         data: {
           name: 'Jagran Lakecity University',
-          shortName: 'JLU',
-          establishedYear: 2013,
-          website: 'https://jlu.edu.in',
-          address: 'Mugaliyachap, Bhopal, MP'
+          shortName: 'JLU'
         }
       })
       console.log('Created university: JLU')
@@ -156,11 +176,33 @@ async function setupProduction() {
       }
     }
 
+    // Final database optimization
+    console.log('\n🔧 Optimizing database performance...')
+    await dbAdapter.optimizeDatabase()
+    
+    // Get database size info
+    const sizeInfo = await dbAdapter.getDatabaseSize()
+    console.log(`📊 Database size: ${sizeInfo.unit}`)
+    
+    // Show performance recommendations
+    if (process.env.NODE_ENV === 'production') {
+      console.log('\n💡 Performance tuning recommendations:')
+      const recommendations = dbAdapter.getPerformanceTuning()
+      recommendations.forEach((rec, index) => {
+        console.log(`${index + 1}. ${rec}`)
+      })
+    }
+
     console.log('\n✅ Production setup completed successfully!')
+    console.log(`\n🗄️  Database: ${dbAdapter.getProvider().toUpperCase()}`)
     console.log('\n📋 Login Credentials:')
     console.log('Admin: admin@jlu.edu.in / JLU@2025admin')
     console.log('Faculty: [email]@jlu.edu.in / JLU@2025faculty')
     console.log('\nRefer to CREDENTIALS.md for full list of accounts.')
+    
+    // Database-specific backup instructions
+    console.log('\n📦 Backup Command:')
+    console.log(dbAdapter.getBackupCommand())
     
   } catch (error) {
     console.error('Error setting up production:', error)

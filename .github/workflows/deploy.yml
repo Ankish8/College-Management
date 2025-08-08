@@ -1,0 +1,63 @@
+name: Deploy to redcrest.co.in
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
+          cd /opt/college-management
+          
+          # Create backup directory if it doesn't exist
+          mkdir -p backups
+          
+          # Backup database before deployment
+          echo "Creating database backup..."
+          docker exec redcrest-postgres pg_dump -U postgres college_management_prod > backups/backup_$(date +%Y%m%d_%H%M%S).sql
+          
+          # Keep only last 5 backups
+          ls -t backups/backup_*.sql | tail -n +6 | xargs -r rm
+          
+          # Pull latest code
+          echo "Pulling latest code..."
+          git pull origin main
+          
+          # Stop application containers (keep database running)
+          echo "Stopping application containers..."
+          docker stop redcrest-app redcrest-nginx 2>/dev/null || true
+          docker rm redcrest-app redcrest-nginx 2>/dev/null || true
+          
+          # Rebuild and start with correct config
+          echo "Building and starting containers..."
+          docker-compose -f docker-compose.redcrest.yml --env-file .env.redcrest build --no-cache
+          docker-compose -f docker-compose.redcrest.yml --env-file .env.redcrest up -d
+          
+          # Wait for services to start
+          echo "Waiting for services to start..."
+          sleep 30
+          
+          # Verify deployment
+          echo "Verifying deployment..."
+          docker-compose -f docker-compose.redcrest.yml ps
+          
+          # Health check
+          echo "Performing health check..."
+          curl -f https://redcrest.co.in/api/health || {
+            echo "Health check failed, checking logs..."
+            docker logs redcrest-app --tail 50
+            exit 1
+          }
+          
+          echo "Deployment successful!"
