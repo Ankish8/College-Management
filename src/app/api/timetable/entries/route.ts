@@ -146,9 +146,12 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
   });
   
   console.log('🔍 Exact duplicate check result:', exactDuplicate ? {
-    id: exactDuplicate.id,
+    id: exactDuplicate.id.slice(-8),
+    subject: exactDuplicate.subject?.name,
+    faculty: exactDuplicate.faculty?.name,
     date: exactDuplicate.date ? exactDuplicate.date.toISOString().split('T')[0] : null,
-    comparing_with: data.date
+    comparing_with: data.date,
+    reason: 'EXACT_DUPLICATE detected'
   } : 'No exact duplicate found');
   
   // Initialize variables outside the if block
@@ -172,7 +175,19 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
       !(entry.batchId === data.batchId && entry.subjectId === data.subjectId)
     ) : [];
 
+    console.log('📊 Conflict analysis:', {
+      batchConflictsFound: batchConflicts.length,
+      facultyConflictsFound: facultyConflicts.length
+    });
+
     if (batchConflicts.length > 0) {
+      console.log('🚨 BATCH conflicts:', batchConflicts.map(c => ({
+        id: c.id.slice(-8),
+        subject: c.subject?.name,
+        faculty: c.faculty?.name,
+        date: c.date ? c.date.toISOString().split('T')[0] : 'recurring'
+      })));
+      
       conflicts.push({
         type: "BATCH_DOUBLE_BOOKING",
         message: `Batch already has a different class at this time`,
@@ -181,6 +196,13 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
     }
 
     if (facultyConflicts.length > 0) {
+      console.log('🚨 FACULTY conflicts:', facultyConflicts.map(c => ({
+        id: c.id.slice(-8),
+        subject: c.subject?.name,
+        faculty: c.faculty?.name,
+        date: c.date ? c.date.toISOString().split('T')[0] : 'recurring'
+      })));
+      
       conflicts.push({
         type: "FACULTY_CONFLICT", 
         message: `Faculty is already teaching another class at this time`,
@@ -465,6 +487,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('📨 POST /api/timetable/entries - Request body:', JSON.stringify(body, null, 2))
+    console.log('🔍 DEBUG - Key fields:', {
+      subjectId: body.subjectId,
+      batchId: body.batchId,
+      facultyId: body.facultyId,
+      timeSlotId: body.timeSlotId,
+      date: body.date,
+      dayOfWeek: body.dayOfWeek
+    })
     const validatedData = createTimetableEntrySchema.parse(body)
 
     // Validate batch exists and user has access
@@ -539,11 +570,13 @@ export async function POST(request: NextRequest) {
 
     // Check for conflicts
     console.log('🔍 Checking conflicts for:', {
-      batchId: validatedData.batchId,
-      facultyId: validatedData.facultyId,
-      timeSlotId: validatedData.timeSlotId,
+      batchId: validatedData.batchId?.slice(-8),
+      subjectId: validatedData.subjectId?.slice(-8),
+      facultyId: validatedData.facultyId?.slice(-8),
+      timeSlotId: validatedData.timeSlotId?.slice(-8),
       dayOfWeek: validatedData.dayOfWeek,
       date: validatedData.date,
+      entryType: validatedData.entryType
     });
     
     const conflicts = await checkConflicts(validatedData)

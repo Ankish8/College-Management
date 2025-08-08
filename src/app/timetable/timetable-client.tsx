@@ -747,14 +747,21 @@ export default function TimetableClient() {
       console.log('⚠️ Original toISOString would have been:', data.date.toISOString().split('T')[0]);
       
       // Map time slot names to actual IDs from database
+      console.log('🔍 DEBUG TimeSlot Resolution:', {
+        searchingFor: data.timeSlot,
+        availableSlots: (timeSlotsData?.timeSlots || timeSlotsData)?.map((ts: any) => ({ name: ts.name, id: ts.id }))
+      })
+      
       let timeSlotId = null
       const timeSlotsList = timeSlotsData?.timeSlots || timeSlotsData
       if (timeSlotsList && Array.isArray(timeSlotsList)) {
         const timeSlot = timeSlotsList.find((ts: any) => ts.name === data.timeSlot)
         timeSlotId = timeSlot?.id
+        console.log('🎯 TimeSlot found:', { name: timeSlot?.name, id: timeSlot?.id })
       }
       
       if (!timeSlotId) {
+        console.error('❌ TimeSlot not found:', data.timeSlot)
         throw new Error(`Time slot "${data.timeSlot}" not found or is inactive`)
       }
       
@@ -879,7 +886,7 @@ export default function TimetableClient() {
   }
 
   // Check conflicts across all batches for a faculty
-  const checkConflicts = async (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => {
+  const checkConflicts = async (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string, date?: Date) => {
     try {
       const params = new URLSearchParams({
         facultyId,
@@ -889,6 +896,12 @@ export default function TimetableClient() {
       
       if (excludeEventId) {
         params.append('excludeEventId', excludeEventId)
+      }
+      
+      if (date) {
+        // Format date as YYYY-MM-DD for the API
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        params.append('date', dateStr)
       }
       
       const response = await fetch(`/api/timetable/conflicts?${params.toString()}`, {
