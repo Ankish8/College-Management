@@ -16,6 +16,7 @@ export async function fetchAttendanceStatus(timetableEntries: CalendarEvent[]): 
         id: event.id,
         batchId: event.extendedProps!.batchId,
         subjectId: event.extendedProps!.subjectId,
+        timeSlotId: event.extendedProps!.timeSlotId, // Add timeSlotId for session-specific lookup
         date: (() => {
           const eventDate = event.start instanceof Date ? event.start : new Date(event.start);
           return `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;

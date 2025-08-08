@@ -16,13 +16,16 @@ import {
   CheckCircle2,
   XCircle,
   Users,
-  UserX
+  UserX,
+  RotateCcw,
+  Eraser
 } from 'lucide-react'
 import { CalendarEvent } from '@/types/timetable'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { EventDetailsModal } from './event-details-modal'
 import { EventEditModal } from './event-edit-modal'
+import { ResetConfirmationModal } from './reset-confirmation-modal'
 
 interface TimetableEntryContextMenuProps {
   event: CalendarEvent
@@ -49,6 +52,9 @@ export function TimetableEntryContextMenu({
   const router = useRouter()
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetScope, setResetScope] = useState<'slot' | 'fullday'>('slot')
+  const [isResetting, setIsResetting] = useState(false)
   
   // Determine event type
   const eventType = event.extendedProps?.type || (event.allDay ? 'holiday' : 'class')
@@ -157,6 +163,74 @@ export function TimetableEntryContextMenu({
     }
   }
 
+  const handleResetAttendance = (scope: 'slot' | 'fullday') => {
+    if (eventType !== 'class' || !event.extendedProps?.subjectId || !event.extendedProps?.batchId) {
+      return
+    }
+
+    // Open modal for confirmation
+    setResetScope(scope)
+    setShowResetModal(true)
+  }
+
+  const handleConfirmReset = async () => {
+    setIsResetting(true)
+    
+    try {
+      const dateStr = new Date(event.start).toISOString().split('T')[0]
+      console.log('🔄 Reset attendance request:', {
+        batchId: event.extendedProps?.batchId,
+        subjectId: event.extendedProps?.subjectId,
+        date: dateStr,
+        scope: resetScope,
+        timeSlotId: event.extendedProps?.timeSlotId
+      })
+
+      const response = await fetch('/api/timetable/reset-attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchId: event.extendedProps?.batchId,
+          subjectId: event.extendedProps?.subjectId,
+          date: dateStr,
+          scope: resetScope,
+          timeSlotId: event.extendedProps?.timeSlotId
+        })
+      })
+
+      const result = await response.json()
+      console.log('🔄 Reset attendance response:', result)
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        })
+        
+        // Close modal and refresh
+        setShowResetModal(false)
+        
+        // Refresh the calendar view
+        if (onRefresh) {
+          onRefresh()
+        } else {
+          router.refresh()
+        }
+      } else {
+        throw new Error(result.error || 'Failed to reset attendance')
+      }
+    } catch (error) {
+      console.error('🔄 Reset attendance error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to reset attendance. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
   const handleCancelClass = async () => {
     try {
       const response = await fetch(`/api/timetable/entries/${event.id}/cancel`, {
@@ -252,6 +326,20 @@ export function TimetableEntryContextMenu({
                     <XCircle className="h-4 w-4" />
                     All Absent - Full Day
                   </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleResetAttendance('slot')}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset Attendance
+                  </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleResetAttendance('fullday')}
+                    className="flex items-center gap-2"
+                  >
+                    <Eraser className="h-4 w-4" />
+                    Reset All - Full Day
+                  </ContextMenuItem>
                   <ContextMenuSeparator />
                 </>
               )}
@@ -298,6 +386,15 @@ export function TimetableEntryContextMenu({
         event={event}
         open={showEditModal}
         onOpenChange={setShowEditModal}
+      />
+      
+      <ResetConfirmationModal
+        event={event}
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={handleConfirmReset}
+        scope={resetScope}
+        isResetting={isResetting}
       />
     </>
   )

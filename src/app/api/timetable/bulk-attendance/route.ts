@@ -54,7 +54,48 @@ export async function POST(request: NextRequest) {
 
     const attendanceDate = new Date(date)
 
-    // For single slot, verify the specific timetable entry exists
+    // Get time slots for this subject to create session mapping (same as regular attendance system)
+    const timetableEntries = await db.timetableEntry.findMany({
+      where: {
+        subjectId: subjectId,
+        isActive: true
+      },
+      include: {
+        timeSlot: {
+          select: {
+            id: true,
+            name: true,
+            startTime: true,
+            endTime: true,
+            sortOrder: true
+          }
+        }
+      },
+      orderBy: {
+        timeSlot: {
+          sortOrder: 'asc'
+        }
+      }
+    })
+
+    // Create time slot mapping
+    const timeSlotMap = new Map()
+    timetableEntries.forEach(entry => {
+      if (!timeSlotMap.has(entry.timeSlot.id)) {
+        timeSlotMap.set(entry.timeSlot.id, entry.timeSlot)
+      }
+    })
+
+    const timeSlots = Array.from(timeSlotMap.values())
+
+    if (timeSlots.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: "No time slots found for this subject"
+      }, { status: 404 })
+    }
+
+    // For single slot, verify the specific time slot exists
     if (scope === 'slot') {
       if (!timeSlotId) {
         return NextResponse.json({
@@ -63,6 +104,14 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
+      if (!timeSlotMap.has(timeSlotId)) {
+        return NextResponse.json({
+          success: false,
+          error: "Time slot not found for this subject"
+        }, { status: 404 })
+      }
+
+      // Verify there's a class scheduled for this specific slot on this date
       const timetableEntry = await db.timetableEntry.findFirst({
         where: {
           batchId,
@@ -76,7 +125,7 @@ export async function POST(request: NextRequest) {
       if (!timetableEntry) {
         return NextResponse.json({
           success: false,
-          error: "No class found for the specified time slot"
+          error: "No class scheduled for the specified time slot on this date"
         }, { status: 404 })
       }
     }
@@ -112,7 +161,7 @@ export async function POST(request: NextRequest) {
 
     // Process in transaction
     await db.$transaction(async (tx) => {
-      // Find or create attendance session (one per day per subject)
+      // Find or create attendance session (one per day per subject, same as regular system)
       let attendanceSession = await tx.attendanceSession.findUnique({
         where: {
           batchId_subjectId_date: {
@@ -134,7 +183,6 @@ export async function POST(request: NextRequest) {
             date: attendanceDate,
             markedBy: user.id,
             isCompleted: false,
-            notes: scope === 'slot' ? `Bulk marked for time slot: ${timeSlotId}` : 'Bulk marked for full day'
           },
           include: {
             attendanceRecords: true
@@ -142,28 +190,43 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      const dbStatus = status === 'present' ? 'PRESENT' : 'ABSENT'
-
-      // For slot-specific marking, check if attendance was already marked
-      if (scope === 'slot') {
-        const existingRecords = attendanceSession.attendanceRecords
-        
-        // If this is the first attendance marking for the day, proceed normally
-        // If attendance was already marked and we're doing slot-specific, we need to be careful
-        if (existingRecords.length > 0) {
-          // Add note that this is a partial update for specific slot
-          await tx.attendanceSession.update({
-            where: { id: attendanceSession.id },
-            data: {
-              notes: (attendanceSession.notes || '') + ` | Slot-specific update: ${timeSlotId} marked as ${status} at ${new Date().toISOString()}`
-            }
-          })
-        }
-      }
-
-      // Mark attendance for all students
+      // Mark attendance for all students using session-specific JSON storage (same as regular system)
       for (const student of students) {
         try {
+          // Get existing attendance record to preserve other session data
+          const existingRecord = await tx.attendanceRecord.findUnique({
+            where: {
+              sessionId_studentId: {
+                sessionId: attendanceSession.id,
+                studentId: student.id
+              }
+            }
+          })
+
+          // Parse existing session data from notes field (JSON format)
+          let sessionData = {}
+          if (existingRecord?.notes) {
+            try {
+              sessionData = JSON.parse(existingRecord.notes)
+            } catch (e) {
+              // If notes is not JSON, start fresh
+              sessionData = {}
+            }
+          }
+
+          if (scope === 'slot') {
+            // Update only the specific time slot
+            sessionData[timeSlotId] = status
+          } else {
+            // Full day - update all time slots for this subject
+            timeSlots.forEach(slot => {
+              sessionData[slot.id] = status
+            })
+          }
+
+          // Determine overall status for the record (fallback for legacy compatibility)
+          const dbStatus = status === 'present' ? 'PRESENT' : 'ABSENT'
+
           await tx.attendanceRecord.upsert({
             where: {
               sessionId_studentId: {
@@ -175,6 +238,7 @@ export async function POST(request: NextRequest) {
               status: dbStatus,
               markedAt: new Date(),
               lastModifiedBy: user.id,
+              notes: JSON.stringify(sessionData)
             },
             create: {
               sessionId: attendanceSession.id,
@@ -182,6 +246,7 @@ export async function POST(request: NextRequest) {
               status: dbStatus,
               markedAt: new Date(),
               lastModifiedBy: user.id,
+              notes: JSON.stringify(sessionData)
             }
           })
 
@@ -193,13 +258,12 @@ export async function POST(request: NextRequest) {
         results.processed++
       }
 
-      // Mark session as completed only for full day, not for single slots
+      // Mark session as completed only for full day
       if (scope === 'fullday') {
         await tx.attendanceSession.update({
           where: { id: attendanceSession.id },
           data: { 
-            isCompleted: true,
-            notes: `Bulk marked all students as ${status} for full day`
+            isCompleted: true
           }
         })
       }
@@ -208,14 +272,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: scope === 'slot' 
-        ? `Marked all students as ${status}. Note: This applies to the entire day for this subject (attendance system tracks per day, not per time slot).`
+        ? `Marked all students as ${status} for the selected time slot`
         : `Marked all students as ${status} for the full day`,
       data: {
         studentsMarked: students.length,
         status: status,
         scope: scope,
-        ...(scope === 'slot' && { timeSlotId }),
-        warning: scope === 'slot' ? 'Attendance is tracked per day per subject, not per time slot' : undefined
+        ...(scope === 'slot' && { timeSlotId })
       }
     })
 

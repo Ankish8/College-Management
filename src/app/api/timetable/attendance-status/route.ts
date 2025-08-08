@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid timetable entries' }, { status: 400 })
     }
 
-    // Extract unique combinations of batchId, subjectId, and date for querying
+    // Extract unique combinations of batchId, subjectId, date, and timeSlotId for querying
     const attendanceQueries = timetableEntries
-      .filter(entry => entry.batchId && entry.subjectId && entry.date)
+      .filter(entry => entry.batchId && entry.subjectId && entry.date && entry.timeSlotId)
       .map(entry => {
         // Parse the date string properly to avoid timezone issues
         const dateStr = entry.date; // Should be in YYYY-MM-DD format
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
         return {
           batchId: entry.batchId,
           subjectId: entry.subjectId,
+          timeSlotId: entry.timeSlotId, // Include timeSlotId for session-specific lookup
           date: date,
           dateStr: dateStr, // Keep original string for comparison
           timetableEntryId: entry.id
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest) {
         attendanceRecords: {
           select: {
             status: true,
-            studentId: true
+            studentId: true,
+            notes: true // Include notes field to read session-specific data
           }
         },
         batch: {
@@ -97,13 +99,14 @@ export async function POST(request: NextRequest) {
 
     console.log('🗺️ Session map contents:', Array.from(sessionMap.keys()));
 
-    // Calculate attendance status for each timetable entry
-    const attendanceStatus = attendanceQueries.map(({ timetableEntryId, batchId, subjectId, dateStr }) => {
+    // Calculate attendance status for each timetable entry (time-slot specific)
+    const attendanceStatus = attendanceQueries.map(({ timetableEntryId, batchId, subjectId, timeSlotId, dateStr }) => {
       const key = `${batchId}-${subjectId}-${dateStr}`
       const session = sessionMap.get(key)
       
       console.log(`🔍 Looking up attendance for entry ${timetableEntryId.slice(-8)}:`, {
         key: `${batchId.slice(-8)}-${subjectId.slice(-8)}-${dateStr}`,
+        timeSlotId: timeSlotId?.slice(-8),
         found: !!session,
         recordCount: session?.attendanceRecords.length || 0
       });
@@ -118,25 +121,59 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Calculate attendance stats
       const totalStudents = session.batch.students.length
-      const presentStudents = session.attendanceRecords.filter(
-        (record: any) => record.status === 'PRESENT'
-      ).length
+      let presentStudents = 0
+      let markedStudents = 0
+
+      // Process each attendance record to check session-specific data
+      session.attendanceRecords.forEach((record: any) => {
+        let sessionStatus = null;
+        
+        // Try to parse session-specific data from notes field
+        if (record.notes) {
+          try {
+            const sessionData = JSON.parse(record.notes);
+            sessionStatus = sessionData[timeSlotId]; // Get status for this specific time slot
+          } catch (e) {
+            // If notes is not JSON, fall back to overall status for backward compatibility
+            console.warn('⚠️ Could not parse session data from notes field:', record.notes);
+          }
+        }
+
+        // If we have session-specific data for this time slot, use it
+        if (sessionStatus) {
+          markedStudents++;
+          if (sessionStatus === 'present') {
+            presentStudents++;
+          }
+        }
+        // If no session-specific data and notes field is empty/null, check overall status for fallback
+        else if (!record.notes) {
+          markedStudents++;
+          if (record.status === 'PRESENT') {
+            presentStudents++;
+          }
+        }
+        // If notes exist but no data for this time slot, this time slot is not marked for this student
+      });
+
+      const isMarked = markedStudents > 0;
       const attendancePercentage = totalStudents > 0 
         ? Math.round((presentStudents / totalStudents) * 100)
         : 0
 
       const result = {
         timetableEntryId,
-        isMarked: session.attendanceRecords.length > 0, // Mark as attended if any records exist
+        isMarked, // Mark as attended if any students have attendance for this time slot
         attendancePercentage,
         totalStudents,
         presentStudents
       }
       
-      console.log(`📊 Returning attendance for ${timetableEntryId.slice(-8)}:`, {
+      console.log(`📊 Returning slot-specific attendance for ${timetableEntryId.slice(-8)}:`, {
         ...result,
+        timeSlotId: timeSlotId?.slice(-8),
+        markedStudents,
         timetableEntryId: result.timetableEntryId.slice(-8)
       });
       
