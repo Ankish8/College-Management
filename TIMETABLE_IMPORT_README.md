@@ -66,11 +66,37 @@ Supports all timetable content:
 
 ```json
 {
-  "type": "SUBJECT",      // Regular classes with faculty
-  "type": "CUSTOM_EVENT", // University activities, clubs, workshops  
-  "type": "HOLIDAY"       // National, university, local holidays
+  "type": "SUBJECT",      // Regular classes with faculty and attendance tracking
+  "type": "CUSTOM_EVENT", // University activities, clubs, workshops, orientations
+  "type": "HOLIDAY"       // National, university, local holidays (full-day events)
 }
 ```
+
+### ✅ Advanced Timetable Management Integration
+After import, the system provides comprehensive timetable management:
+- **Excel-like Interface**: Intuitive grid-based timetable editing
+- **QuickCreatePopup**: Contextual popup for rapid class creation
+- **Conflict Detection**: Real-time faculty/room conflict checking
+- **Auto-save System**: Recent subjects and preferences persistence
+- **Drag Extensions**: Visual drag handles for extending time slots
+- **Multiple View Modes**: Traditional, calendar, workload views
+
+### ✅ Attendance System Integration
+Imported timetable entries automatically integrate with the attendance system:
+- **Attendance Status Indicators**: Visual feedback on timetable cards showing attendance status
+- **Color-coded Badges**: Show attendance counts (e.g., "23/35 students")
+- **"Not Marked" Status**: Clear indicators for classes without attendance data
+- **Heat Map Bars**: Visual attendance percentage with color coding
+- **Direct Navigation**: Quick access to attendance marking from timetable cards
+- **Bulk Attendance Operations**: Efficient bulk marking and management
+
+### ✅ Smart Content Classification
+The system intelligently classifies imported content:
+- **Subject Recognition**: "UI Development", "Design Thinking", "Open Elective"
+- **Custom Event Detection**: "Orientation", "Summer Internship", "Design Hive Club", "University Level Clubs"
+- **Holiday Identification**: "Independence Day", "Ganesh Chaturthi", etc. (automatically creates full-day events)
+- **Faculty Assignment**: Automatic faculty creation and subject assignment
+- **Time Slot Mapping**: Maps Excel time slots to system time slots
 
 ### ✅ Intelligent Data Processing
 - **Automatic Faculty Creation**: Creates faculty accounts if they don't exist
@@ -78,18 +104,21 @@ Supports all timetable content:
 - **Email Generation**: Creates email addresses from faculty names
 - **Duplicate Detection**: Prevents duplicate entries
 - **Date Validation**: Ensures date/day consistency
+- **Content Type Auto-Detection**: Automatically categorizes subjects, events, and holidays
 
 ### ✅ Comprehensive Validation
 - **Schema Validation**: JSON structure and data types
 - **Business Logic**: Department existence, date ranges, conflicts
 - **Warning System**: Non-blocking issues like existing batches
 - **Error Reporting**: Detailed error messages with field references
+- **Content Classification**: Validates proper categorization of subjects vs events vs holidays
 
 ### ✅ Real-time Progress Tracking
 - **Status Monitoring**: Track import progress in real-time
 - **Time Estimation**: Estimated completion times
 - **Result Details**: Created counts, warnings, errors
 - **Failure Recovery**: Detailed error reporting for troubleshooting
+- **Bulk Operation Tracking**: Progress tracking for large imports
 
 ## 📋 Supported Data Formats
 
@@ -156,21 +185,43 @@ node excel-to-json-converter.js your-file.xlsx --batch "Your Batch Name"
 
 ## 📊 Usage Examples
 
-### Example 1: B.Des UX Batch 3
+### Example 1: B.Des UX Batch 5 (Actual Implementation)
 ```bash
-# Convert Excel to JSON
-node excel-to-json-converter.js "Batch3_Timetable.xlsx" \
-  --batch "B.Des UX Batch 3" \
+# Convert actual JLU Excel file to JSON
+node excel-to-json-converter.js "Time Table_Block_ July to December 2025_Odd Sem.xlsx" \
+  --sheet "Sem 5 Bdes UX " \
+  --batch "B.Des UX Batch 5" \
   --department "Design" \
   --semester "ODD" \
-  --output batch3-timetable.json
+  --year 2025 \
+  --output batch5-timetable.json
 
 # Validate and import
-curl -X POST http://localhost:3000/api/timetable/validate -d @batch3-timetable.json
-curl -X POST http://localhost:3000/api/timetable/import -d @batch3-timetable.json
+curl -X POST http://localhost:3000/api/timetable/validate -d @batch5-timetable.json
+curl -X POST http://localhost:3000/api/timetable/import -d @batch5-timetable.json
 ```
 
-### Example 2: Engineering Batch
+### Example 2: Week 1 Data Structure (July 21-25, 2025)
+The system handles diverse content types from the actual Excel data:
+
+**Monday, July 21, 2025**:
+- 9:30-10:30 AM: ORIENTATION (Custom Event)
+- 10:30-11:30 AM: ORIENTATION (Custom Event)  
+- 1:30-2:30 PM: ORIENTATION (Custom Event)
+- Faculty: Madhu Toppo & Sushmita Shahi
+
+**Wednesday, July 23, 2025**:
+- All time slots: SUMMER INTERNSHIP (Custom Event)
+
+**Monday, August 4, 2025**:
+- 9:30-12:30 PM: UI Development (Subject)
+- 1:30-4:30 PM: Design Thinking (Subject)
+- Faculty: Priyal Gautam & Bhawana Jain
+
+**Wednesday, August 27, 2025**:
+- Full day: Ganesh Chaturthi 2025 (Holiday)
+
+### Example 3: Engineering Batch
 ```bash
 # Convert with different parameters
 node excel-to-json-converter.js "CSE_Schedule.xlsx" \
@@ -409,6 +460,18 @@ When reporting issues, include:
 - Expected vs actual behavior
 - Server environment details
 
+## ⚠️ Current Status
+
+**Import API Status**: Currently disabled for build compatibility (returning 503 status)
+- The complete implementation exists but is temporarily commented out
+- Schema validation and business logic are fully implemented
+- Progress tracking and status monitoring are ready
+- Enable by uncommenting the implementation in `/src/app/api/timetable/import/route.ts`
+
+**Excel Converter**: Fully functional and ready to use
+**Validation API**: Available and working
+**Status Tracking API**: Available for monitoring imports
+
 ## 🔄 Version History
 
 - **v1.0.0**: Initial batch-agnostic import system
@@ -416,6 +479,9 @@ When reporting issues, include:
 - **v1.2.0**: Excel conversion utility and testing framework  
 - **v1.3.0**: Enhanced progress tracking and status monitoring
 - **v1.4.0**: Multi-format support and intelligent data processing
+- **v1.5.0**: Added attendance system integration and smart content classification
+- **v1.6.0**: Enhanced with real-world data support (JLU timetable format)
+- **v2.0.0**: Complete integration with advanced timetable management features
 
 ---
 

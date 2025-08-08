@@ -1,0 +1,4163 @@
+{
+  "metadata": {
+    "importId": "bdes-ux-batch-5-2025-08-08-jbdy7m",
+    "createdAt": "2025-08-08T08:26:46.505Z",
+    "description": "Timetable for B.Des UX Batch 5 - Converted from Excel"
+  },
+  "batch": {
+    "name": "B.Des UX Batch 5",
+    "semester": "ODD",
+    "year": 2025,
+    "department": "Design",
+    "specialization": "User Experience Design",
+    "capacity": 30
+  },
+  "dateRange": {
+    "startDate": "2025-07-01",
+    "endDate": "2025-12-31",
+    "description": "Academic semester date range"
+  },
+  "timeSlots": [
+    {
+      "name": "9:30-10:30",
+      "startTime": "09:30",
+      "endTime": "10:30",
+      "duration": 60,
+      "sortOrder": 1
+    },
+    {
+      "name": "10:30-11:30",
+      "startTime": "10:30",
+      "endTime": "11:30",
+      "duration": 60,
+      "sortOrder": 2
+    },
+    {
+      "name": "11:30-12:30",
+      "startTime": "11:30",
+      "endTime": "12:30",
+      "duration": 60,
+      "sortOrder": 3
+    },
+    {
+      "name": "13:30-14:30",
+      "startTime": "13:30",
+      "endTime": "14:30",
+      "duration": 60,
+      "sortOrder": 4
+    },
+    {
+      "name": "14:30-15:30",
+      "startTime": "14:30",
+      "endTime": "15:30",
+      "duration": 60,
+      "sortOrder": 5
+    },
+    {
+      "name": "15:30-16:30",
+      "startTime": "15:30",
+      "endTime": "16:30",
+      "duration": 60,
+      "sortOrder": 6
+    }
+  ],
+  "entries": [
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-21",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-22",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "ORIENTATION",
+      "description": "Custom event: ORIENTATION",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-23",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-24",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-25",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-28",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-29",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-30",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-07-31",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-01",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-04",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-05",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-06",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-07",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-08",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-11",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-12",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-13",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-14",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-18",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-19",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-20",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-21",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-22",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-25",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Priyal Gautam & Bhawana Jain",
+        "email": "priyal.jain@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-26",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "HOLIDAY",
+      "date": "2025-08-27",
+      "name": "Ganesh Chaturthi 2025",
+      "description": "Ganesh Chaturthi 2025",
+      "holidayType": "LOCAL",
+      "isRecurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-28",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-29",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-29",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-08-29",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-08-29",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "Internal ( Design Thinking Application)",
+      "description": "Custom event: Internal ( Design Thinking Application)",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-01",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-02",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-03",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-04",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-05",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-08",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-09",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-10",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-11",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "UI Development",
+        "code": "UIDE301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: UI Devolopment"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "subject": {
+        "name": "Design Thinking",
+        "code": "DETH301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Design Thinking"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-12",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-15",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-15",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-15",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-16",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-16",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-16",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-17",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-17",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-17",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-17",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-17",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "Design Hive Club",
+      "description": "Custom event: Design Hive Club",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-18",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-18",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-18",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-19",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-19",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-19",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-22",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-22",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-22",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-23",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-23",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-23",
+      "dayOfWeek": "TUESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "09:30-10:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "10:30-11:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "SUBJECT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "11:30-12:30",
+      "subject": {
+        "name": "Open Elective",
+        "code": "OPEL301",
+        "credits": 3,
+        "type": "THEORY"
+      },
+      "faculty": {
+        "name": "Unknown",
+        "email": "unknown@jlu.edu.in",
+        "department": "Design"
+      },
+      "recurring": false,
+      "notes": "Original text: Open Elective"
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-24",
+      "dayOfWeek": "WEDNESDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-25",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-25",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-25",
+      "dayOfWeek": "THURSDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-26",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-26",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-26",
+      "dayOfWeek": "FRIDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "University Level Clubs",
+      "description": "Custom event: University Level Clubs",
+      "color": "#3b82f6",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-29",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "13:30-14:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-29",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "14:30-15:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    },
+    {
+      "type": "CUSTOM_EVENT",
+      "date": "2025-09-29",
+      "dayOfWeek": "MONDAY",
+      "timeSlot": "15:30-16:30",
+      "title": "SUMMER INTERNSHIP",
+      "description": "Custom event: SUMMER INTERNSHIP",
+      "color": "#6b7280",
+      "recurring": false
+    }
+  ]
+}

@@ -31,8 +31,19 @@ const LAYOUT_CONFIGS = {
     startRow: 2, // First data row (0-based)
     dateRow: 1,  // Row containing dates (0-based)
   },
+  'JLU_ACTUAL': {
+    name: 'JLU Actual Format',
+    description: 'Actual JLU timetable format from July-December 2025',
+    weekColumn: 0,    // Column A - Week numbers
+    dateColumn: 1,    // Column B - Dates
+    dayColumn: 2,     // Column C - Day names
+    firstTimeSlotColumn: 4, // Column E - First time slot (skip empty column D)
+    timeSlotHeaderRow: 11,  // Row with time slot headers (0-based)
+    dataStartRow: 12, // First data row after headers (0-based)
+    facultyColumn: 12 // Column M - Faculty names
+  },
   'HORIZONTAL': {
-    name: 'Horizontal Layout',
+    name: 'Horizontal Layout', 
     description: 'Time slots as columns, days as rows',
     dayColumn: 'A',
     timeSlotColumns: ['B', 'C', 'D', 'E', 'F'],
@@ -41,41 +52,57 @@ const LAYOUT_CONFIGS = {
   }
 }
 
-// Default time slots for JLU
+// Default time slots for JLU (updated based on actual data)
 const DEFAULT_TIME_SLOTS = [
-  { name: "10:15-11:05", startTime: "10:15", endTime: "11:05", duration: 50, sortOrder: 1 },
-  { name: "11:15-12:05", startTime: "11:15", endTime: "12:05", duration: 50, sortOrder: 2 },
-  { name: "12:15-13:05", startTime: "12:15", endTime: "13:05", duration: 50, sortOrder: 3 },
-  { name: "14:15-15:05", startTime: "14:15", endTime: "15:05", duration: 50, sortOrder: 4 }
+  { name: "9:30-10:30", startTime: "09:30", endTime: "10:30", duration: 60, sortOrder: 1 },
+  { name: "10:30-11:30", startTime: "10:30", endTime: "11:30", duration: 60, sortOrder: 2 },
+  { name: "11:30-12:30", startTime: "11:30", endTime: "12:30", duration: 60, sortOrder: 3 },
+  { name: "13:30-14:30", startTime: "13:30", endTime: "14:30", duration: 60, sortOrder: 4 },
+  { name: "14:30-15:30", startTime: "14:30", endTime: "15:30", duration: 60, sortOrder: 5 },
+  { name: "15:30-16:30", startTime: "15:30", endTime: "16:30", duration: 60, sortOrder: 6 }
 ]
 
-// Subject code patterns for detecting custom events
+// Updated patterns based on actual JLU data
 const CUSTOM_EVENT_PATTERNS = [
-  /university.*level.*club/i,
-  /open.*elective/i,
+  /^orientation$/i,
+  /summer.*internship/i,
   /design.*hive.*club/i,
+  /university.*level.*clubs/i,
   /club.*activity/i,
-  /event/i,
+  /internal.*\(/i, // Internal exams
   /workshop/i,
-  /seminar/i
+  /seminar/i,
+  /event/i
 ]
 
-// Holiday patterns
+// Holiday patterns - updated based on actual data
 const HOLIDAY_PATTERNS = [
-  /holiday/i,
   /independence.*day/i,
+  /ganesh.*chaturthi/i,
   /gandhi.*jayanti/i,
   /diwali/i,
   /holi/i,
   /eid/i,
   /christmas/i,
-  /ganesh.*chaturthi/i
+  /dussehra/i,
+  /durgashtami/i,
+  /navratri/i
+]
+
+// Subject patterns - to identify actual subjects
+const SUBJECT_PATTERNS = [
+  /ui.*dev/i,           // UI Development  
+  /design.*thinking/i,  // Design Thinking
+  /visual.*design/i,    // Visual Design
+  /semiotics/i,         // Semiotics
+  /ux.*design/i,        // UX Design
+  /open.*elective/i     // Open Elective (could be subject or event)
 ]
 
 class ExcelToJsonConverter {
   constructor(options = {}) {
     this.options = {
-      layout: 'JLU_STANDARD',
+      layout: 'JLU_ACTUAL', // Updated to use actual format
       defaultDepartment: 'Design',
       defaultSemester: 'ODD',
       defaultYear: new Date().getFullYear(),
@@ -91,17 +118,36 @@ class ExcelToJsonConverter {
   /**
    * Convert Excel file to JSON format
    */
-  async convertExcelToJson(excelPath, batchName, dateRange = null) {
+  async convertExcelToJson(excelPath, batchName, dateRange = null, sheetName = null) {
     try {
       console.log(`📊 Converting Excel file: ${excelPath}`)
       console.log(`🎓 Batch: ${batchName}`)
       
       // Read Excel file
       const workbook = XLSX.readFile(excelPath)
-      const sheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[sheetName]
       
-      console.log(`📋 Processing sheet: ${sheetName}`)
+      // Find the correct sheet based on batch name or use specified sheet
+      let targetSheet = sheetName
+      if (!targetSheet) {
+        // Auto-detect sheet based on batch name
+        if (batchName.includes('Batch 5') || batchName.includes('B.Des UX')) {
+          targetSheet = workbook.SheetNames.find(name => 
+            name.toLowerCase().includes('sem 5') && 
+            name.toLowerCase().includes('bdes') && 
+            name.toLowerCase().includes('ux')
+          )
+        }
+        
+        // Fallback to first sheet if no match
+        if (!targetSheet) {
+          targetSheet = workbook.SheetNames[0]
+        }
+      }
+      
+      const worksheet = workbook.Sheets[targetSheet]
+      
+      console.log(`📋 Available sheets: ${workbook.SheetNames.join(', ')}`)
+      console.log(`📋 Processing sheet: ${targetSheet}`)
       
       // Convert to JSON with intelligent parsing
       const jsonData = this.parseWorksheet(worksheet, batchName, dateRange)
@@ -146,10 +192,16 @@ class ExcelToJsonConverter {
       entries: []
     }
 
+    
     if (config.name === 'JLU Standard Layout') {
       this.parseJLUStandardLayout(worksheet, jsonData, range)
+    } else if (config.name === 'JLU Actual Format') {
+      this.parseJLUActualFormat(worksheet, jsonData, range)
     } else if (config.name === 'Horizontal Layout') {
       this.parseHorizontalLayout(worksheet, jsonData, range)
+    } else {
+      console.log('⚠️  Unknown layout, using JLU Actual Format as fallback')
+      this.parseJLUActualFormat(worksheet, jsonData, range)
     }
 
     return jsonData
@@ -190,6 +242,153 @@ class ExcelToJsonConverter {
         }
       })
     }
+  }
+
+  /**
+   * Parse JLU Actual Format (vertical layout with dates in rows)
+   */
+  parseJLUActualFormat(worksheet, jsonData, range) {
+    const config = this.layoutConfig
+    
+    // Extract time slot headers from the header row
+    const timeSlotHeaders = []
+    
+    for (let col = config.firstTimeSlotColumn; col <= config.facultyColumn - 1; col++) {
+      const cellAddress = XLSX.utils.encode_cell({r: config.timeSlotHeaderRow, c: col})
+      const headerCell = worksheet[cellAddress]
+      
+      if (headerCell && headerCell.v) {
+        const headerValue = headerCell.v.toString().trim()
+        // Skip lunch break and empty columns
+        if (headerValue && 
+            !headerValue.toLowerCase().includes('lunch') && 
+            !headerValue.toLowerCase().includes('break') &&
+            headerValue !== 'Faculty Name') {
+          const timeSlot = this.normalizeTimeSlot(headerValue)
+          if (timeSlot && timeSlot !== headerValue) { // Only accept if it was successfully parsed
+            timeSlotHeaders.push({ column: col, timeSlot })
+          }
+        }
+      }
+    }
+    
+    console.log(`📅 Found ${timeSlotHeaders.length} time slots:`, timeSlotHeaders.map(h => h.timeSlot))
+    
+    // Process each data row
+    let processedRows = 0
+    for (let row = config.dataStartRow; row <= Math.min(config.dataStartRow + 50, range.e.r); row++) { // Limit to first 50 rows for testing
+      // Get basic info for this row
+      const dateCell = worksheet[XLSX.utils.encode_cell({r: row, c: config.dateColumn})]
+      const dayCell = worksheet[XLSX.utils.encode_cell({r: row, c: config.dayColumn})]
+      const facultyCell = worksheet[XLSX.utils.encode_cell({r: row, c: config.facultyColumn})]
+      
+      
+      if (!dateCell || !dayCell) continue
+      
+      const dateStr = dateCell.v ? dateCell.v.toString().trim() : ''
+      const dayOfWeek = this.normalizeDayOfWeek(dayCell.v ? dayCell.v.toString().trim() : '')
+      const facultyName = facultyCell && facultyCell.v ? facultyCell.v.toString().trim() : ''
+      
+      if (!dateStr || !dayOfWeek) continue
+      
+      const date = this.parseDate(dateStr)
+      if (!date) continue
+      
+      processedRows++
+      
+      // Check if this is a full-day holiday (special case)
+      if (timeSlotHeaders.length > 0) {
+        const firstSlotCell = worksheet[XLSX.utils.encode_cell({r: row, c: timeSlotHeaders[0].column})]
+        if (firstSlotCell && firstSlotCell.v) {
+          const firstCellValue = firstSlotCell.v.toString().trim()
+          if (this.isFullDayHoliday(firstCellValue)) {
+            // Create a full-day holiday entry
+            jsonData.entries.push({
+              type: 'HOLIDAY',
+              date: this.formatDate(date),
+              name: this.extractHolidayName(firstCellValue),
+              description: firstCellValue,
+              holidayType: this.detectHolidayType(firstCellValue),
+              isRecurring: false
+            })
+            continue
+          }
+        }
+      }
+      
+      // Process each time slot for this day
+      timeSlotHeaders.forEach(({ column, timeSlot }) => {
+        const cell = worksheet[XLSX.utils.encode_cell({r: row, c: column})]
+        if (cell && cell.v) {
+          const cellValue = cell.v.toString().trim()
+          if (cellValue) {
+            const entry = this.parseCellValueActual(cellValue, date, dayOfWeek, timeSlot, facultyName)
+            if (entry) {
+              jsonData.entries.push(entry)
+            }
+          }
+        }
+      })
+    }
+  }
+
+  /**
+   * Parse cell value for JLU Actual format
+   */
+  parseCellValueActual(cellValue, date, dayOfWeek, timeSlot, facultyName) {
+    // Check if it's a holiday (should be handled at row level)
+    if (this.isHoliday(cellValue)) {
+      return {
+        type: 'HOLIDAY',
+        date: this.formatDate(date),
+        name: this.extractHolidayName(cellValue),
+        description: cellValue,
+        holidayType: this.detectHolidayType(cellValue),
+        isRecurring: false
+      }
+    }
+    
+    // Check if it's a custom event
+    if (this.isCustomEvent(cellValue)) {
+      return {
+        type: 'CUSTOM_EVENT',
+        date: this.formatDate(date),
+        dayOfWeek,
+        timeSlot,
+        title: cellValue,
+        description: `Custom event: ${cellValue}`,
+        color: this.assignEventColor(cellValue),
+        recurring: false
+      }
+    }
+    
+    // Check if it's a subject
+    if (this.isSubject(cellValue)) {
+      const subjectName = this.extractSubjectName(cellValue)
+      const facultyEmail = this.generateFacultyEmail(facultyName || 'Unknown')
+      
+      return {
+        type: 'SUBJECT',
+        date: this.formatDate(date),
+        dayOfWeek,
+        timeSlot,
+        subject: {
+          name: subjectName,
+          code: this.generateSubjectCode(subjectName),
+          credits: 3, // Default credits
+          type: 'THEORY'
+        },
+        faculty: {
+          name: facultyName || 'Unknown',
+          email: facultyEmail,
+          department: this.options.defaultDepartment
+        },
+        recurring: false,
+        notes: `Original text: ${cellValue}`
+      }
+    }
+    
+    return null
   }
 
   /**
@@ -261,6 +460,137 @@ class ExcelToJsonConverter {
    */
   isCustomEvent(cellValue) {
     return CUSTOM_EVENT_PATTERNS.some(pattern => pattern.test(cellValue))
+  }
+
+  /**
+   * Check if cell value represents a subject
+   */
+  isSubject(cellValue) {
+    return SUBJECT_PATTERNS.some(pattern => pattern.test(cellValue))
+  }
+
+  /**
+   * Check if cell value represents a full-day holiday
+   */
+  isFullDayHoliday(cellValue) {
+    return HOLIDAY_PATTERNS.some(pattern => pattern.test(cellValue))
+  }
+
+  /**
+   * Extract subject name from cell value
+   */
+  extractSubjectName(cellValue) {
+    // Clean up common variations
+    return cellValue.replace(/devolopment/i, 'Development')
+                   .replace(/^ui\s*/i, 'UI ')
+                   .replace(/\s+/g, ' ')
+                   .trim()
+  }
+
+  /**
+   * Normalize time slot format
+   */
+  normalizeTimeSlot(timeSlotStr) {
+    // Handle various formats: "9:30 AM - 10:30 AM", "1:30 PM - 2:30 ", "3: 30 PM  to 4:30PM"
+    const cleanStr = timeSlotStr.replace(/\s+/g, ' ').trim()
+    const match = cleanStr.match(/(\d{1,2}):?\s*(\d{2})\s*(AM|PM)?\s*(?:to|[-–])\s*(\d{1,2}):?\s*(\d{2})\s*(AM|PM)?/i)
+    
+    if (match) {
+      let startHour = parseInt(match[1])
+      let startMin = match[2]
+      let endHour = parseInt(match[4])
+      let endMin = match[5]
+      
+      // Convert to 24-hour format if needed
+      if (match[3] && match[3].toUpperCase() === 'PM' && startHour !== 12) {
+        startHour += 12
+      }
+      if (match[6] && match[6].toUpperCase() === 'PM' && endHour !== 12) {
+        endHour += 12
+      }
+      
+      // Handle AM/PM when start time doesn't have it but end time does 
+      if (!match[3] && match[6] && match[6].toUpperCase() === 'PM' && startHour < 12 && startHour >= 1) {
+        startHour += 12
+      }
+      
+      // Handle when end time doesn't have AM/PM but should be PM (common in afternoon slots)
+      if (!match[6] && match[3] && match[3].toUpperCase() === 'PM' && endHour < startHour && endHour < 12) {
+        endHour += 12
+      }
+      
+      return `${startHour.toString().padStart(2, '0')}:${startMin}-${endHour.toString().padStart(2, '0')}:${endMin}`
+    }
+    
+    return timeSlotStr // Return as-is if no match
+  }
+
+  /**
+   * Normalize day of week
+   */
+  normalizeDayOfWeek(dayStr) {
+    const dayMap = {
+      'monday': 'MONDAY',
+      'tuesday': 'TUESDAY', 
+      'wednesday': 'WEDNESDAY',
+      'thursday': 'THURSDAY',
+      'friday': 'FRIDAY',
+      'saturday': 'SATURDAY',
+      'sunday': 'SUNDAY'
+    }
+    
+    return dayMap[dayStr.toLowerCase()] || dayStr.toUpperCase()
+  }
+
+  /**
+   * Parse date from various formats
+   */
+  parseDate(dateStr) {
+    // Handle Excel serial number (like 45859)
+    if (/^\d{5}$/.test(dateStr)) {
+      // Excel serial number (days since 1900-01-01, with a leap year bug)
+      const excelEpoch = new Date(1900, 0, 1) // January 1, 1900
+      const serialNumber = parseInt(dateStr)
+      // Excel incorrectly treats 1900 as a leap year, so subtract 2 days for dates after Feb 28, 1900
+      const days = serialNumber > 59 ? serialNumber - 2 : serialNumber - 1
+      const date = new Date(excelEpoch)
+      date.setDate(date.getDate() + days)
+      return date
+    }
+    
+    // Handle formats like "21 Jul 2025", "22-Jul-2025", "23/07/2025"
+    const formats = [
+      /(\d{1,2})\s+(\w{3})\s+(\d{4})/,     // "21 Jul 2025"
+      /(\d{1,2})-(\w{3})-(\d{4})/,         // "22-Jul-2025"
+      /(\d{1,2})\/(\d{1,2})\/(\d{4})/      // "23/07/2025"
+    ]
+    
+    const monthMap = {
+      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+      'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+      'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    }
+    
+    for (const format of formats) {
+      const match = dateStr.match(format)
+      if (match) {
+        let day = match[1].padStart(2, '0')
+        let month = match[2]
+        let year = match[3]
+        
+        if (month.length === 3) {
+          // Convert month name to number
+          month = monthMap[month.toLowerCase()] || month
+        } else if (month.length <= 2) {
+          // Pad month number
+          month = month.padStart(2, '0')
+        }
+        
+        return new Date(`${year}-${month}-${day}`)
+      }
+    }
+    
+    return null
   }
 
   /**
@@ -647,10 +977,12 @@ Examples:
   const outputFile = args.includes('--output') ? args[args.indexOf('--output') + 1] : 
                     `${path.parse(inputFile).name}-converted.json`
   
+  const sheetName = args.includes('--sheet') ? args[args.indexOf('--sheet') + 1] : null
+  
   // Convert Excel to JSON
   const converter = new ExcelToJsonConverter(options)
   
-  converter.convertExcelToJson(inputFile, batchName)
+  converter.convertExcelToJson(inputFile, batchName, null, sheetName)
     .then(jsonData => {
       // Write output file
       fs.writeFileSync(outputFile, JSON.stringify(jsonData, null, 2))

@@ -96,13 +96,6 @@ if (!global.importStatus) {
 }
 
 export async function POST(request: NextRequest) {
-  // Temporarily disabled due to schema issues - focusing on attendance functionality
-  return NextResponse.json({ 
-    success: false, 
-    error: 'Import functionality temporarily disabled for build compatibility' 
-  }, { status: 503 })
-  
-  /* TODO: Fix schema issues and re-enable
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -195,7 +188,7 @@ async function processImport(data: TimetableImportData, userId: string) {
       updatedAt: new Date()
     })
 
-    // 1. Find or create department
+    // 1. Find department
     const department = await db.department.findFirst({
       where: { name: { contains: data.batch.department } }
     })
@@ -204,13 +197,36 @@ async function processImport(data: TimetableImportData, userId: string) {
       throw new Error(`Department '${data.batch.department}' not found. Please create the department first.`)
     }
 
-    // 2. Find or create specialization
+    // 2. Find or create program (assuming Design department has a B.Des program)
+    let program = await db.program.findFirst({
+      where: { 
+        departmentId: department.id,
+        name: { contains: "B.Des" }
+      }
+    })
+
+    if (!program) {
+      program = await db.program.create({
+        data: {
+          name: "Bachelor of Design",
+          shortName: "B.Des",
+          duration: 4,
+          totalSems: 8,
+          programType: "UNDERGRADUATE",
+          departmentId: department.id,
+          isActive: true
+        }
+      })
+      results.warnings.push(`Created new program: Bachelor of Design`)
+    }
+
+    // 3. Find or create specialization
     let specialization = null
     if (data.batch.specialization) {
       specialization = await db.specialization.findFirst({
         where: { 
-          name: { contains: data.batch.specialization }
-          // departmentId: department.id // Commented out due to schema mismatch
+          name: { contains: data.batch.specialization },
+          programId: program.id
         }
       })
 
@@ -218,8 +234,8 @@ async function processImport(data: TimetableImportData, userId: string) {
         specialization = await db.specialization.create({
           data: {
             name: data.batch.specialization,
-            code: data.batch.specialization.substring(0, 10).toUpperCase(),
-            departmentId: department.id,
+            shortName: data.batch.specialization.substring(0, 10).toUpperCase(),
+            programId: program.id,
             isActive: true
           }
         })
@@ -235,20 +251,26 @@ async function processImport(data: TimetableImportData, userId: string) {
       updatedAt: new Date()
     })
 
-    // 3. Find or create batch
+    // 4. Find or create batch
     let batch = await db.batch.findFirst({
       where: { name: data.batch.name }
     })
 
     if (!batch) {
+      const startYear = data.batch.year
+      const endYear = data.batch.year + 4 // B.Des is typically 4 years
+      
       batch = await db.batch.create({
         data: {
           name: data.batch.name,
-          semester: data.batch.semester,
-          year: data.batch.year,
-          capacity: data.batch.capacity || 30,
-          departmentId: department.id,
+          programId: program.id,
           specializationId: specialization?.id,
+          semester: parseInt(data.batch.semester === "ODD" ? "1" : "2"), // Convert to semester number
+          startYear: startYear,
+          endYear: endYear,
+          maxCapacity: data.batch.capacity || 30,
+          currentStrength: 0,
+          semType: data.batch.semester,
           isActive: true
         }
       })
@@ -341,8 +363,10 @@ async function processImport(data: TimetableImportData, userId: string) {
                 name: entry.subject.name,
                 code: entry.subject.code,
                 credits: entry.subject.credits,
-                type: entry.subject.type,
-                departmentId: department.id,
+                totalHours: entry.subject.credits * 15, // Assuming 15 hours per credit
+                batchId: batch.id,
+                examType: entry.subject.type,
+                subjectType: "CORE",
                 isActive: true
               }
             })
@@ -373,10 +397,10 @@ async function processImport(data: TimetableImportData, userId: string) {
           facultyId = faculty.id
 
           // Update subject with faculty if not assigned
-          if (!subject.facultyId) {
+          if (!subject.primaryFacultyId) {
             await db.subject.update({
               where: { id: subject.id },
-              data: { facultyId: faculty.id }
+              data: { primaryFacultyId: faculty.id }
             })
           }
         }
@@ -460,7 +484,7 @@ async function processImport(data: TimetableImportData, userId: string) {
       updatedAt: new Date()
     })
     throw error
-  } */
+  }
 }
 
 export async function GET(request: NextRequest) {
