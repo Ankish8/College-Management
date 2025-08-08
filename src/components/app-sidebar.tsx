@@ -347,9 +347,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled title="Coming Soon">
-                  <User2 className="mr-2 h-4 w-4" />
-                  Profile
+                <DropdownMenuItem asChild>
+                  <PrefetchLink href="/profile">
+                    <User2 className="mr-2 h-4 w-4" />
+                    Profile
+                  </PrefetchLink>
                 </DropdownMenuItem>
                 {isAdmin(user as any) && (
                   <DropdownMenuItem asChild>

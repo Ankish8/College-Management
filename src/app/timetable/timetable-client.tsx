@@ -1183,6 +1183,7 @@ export default function TimetableClient() {
             initialDate={selectedDate}
             batchId={selectedBatchId}
             filters={filters}
+            session={session}
             onFiltersChange={handleFiltersChange}
             onEventClick={handleEventClick}
             onEventEdit={handleEventEdit}

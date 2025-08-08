@@ -101,6 +101,7 @@ model User {
   name               String?
   phone              String?
   employeeId         String?                @unique
+  password           String?                // For storing hashed passwords
   role               String                 @default("STUDENT")
   departmentId       String?
   status             String                 @default("ACTIVE")

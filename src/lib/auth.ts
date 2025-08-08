@@ -1,5 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { NextAuthOptions } from "next-auth"
+import bcrypt from "bcryptjs"
 // Define types for string-based enums in the database
 export type Role = 'ADMIN' | 'FACULTY' | 'STUDENT'
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
@@ -28,6 +29,14 @@ export const authOptions: NextAuthOptions = {
           const user = await db.user.findUnique({
             where: {
               email: credentials.email as string
+            },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              password: true,
+              status: true
             }
           })
 
@@ -41,10 +50,28 @@ export const authOptions: NextAuthOptions = {
 
           console.log("User found:", user.email, user.role)
 
-          // For development, we'll create a simple password check
-          // In production, you should hash passwords properly
-          const isPasswordValid = credentials.password === "password123" || 
-            (user.email === "admin@jlu.edu.in" && credentials.password === "admin123")
+          // Production password check
+          let isPasswordValid = false
+          
+          // Check if user has a hashed password stored
+          if (user.password) {
+            // User has changed their password, check against the hash
+            isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          } else {
+            // Use default passwords
+            // Admin account
+            if (user.email === "admin@jlu.edu.in") {
+              isPasswordValid = credentials.password === "JLU@2025admin"
+            }
+            // Faculty accounts
+            else if (user.role === "FACULTY") {
+              isPasswordValid = credentials.password === "JLU@2025faculty"
+            }
+            // Development fallback
+            else {
+              isPasswordValid = credentials.password === "password123"
+            }
+          }
 
           console.log("Password valid:", isPasswordValid, "Password provided:", credentials.password)
 

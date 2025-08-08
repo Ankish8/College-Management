@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,69 +39,63 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-normal text-gray-900">
             JLU College Management
-          </CardTitle>
-          <CardDescription className="text-center">
-            Sign in to access the attendance system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                {error}
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
+          </h1>
+          <p className="text-sm text-gray-500 mt-2">
+            Sign in to continue
+          </p>
+        </div>
 
-          {/* Development credentials info */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">Development Access:</h4>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Admin:</strong> admin@jlu.edu.in / admin123</p>
-              <p><strong>Faculty:</strong> ankish.khatri@jlu.edu.in / password123</p>
-              <p><strong>Any User:</strong> any@email.com / password123</p>
-              <p><em>Note: Create users in database for proper testing</em></p>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="text-sm text-red-600 text-center">
+              {error}
             </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-normal text-gray-700">
+              Email
+            </Label>
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="name@jlu.edu.in"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border-gray-300 focus:border-gray-400 focus:ring-0"
+              required
+            />
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-normal text-gray-700">
+              Password
+            </Label>
+            <Input 
+              id="password" 
+              type="password" 
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border-gray-300 focus:border-gray-400 focus:ring-0"
+              required
+            />
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-normal"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }

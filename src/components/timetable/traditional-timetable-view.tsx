@@ -35,6 +35,7 @@ interface TraditionalTimetableViewProps {
   date: Date
   events: CalendarEvent[]
   batchId?: string
+  session?: any
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
   onQuickCreate?: (data: {
@@ -96,6 +97,7 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
   date,
   events,
   batchId,
+  session,
   onEventClick,
   onEventCreate,
   onQuickCreate,
@@ -594,16 +596,21 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             </div>
 
             {/* Right side: Mark Attendance Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleMarkAttendance(e)
-              }}
-              className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
-              title="Mark Attendance"
-            >
-              Mark Attendance
-            </button>
+            {/* Only show for admin or faculty teaching this subject */}
+            {(session?.user?.role === 'ADMIN' || 
+              (session?.user?.role === 'FACULTY' && 
+               event.extendedProps?.facultyId === session?.user?.id)) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleMarkAttendance(e)
+                }}
+                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                title="Mark Attendance"
+              >
+                Mark Attendance
+              </button>
+            )}
           </div>
           
           {/* Heat map bar at bottom */}
