@@ -99,7 +99,7 @@ export function PredictionSummaryPanel({
           </Button>
           
           <div className="text-xs text-muted-foreground">
-            Space: Confirm focused • Click: Manual override
+            Space: Present • Alt: Absent • Click: Manual override
           </div>
         </div>
 

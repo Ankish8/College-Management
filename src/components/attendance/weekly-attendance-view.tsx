@@ -187,7 +187,7 @@ function DayAttendanceCell({
       onClick={handleCellClick}
       onKeyDown={handleKeyPress}
       data-cell-position={`${studentIndex}-${dayIndex}`}
-      title={`Click to focus. Use arrow keys to navigate. Space=Toggle P/A, P=Present, A=Absent, M=Medical`}
+      title={`Click to focus. Use arrow keys to navigate. Space=Toggle P/A, Alt=Absent, P=Present, A=Absent, M=Medical`}
     >
       {getStatusBadge(dayData.overallStatus)}
       

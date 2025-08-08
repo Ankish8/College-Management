@@ -17,6 +17,7 @@ import { CheckCircle, XCircle, Heart, Check, X } from "lucide-react"
 import { StudentAvatar } from "./student-avatar"
 import { AttendanceStatusButton } from "./attendance-status-button"
 import { AttendanceHistory } from "./attendance-history"
+import { KeyboardHint } from "./keyboard-hint"
 import type { AttendanceMode } from "./attendance-mode-toggle"
 import type { Student, Session, AttendanceStatus, AttendancePrediction, PredictionSummary } from "@/types/attendance"
 
@@ -206,29 +207,13 @@ export function AttendanceTable({
           }
         }
         break
-      case 'Shift':
+      case 'Alt':
         event.preventDefault()
         if (focusedCell) {
           const student = displayStudents[focusedCell.studentIndex]
           const isFullDay = focusedCell.sessionIndex === sessions.length
           
-          // Shift marks as absent
-          if (isFullDay) {
-            handleFullDayAttendance(student.id, 'absent')
-          } else {
-            const session = sessions[focusedCell.sessionIndex]
-            onAttendanceChange(student.id, session.id, 'absent')
-          }
-        }
-        break
-      case 'Control':
-      case 'Meta': // Command key on Mac
-        event.preventDefault()
-        if (focusedCell) {
-          const student = displayStudents[focusedCell.studentIndex]
-          const isFullDay = focusedCell.sessionIndex === sessions.length
-          
-          // Control/Command marks as absent (alternative)
+          // Alt marks as absent
           if (isFullDay) {
             handleFullDayAttendance(student.id, 'absent')
           } else {
@@ -448,21 +433,24 @@ export function AttendanceTable({
                   const prediction = getPrediction(student.id, session.id)
                   
                   const handleCellClick = (e: React.MouseEvent) => {
-                    // Only handle cell clicks in fast mode or predictive mode
-                    if (isInFastMode || isInPredictiveMode) {
-                      setFocusedCell({ studentIndex, sessionIndex })
-                      
-                      if (isInFastMode) {
-                        const currentStatus = attendanceData[student.id]?.[session.id]
-                        const newStatus = currentStatus === 'present' ? 'absent' : 'present'
-                        onAttendanceChange(student.id, session.id, newStatus)
-                      } else if (isInPredictiveMode && prediction && onPredictionConfirm) {
-                        onPredictionConfirm(student.id, session.id, prediction)
-                      }
+                    // Prevent event bubbling if clicking on the status button itself
+                    if ((e.target as HTMLElement).closest('.attendance-status-button')) {
+                      return
+                    }
+                    
+                    setFocusedCell({ studentIndex, sessionIndex })
+                    
+                    if (isInFastMode) {
+                      const currentStatus = attendanceData[student.id]?.[session.id]
+                      const newStatus = currentStatus === 'present' ? 'absent' : 'present'
+                      onAttendanceChange(student.id, session.id, newStatus)
+                    } else if (isInPredictiveMode && prediction && onPredictionConfirm) {
+                      onPredictionConfirm(student.id, session.id, prediction)
                     } else {
-                      // In regular mode, just focus the cell but don't handle status changes
-                      // Let the AttendanceStatusButton handle the clicks
-                      setFocusedCell({ studentIndex, sessionIndex })
+                      // In detailed mode, toggle attendance when clicking anywhere on the cell
+                      const currentStatus = attendanceData[student.id]?.[session.id]
+                      const newStatus = currentStatus === 'present' ? 'absent' : 'present'
+                      onAttendanceChange(student.id, session.id, newStatus)
                     }
                   }
                   
@@ -476,7 +464,7 @@ export function AttendanceTable({
                       onClick={handleCellClick}
                       data-cell-id={`${studentIndex}-${sessionIndex}`}
                     >
-                      <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center gap-1 relative">
                         <AttendanceStatusButton
                           status={attendanceData[student.id]?.[session.id] || null}
                           onStatusChange={(status) => onAttendanceChange(student.id, session.id, status)}
@@ -511,27 +499,30 @@ export function AttendanceTable({
                   } : null
                   
                   const handleCellClick = (e: React.MouseEvent) => {
-                    // Only handle cell clicks in fast mode or predictive mode
-                    if (isInFastMode || isInPredictiveMode) {
-                      setFocusedCell({ studentIndex, sessionIndex })
-                      
-                      if (isInFastMode) {
-                        const currentStatus = attendanceData[student.id]?.['full-day']
-                        const newStatus = currentStatus === 'present' ? 'absent' : 'present'
-                        handleFullDayAttendance(student.id, newStatus)
-                      } else if (isInPredictiveMode && fullDayPrediction) {
-                        // In predictive mode, confirm all session predictions
-                        sessions.forEach(session => {
-                          const prediction = getPrediction(student.id, session.id)
-                          if (prediction && onPredictionConfirm) {
-                            onPredictionConfirm(student.id, session.id, prediction)
-                          }
-                        })
-                      }
+                    // Prevent event bubbling if clicking on the status button itself
+                    if ((e.target as HTMLElement).closest('.attendance-status-button')) {
+                      return
+                    }
+                    
+                    setFocusedCell({ studentIndex, sessionIndex })
+                    
+                    if (isInFastMode) {
+                      const currentStatus = attendanceData[student.id]?.['full-day']
+                      const newStatus = currentStatus === 'present' ? 'absent' : 'present'
+                      handleFullDayAttendance(student.id, newStatus)
+                    } else if (isInPredictiveMode && fullDayPrediction) {
+                      // In predictive mode, confirm all session predictions
+                      sessions.forEach(session => {
+                        const prediction = getPrediction(student.id, session.id)
+                        if (prediction && onPredictionConfirm) {
+                          onPredictionConfirm(student.id, session.id, prediction)
+                        }
+                      })
                     } else {
-                      // In regular mode, just focus the cell but don't handle status changes
-                      // Let the AttendanceStatusButton handle the clicks
-                      setFocusedCell({ studentIndex, sessionIndex })
+                      // In detailed mode, toggle full-day attendance when clicking anywhere on the cell
+                      const currentStatus = attendanceData[student.id]?.['full-day']
+                      const newStatus = currentStatus === 'present' ? 'absent' : 'present'
+                      handleFullDayAttendance(student.id, newStatus)
                     }
                   }
                   
@@ -544,7 +535,7 @@ export function AttendanceTable({
                       onClick={handleCellClick}
                       data-cell-id={`${studentIndex}-${sessionIndex}`}
                     >
-                      <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center gap-1 relative">
                         <AttendanceStatusButton
                           status={attendanceData[student.id]?.['full-day'] || null}
                           onStatusChange={(status) => handleFullDayAttendance(student.id, status)}
@@ -574,6 +565,8 @@ export function AttendanceTable({
           </TableBody>
         </Table>
       </div>
+      
+      <KeyboardHint isVisible={attendanceMode === 'detailed'} />
     </Card>
   )
 }

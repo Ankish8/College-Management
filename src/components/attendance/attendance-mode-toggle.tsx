@@ -17,7 +17,8 @@ export function AttendanceModeToggle({ mode, onModeChange }: AttendanceModeToggl
       <div className="flex items-center gap-4">
         <div className="text-xs text-muted-foreground flex items-center gap-3">
           <span>Navigate: ↑↓←→</span>
-          <span>Mark: Space</span>
+          <span>Present: Space</span>
+          <span>Absent: Alt</span>
           {mode === 'detailed' ? (
             <span>Medical: Right-click or M</span>
           ) : mode === 'fast' ? (

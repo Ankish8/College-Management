@@ -111,12 +111,12 @@ export function AttendanceStatusButton({
       <ContextMenu>
         <ContextMenuTrigger>
           <div
-            className={getButtonStyle()}
+            className={`${getButtonStyle()} attendance-status-button`}
             onClick={handleClick}
             title={
               status 
-                ? `${getStatusLabel()} - Single click: Present, Double click: Absent, Right click: Medical`
-                : "Single click: Present, Double click: Absent, Right click: Medical"
+                ? `${getStatusLabel()} - Click cell or Space: Present, Alt: Absent, Right click: Medical`
+                : "Click cell or Space: Present, Alt: Absent, Right click: Medical"
             }
           >
             {getButtonContent()}
