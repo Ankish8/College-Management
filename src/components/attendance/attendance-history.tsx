@@ -75,21 +75,27 @@ export function AttendanceHistory({
   // Calculate stats only for days with classes that have been marked
   const daysWithClasses = weekDates.filter(d => d.attendance)
   const markedDays = daysWithClasses.filter(d => d.attendance?.status !== 'unmarked')
-  const presentCount = markedDays.filter(d => 
-    d.attendance?.status === 'present' || d.attendance?.status === 'medical'
-  ).length
+  const presentCount = markedDays.filter(d => {
+    const status = d.attendance?.status?.toLowerCase()
+    return status === 'present' || status === 'medical' || status === 'excused'
+  }).length
   const totalDays = markedDays.length // Only count marked days for percentage
   const percentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
 
   const getDotColor = (attendance?: AttendanceRecord) => {
     if (!attendance) return 'bg-gray-200' // Grey for no class scheduled
-    switch (attendance.status) {
+    
+    // Convert to lowercase for case-insensitive comparison
+    const status = attendance.status?.toLowerCase()
+    
+    switch (status) {
       case 'present':
         return 'bg-green-500' // Green for present
       case 'absent':
         return 'bg-red-500' // Red for absent
       case 'medical':
-        return 'bg-blue-500' // Blue for medical leave
+      case 'excused':
+        return 'bg-blue-500' // Blue for medical leave or excused
       case 'unmarked':
         return 'bg-yellow-300' // Light yellow for class scheduled but attendance not marked
       default:
