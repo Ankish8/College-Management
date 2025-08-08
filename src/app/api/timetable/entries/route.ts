@@ -591,6 +591,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for existing entries with the same unique constraint before creating
+    const existingEntry = await db.timetableEntry.findFirst({
+      where: {
+        batchId: validatedData.batchId,
+        timeSlotId: validatedData.timeSlotId,
+        dayOfWeek: validatedData.dayOfWeek,
+        date: validatedData.date ? new Date(validatedData.date) : null,
+      },
+    })
+
+    if (existingEntry) {
+      console.log('🚨 Found existing entry:', {
+        id: existingEntry.id,
+        batchId: existingEntry.batchId,
+        timeSlotId: existingEntry.timeSlotId,
+        dayOfWeek: existingEntry.dayOfWeek,
+        date: existingEntry.date,
+        isActive: existingEntry.isActive,
+        customEventTitle: existingEntry.customEventTitle
+      })
+      return NextResponse.json(
+        { 
+          error: "A timetable entry already exists for this time slot",
+          details: {
+            existingEntryId: existingEntry.id,
+            batch: validatedData.batchId,
+            timeSlot: validatedData.timeSlotId,
+            dayOfWeek: validatedData.dayOfWeek,
+            date: validatedData.date
+          }
+        },
+        { status: 409 }
+      )
+    }
+
     // Create the timetable entry
     const entry = await db.timetableEntry.create({
       data: {
@@ -604,7 +639,7 @@ export async function POST(request: NextRequest) {
         notes: validatedData.notes,
         // Custom event fields
         customEventTitle: validatedData.customEventTitle || null,
-        customEventColor: validatedData.customEventColor || null,
+        customEventColor: validatedData.customEventColor || null
       },
       include: {
         batch: {
@@ -645,6 +680,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid input", details: error.issues },
         { status: 400 }
+      )
+    }
+
+    // Handle Prisma unique constraint errors
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      console.error("Prisma unique constraint error:", error)
+      return NextResponse.json(
+        { 
+          error: "A timetable entry already exists for this time slot",
+          details: "Unique constraint violation on batchId, timeSlotId, dayOfWeek, date"
+        },
+        { status: 409 }
       )
     }
 

@@ -246,16 +246,18 @@ export function CalendarWeekView({
               )}
             </div>
 
-            {/* Mark Attendance Button Row */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleMarkAttendance}
-                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
-                title="Mark Attendance"
-              >
-                Mark Attendance
-              </button>
-            </div>
+            {/* Mark Attendance Button Row - only for regular classes */}
+            {event.extendedProps?.type !== 'custom' && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleMarkAttendance}
+                  className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer"
+                  title="Mark Attendance"
+                >
+                  Mark Attendance
+                </button>
+              </div>
+            )}
 
             {/* Heat map bar at bottom */}
             {event.extendedProps?.attendance?.isMarked && (

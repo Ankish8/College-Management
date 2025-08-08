@@ -125,7 +125,16 @@ export default function ProfilePage() {
       })
     } catch (error) {
       console.error('Error changing password:', error)
-      toast.error((error as Error).message || 'Failed to change password')
+      const errorMessage = (error as Error).message || 'Failed to change password'
+      toast.error(errorMessage)
+      
+      // Log additional error details for debugging
+      if (error instanceof Error) {
+        console.error('Full error details:', {
+          message: error.message,
+          stack: error.stack
+        })
+      }
     } finally {
       setIsSaving(false)
     }

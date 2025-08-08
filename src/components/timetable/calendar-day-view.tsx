@@ -311,16 +311,18 @@ export function CalendarDayView({
                   </div>
                 )}
 
-                {/* Mark Attendance Button */}
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleMarkAttendance}
-                    className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer pointer-events-auto"
-                    title="Mark Attendance"
-                  >
-                    Mark Attendance
-                  </button>
-                </div>
+                {/* Mark Attendance Button - only show for regular class events, not custom events */}
+                {event.extendedProps?.type !== 'custom' && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleMarkAttendance}
+                      className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer pointer-events-auto"
+                      title="Mark Attendance"
+                    >
+                      Mark Attendance
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

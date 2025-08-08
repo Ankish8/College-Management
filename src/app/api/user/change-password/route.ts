@@ -48,21 +48,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check current password based on role
+    // Check current password
     let isCurrentPasswordValid = false
     
-    // For admin - check against admin password
-    if (user.email === 'admin@jlu.edu.in') {
-      isCurrentPasswordValid = currentPassword === 'JLU@2025admin'
-    } 
-    // For faculty - check against faculty password
-    else if (user.role === 'FACULTY') {
-      isCurrentPasswordValid = currentPassword === 'JLU@2025faculty'
+    if (!user.password) {
+      return NextResponse.json(
+        { error: 'User account not properly configured. Please contact admin.' },
+        { status: 400 }
+      )
     }
-    // If user has a hashed password in database, check against it
-    else if (user.password) {
-      isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password)
-    }
+
+    // All passwords are now hashed in database, so check against hashed password
+    isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password)
 
     if (!isCurrentPasswordValid) {
       return NextResponse.json(
@@ -72,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     // Update user password
     await db.user.update({

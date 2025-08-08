@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { X, Clock, BookOpen, Star, History, Ban, Loader2, CalendarDays, User, Palette, Gift } from 'lucide-react'
+import { X, Clock, BookOpen, Star, History, Ban, Loader2, CalendarDays, Gift } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -493,32 +493,56 @@ export function QuickCreatePopup({
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm font-medium">Event Title</Label>
-                  <Input
-                    value={customEventTitle}
-                    onChange={(e) => setCustomEventTitle(e.target.value)}
-                    placeholder="e.g., Orientation, Field Research Project..."
-                    className="mt-1"
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium">Color</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {colorOptions.map((color) => (
-                      <button
-                        key={color.value}
-                        onClick={() => setCustomEventColor(color.value)}
-                        className={cn(
-                          "w-6 h-6 rounded-full border-2 transition-all",
-                          color.class,
-                          customEventColor === color.value
-                            ? "border-gray-900 ring-2 ring-gray-300"
-                            : "border-gray-300 hover:border-gray-400"
-                        )}
-                        title={color.label}
-                      />
-                    ))}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCustomEventTitle('Open Elective')
+                        }}
+                        className="text-xs"
+                      >
+                        Open Elective
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCustomEventTitle('University Level Clubs')
+                        }}
+                        className="text-xs"
+                      >
+                        University Level Clubs
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCustomEventTitle('Design Hive Club')
+                        }}
+                        className="text-xs"
+                      >
+                        Design Hive Club
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCustomEventTitle('Internship')
+                        }}
+                        className="text-xs"
+                      >
+                        Internship
+                      </Button>
+                    </div>
+                    <Input
+                      value={customEventTitle}
+                      onChange={(e) => setCustomEventTitle(e.target.value)}
+                      placeholder="e.g., Orientation, Field Research Project..."
+                      className="mt-1"
+                      autoFocus
+                    />
                   </div>
                 </div>
 
@@ -531,6 +555,7 @@ export function QuickCreatePopup({
                     className="mt-1"
                   />
                 </div>
+
 
                 <Button
                   onClick={handleCustomEventCreate}

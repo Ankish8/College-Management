@@ -39,10 +39,18 @@ interface TraditionalTimetableViewProps {
   onEventClick?: (event: CalendarEvent) => void
   onEventCreate?: (date: Date, timeSlot?: string) => void
   onQuickCreate?: (data: {
-    subjectId: string
-    facultyId: string
+    subjectId?: string
+    facultyId?: string
     date: Date
     timeSlot: string
+    customEventTitle?: string
+    customEventColor?: string
+    isCustomEvent?: boolean
+    requiresAttendance?: boolean
+    isHoliday?: boolean
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }) => void
   subjects?: Array<{
     id: string
@@ -386,18 +394,9 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
     holidayType?: string
     holidayDescription?: string
   }) => {
-    if (onQuickCreate && data.subjectId && data.facultyId) {
-      // Handle regular subject creation
-      onQuickCreate({
-        subjectId: data.subjectId,
-        facultyId: data.facultyId,
-        date: data.date,
-        timeSlot: data.timeSlot
-      })
-    } else if (data.isCustomEvent || data.isHoliday) {
-      // Handle custom events and holidays - these would need different handling
-      // For now, we'll log them since the parent onQuickCreate only handles subjects
-      console.log('Custom event or holiday creation not handled by this view:', data)
+    if (onQuickCreate) {
+      // Pass all data to parent - let parent handle different types of events
+      onQuickCreate(data)
     }
     setIsPopupOpen(false)
     setSelectedTimeSlot('')
@@ -596,10 +595,11 @@ export const TraditionalTimetableView = memo(function TraditionalTimetableView({
             </div>
 
             {/* Right side: Mark Attendance Button */}
-            {/* Only show for admin or faculty teaching this subject */}
+            {/* Only show for admin or faculty teaching this subject, and not for custom events */}
             {(session?.user?.role === 'ADMIN' || 
               (session?.user?.role === 'FACULTY' && 
-               event.extendedProps?.facultyId === session?.user?.id)) && (
+               event.extendedProps?.facultyId === session?.user?.id)) && 
+               event.extendedProps?.type !== 'custom' && (
               <button
                 onClick={(e) => {
                   e.stopPropagation()

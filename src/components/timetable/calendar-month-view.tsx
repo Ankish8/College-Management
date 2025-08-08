@@ -153,14 +153,16 @@ export function CalendarMonthView({
               {event.extendedProps?.subjectCode}
             </div>
             
-            {/* Mark Attendance Button - appears on hover */}
-            <button
-              onClick={handleMarkAttendance}
-              className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
-              title="Mark Attendance"
-            >
-              Attend
-            </button>
+            {/* Mark Attendance Button - appears on hover, only for regular classes */}
+            {event.extendedProps?.type !== 'custom' && (
+              <button
+                onClick={handleMarkAttendance}
+                className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors cursor-pointer opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
+                title="Mark Attendance"
+              >
+                Attend
+              </button>
+            )}
           </div>
         </div>
       </TimetableEntryContextMenu>

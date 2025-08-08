@@ -203,6 +203,7 @@ model TimetableEntry {
   // Custom event fields
   customEventTitle String?
   customEventColor String?
+  requiresAttendance Boolean? @default(true) // Whether this entry requires attendance marking
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   timeSlot         TimeSlot  @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)

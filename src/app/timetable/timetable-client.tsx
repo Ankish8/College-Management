@@ -176,7 +176,8 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
         isPastDate: isPastDate,
         isCustomEvent: isCustomEvent,
         customEventTitle: entry.customEventTitle,
-        customEventColor: entry.customEventColor
+        customEventColor: entry.customEventColor,
+        type: isCustomEvent ? 'custom' : 'class'
       }
     })
   } else {
@@ -281,7 +282,8 @@ function timetableEntryToCalendarEvents(entry: any, currentDate: Date = new Date
           isPastDate: isPastDate,
           isCustomEvent: isCustomEvent,
           customEventTitle: entry.customEventTitle,
-          customEventColor: entry.customEventColor
+          customEventColor: entry.customEventColor,
+          type: isCustomEvent ? 'custom' : 'class'
         }
       })
     }
@@ -574,7 +576,8 @@ export default function TimetableClient() {
           isPastDate: isPastDate,
           isCustomEvent: isCustomEvent,
           customEventTitle: entry.customEventTitle,
-          customEventColor: entry.customEventColor
+          customEventColor: entry.customEventColor,
+          type: isCustomEvent ? 'custom' : 'class'
         }
       })
       })
@@ -694,18 +697,41 @@ export default function TimetableClient() {
     holidayDescription?: string
   }) => {
     try {
+      // Debug current session
+      console.log('👤 Current session info:', {
+        hasSession: !!session,
+        userRole: session?.user?.role,
+        userId: session?.user?.id,
+        userEmail: session?.user?.email
+      })
       // Handle holidays separately
       if (data.isHoliday) {
+        console.log('🎊 Creating holiday with data:', {
+          isHoliday: data.isHoliday,
+          holidayName: data.holidayName,
+          holidayType: data.holidayType,
+          holidayDescription: data.holidayDescription,
+          date: data.date
+        })
+        
+        // Validate required fields
+        if (!data.holidayName?.trim()) {
+          throw new Error('Holiday name is required')
+        }
+        if (!data.holidayType?.trim()) {
+          throw new Error('Holiday type is required')
+        }
+        
         const holidayData = {
-          name: data.holidayName!,
+          name: data.holidayName.trim(),
           date: `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`, // Format as YYYY-MM-DD without timezone conversion
-          type: data.holidayType!,
-          description: data.holidayDescription || '',
+          type: data.holidayType,
+          description: data.holidayDescription?.trim() || '',
           isRecurring: false,
           departmentId: null // University-wide holiday
         }
         
-        console.log('Sending holiday data:', holidayData)
+        console.log('📤 Sending holiday data to API:', holidayData)
         
         const response = await fetch('/api/holidays', {
           method: 'POST',
@@ -715,7 +741,15 @@ export default function TimetableClient() {
         })
         
         if (!response.ok) {
-          const errorData = await response.json()
+          let errorData: any = {}
+          try {
+            const errorText = await response.text()
+            errorData = errorText ? JSON.parse(errorText) : {}
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError)
+            errorData = { error: `HTTP ${response.status}: Failed to parse error response` }
+          }
+          
           console.error('Holiday creation failed:', errorData)
           
           // Handle validation errors more gracefully
@@ -724,10 +758,18 @@ export default function TimetableClient() {
             throw new Error(`Validation failed: ${validationErrors}`)
           }
           
-          throw new Error(errorData.error || 'Failed to create holiday')
+          throw new Error(errorData.error || `Failed to create holiday (HTTP ${response.status})`)
         }
         
-        const result = await response.json()
+        let result: any = {}
+        try {
+          const responseText = await response.text()
+          result = responseText ? JSON.parse(responseText) : {}
+        } catch (parseError) {
+          console.warn('Failed to parse success response, but holiday was created:', parseError)
+        }
+        
+        console.log('Holiday created successfully:', result)
         toast.success(`🎊 Holiday "${data.holidayName}" created successfully!`)
         
         // Refresh both timetable and holiday data
@@ -778,8 +820,23 @@ export default function TimetableClient() {
         throw new Error(`Time slot "${data.timeSlot}" not found or is inactive`)
       }
       
+      // Validate required fields before creating the request
+      if (!selectedBatchId) {
+        throw new Error('No batch selected. Please select a batch first.')
+      }
+      if (!timeSlotId) {
+        throw new Error('Invalid time slot. Please try again.')
+      }
+      
+      console.log('🔍 Pre-creation validation passed:', {
+        selectedBatchId,
+        timeSlotId,
+        dayOfWeek,
+        formattedDate: `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`
+      })
+      
       let createData: any = {
-        batchId: selectedBatchId || '',
+        batchId: selectedBatchId,
         timeSlotId: timeSlotId,
         dayOfWeek: dayOfWeek,
         entryType: 'REGULAR',
@@ -788,46 +845,159 @@ export default function TimetableClient() {
 
       // Add fields based on whether it's a custom event or regular subject
       if (data.isCustomEvent) {
-        createData.customEventTitle = data.customEventTitle!
-        createData.customEventColor = data.customEventColor
+        console.log('🎨 Creating custom event with data:', {
+          customEventTitle: data.customEventTitle,
+          customEventColor: data.customEventColor,
+          facultyId: data.facultyId,
+          isCustomEvent: data.isCustomEvent
+        })
+        
+        // Validate required fields for custom events
+        if (!data.customEventTitle?.trim()) {
+          throw new Error('Custom event title is required')
+        }
+        
+        createData.customEventTitle = data.customEventTitle.trim()
+        createData.customEventColor = data.customEventColor || '#3b82f6'
         createData.isCustomEvent = true
-        createData.subjectId = null
-        createData.facultyId = data.facultyId || null // Optional faculty for custom events
+        // For custom events, don't send subjectId at all (Zod expects undefined, not null)
+        // Only include facultyId if it's provided and not empty
+        if (data.facultyId && data.facultyId.trim()) {
+          createData.facultyId = data.facultyId.trim()
+        }
+        // subjectId is not needed for custom events, so don't include it
       } else {
-        createData.subjectId = data.subjectId!
-        createData.facultyId = data.facultyId!
+        console.log('📚 Creating regular subject entry with data:', {
+          subjectId: data.subjectId,
+          facultyId: data.facultyId
+        })
+        
+        if (!data.subjectId || !data.facultyId) {
+          throw new Error('Subject and faculty are required for regular classes')
+        }
+        
+        createData.subjectId = data.subjectId
+        createData.facultyId = data.facultyId
       }
       
-      console.log('📤 Sending to API:', createData);
-      
-      const response = await fetch('/api/timetable/entries', {
+      console.log('📤 Sending to API:', {
+        url: '/api/timetable/entries',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(createData),
+        data: createData,
+        dataStringified: JSON.stringify(createData),
+        dataSize: JSON.stringify(createData).length
+      });
+      
+      let response: Response
+      try {
+        response = await fetch('/api/timetable/entries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(createData),
+        })
+      } catch (fetchError) {
+        console.error('🚨 Network error during fetch:', fetchError)
+        throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`)
+      }
+      
+      console.log('📨 Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url,
+        headers: Object.fromEntries(response.headers.entries())
       })
       
       // API request sent
       
       if (!response.ok) {
-        const errorText = await response.text()
-        let error
+        let errorText = ''
+        let error: any = {}
+        
         try {
-          error = JSON.parse(errorText)
-        } catch {
-          error = { message: errorText }
+          errorText = await response.text()
+        } catch (readError) {
+          console.error('Failed to read error response:', readError)
+          errorText = `Failed to read response: ${readError}`
         }
-        throw new Error(error.message || `Failed to create timetable entry (${response.status})`)
+        
+        console.error('🚨 API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          responseText: errorText,
+          responseTextLength: errorText.length,
+          sentData: createData,
+          url: response.url
+        })
+        
+        try {
+          if (errorText && errorText.trim()) {
+            error = JSON.parse(errorText)
+          } else {
+            error = { message: `Empty response from server (${response.status} ${response.statusText})` }
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError)
+          error = { 
+            message: errorText || `HTTP ${response.status}: ${response.statusText}`,
+            originalError: String(parseError)
+          }
+        }
+        
+        console.error('🔍 Parsed error object:', error)
+        
+        // Handle validation errors more gracefully
+        if (error.details && Array.isArray(error.details)) {
+          const validationErrors = error.details.map((err: any) => {
+            if (typeof err === 'string') return err
+            return err.message || (err.path ? `${err.path.join('.')}: ${err.code || 'validation error'}` : 'Validation error')
+          }).join(', ')
+          throw new Error(`Validation failed: ${validationErrors}`)
+        }
+        
+        const errorMessage = error.error || error.message || `Failed to create timetable entry (HTTP ${response.status})`
+        throw new Error(errorMessage)
       }
       
       const result = await response.json()
-      toast.success('Class created successfully!')
+      
+      // Show appropriate success message based on event type
+      if (data.isCustomEvent) {
+        toast.success(`🎨 Custom event "${data.customEventTitle}" created successfully!`)
+      } else {
+        toast.success('📚 Class created successfully!')
+      }
+      
+      console.log('✅ Timetable entry created successfully:', result)
       
       // Refetch the timetable data to show the new event
       refetch()
     } catch (error) {
-      console.error('Error creating class:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to create class')
+      const errorInfo = {
+        error: error,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorString: JSON.stringify(error, null, 2),
+        stack: error instanceof Error ? error.stack : undefined,
+        data: {
+          isHoliday: data.isHoliday,
+          isCustomEvent: data.isCustomEvent,
+          hasSubjectId: !!data.subjectId,
+          hasFacultyId: !!data.facultyId,
+          holidayName: data.holidayName,
+          customEventTitle: data.customEventTitle,
+        }
+      }
+      
+      console.error('🚨 Error in handleQuickCreate:', errorInfo)
+      
+      const errorMessage = error instanceof Error ? error.message : (
+        typeof error === 'string' ? error : 'An unexpected error occurred'
+      )
+      
+      toast.error(errorMessage)
     }
   }
 

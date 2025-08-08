@@ -40,10 +40,17 @@ interface FullCalendarProps extends Omit<TimetableViewProps, 'currentDate' | 'on
   onEventDelete?: (eventId: string) => void
   onCheckConflicts?: (facultyId: string, dayOfWeek: string, timeSlot: string, excludeEventId?: string) => Promise<boolean>
   onQuickCreate?: (data: {
-    subjectId: string
-    facultyId: string
+    subjectId?: string
+    facultyId?: string
     date: Date
     timeSlot: string
+    customEventTitle?: string
+    customEventColor?: string
+    isCustomEvent?: boolean
+    isHoliday?: boolean
+    holidayName?: string
+    holidayType?: string
+    holidayDescription?: string
   }) => void
   subjects?: Array<{
     id: string

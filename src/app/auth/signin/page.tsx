@@ -1,6 +1,13 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signIn } from "next-auth/react"
@@ -39,62 +46,59 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-normal text-gray-900">
-            JLU College Management
-          </h1>
-          <p className="text-sm text-gray-500 mt-2">
-            Sign in to continue
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="text-sm text-red-600 text-center">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-normal text-gray-700">
-              Email
-            </Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="name@jlu.edu.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border-gray-300 focus:border-gray-400 focus:ring-0"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-normal text-gray-700">
-              Password
-            </Label>
-            <Input 
-              id="password" 
-              type="password" 
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border-gray-300 focus:border-gray-400 focus:ring-0"
-              required
-            />
-          </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-normal"
-            disabled={isLoading}
-          >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle>JLU College Management</CardTitle>
+            <CardDescription>
+              Enter your credentials to access the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-6">
+                {error && (
+                  <div className="text-sm text-red-600 text-center bg-red-50 p-3 rounded-md">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="grid gap-3">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="admin@jlu.edu.in"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="grid gap-3">
+                  <Label htmlFor="password">Password</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required 
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Login"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
