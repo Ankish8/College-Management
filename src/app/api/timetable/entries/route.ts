@@ -78,25 +78,22 @@ async function checkConflicts(data: z.infer<typeof createTimetableEntrySchema>, 
   // Single optimized query to check both batch and faculty conflicts
   // For date-specific entries, only check conflicts on the same date
   // For recurring entries, check against all entries
-  let dateFilter = {}
-  if (data.date) {
-    // For date-specific entries, only check conflicts on the same specific date
-    // or with recurring entries (which apply to all dates)
-    dateFilter = {
-      OR: [
-        { date: null }, // Recurring entries always conflict
-        { date: new Date(data.date) } // Same specific date conflicts
-      ]
-    }
-  } else {
-    // For recurring entries, conflict with all entries
-    dateFilter = {}
-  }
   
   const queryWhere = {
     ...whereClause,
-    ...dateFilter,
-    OR: orConditions
+    AND: [
+      // Date filtering condition
+      ...(data.date ? [{
+        OR: [
+          { date: null }, // Recurring entries always conflict
+          { date: new Date(data.date) } // Same specific date conflicts
+        ]
+      }] : []),
+      // Batch/Faculty conflicts condition
+      {
+        OR: orConditions
+      }
+    ]
   };
   
   console.log('🔍 Conflict query where clause:', JSON.stringify(queryWhere, null, 2));
