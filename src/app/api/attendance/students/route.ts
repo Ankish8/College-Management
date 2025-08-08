@@ -164,6 +164,13 @@ export async function GET(request: NextRequest) {
         }
       })
       
+      console.log(`📋 Found ${timetableEntries.length} timetable entries for subject:`)
+      timetableEntries.forEach((entry, i) => {
+        const entryType = entry.date ? 'date-specific' : 'recurring'
+        const entryDateStr = entry.date ? entry.date.toISOString().split('T')[0] : 'all weeks'
+        console.log(`  ${i+1}. ${entry.dayOfWeek} (${entryType}, ${entryDateStr}) - Entry ID: ${entry.id}`)
+      })
+      
       // Convert timetable entries to actual dates for the current week
       const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
       
@@ -175,11 +182,25 @@ export async function GET(request: NextRequest) {
         
         console.log(`🔍 Day ${i}: ${currentDate.toISOString().split('T')[0]} (${dayName})`)
         
-        // Check if there's a timetable entry for this day
-        const entryForDay = timetableEntries.find(entry => entry.dayOfWeek === dayName)
+        // Check if there's a timetable entry for this specific date
+        // Need to consider both recurring entries (date: null) and date-specific entries
+        const currentDateStr = currentDate.toISOString().split('T')[0]
+        const entryForDay = timetableEntries.find(entry => {
+          // Must match the day of week
+          if (entry.dayOfWeek !== dayName) return false
+          
+          // If it's a recurring entry (date is null), it applies to all weeks
+          if (!entry.date) return true
+          
+          // If it's a date-specific entry, it must match the exact date
+          const entryDateStr = entry.date.toISOString().split('T')[0]
+          return entryDateStr === currentDateStr
+        })
         
         if (entryForDay) {
-          console.log(`✅ Found entry for ${dayName}: ${entryForDay.dayOfWeek}`)
+          const entryType = entryForDay.date ? 'date-specific' : 'recurring'
+          const entryDateStr = entryForDay.date ? entryForDay.date.toISOString().split('T')[0] : 'all weeks'
+          console.log(`✅ Found ${entryType} entry for ${dayName} on ${currentDateStr}: applies to ${entryDateStr}`)
           scheduledClasses.push({
             date: new Date(currentDate), // Create new date object to avoid reference issues
             dayOfWeek: dayName,
@@ -187,7 +208,7 @@ export async function GET(request: NextRequest) {
             timetableEntryId: entryForDay.id
           })
         } else {
-          console.log(`❌ No entry found for ${dayName}`)
+          console.log(`❌ No entry found for ${dayName} on ${currentDateStr}`)
         }
       }
       
