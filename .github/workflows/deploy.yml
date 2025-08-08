@@ -25,7 +25,7 @@ jobs:
           
           # Backup database before deployment
           echo "Creating database backup..."
-          docker exec redcrest-postgres pg_dump -U postgres college_management_prod > backups/backup_$(date +%Y%m%d_%H%M%S).sql
+          docker exec college-management-postgres-prod pg_dump -U postgres college_management_prod > backups/backup_$(date +%Y%m%d_%H%M%S).sql
           
           # Keep only last 5 backups
           ls -t backups/backup_*.sql | tail -n +6 | xargs -r rm
@@ -36,13 +36,13 @@ jobs:
           
           # Stop application containers (keep database running)
           echo "Stopping application containers..."
-          docker stop redcrest-app redcrest-nginx 2>/dev/null || true
-          docker rm redcrest-app redcrest-nginx 2>/dev/null || true
+          docker stop college-management-app-prod college-management-nginx-prod 2>/dev/null || true
+          docker rm college-management-app-prod college-management-nginx-prod 2>/dev/null || true
           
           # Rebuild and start with correct config
           echo "Building and starting containers..."
-          docker-compose -f docker-compose.redcrest.yml --env-file .env.redcrest build --no-cache
-          docker-compose -f docker-compose.redcrest.yml --env-file .env.redcrest up -d
+          docker-compose -f docker-compose.prod.yml --env-file .env.production build --no-cache
+          docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
           
           # Wait for services to start
           echo "Waiting for services to start..."
@@ -50,13 +50,13 @@ jobs:
           
           # Verify deployment
           echo "Verifying deployment..."
-          docker-compose -f docker-compose.redcrest.yml ps
+          docker-compose -f docker-compose.prod.yml ps
           
           # Health check
           echo "Performing health check..."
           curl -f https://redcrest.co.in/api/health || {
             echo "Health check failed, checking logs..."
-            docker logs redcrest-app --tail 50
+            docker logs college-management-app-prod --tail 50
             exit 1
           }
           
