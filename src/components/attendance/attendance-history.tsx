@@ -82,16 +82,16 @@ export function AttendanceHistory({
   const percentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
 
   const getDotColor = (attendance?: AttendanceRecord) => {
-    if (!attendance) return 'bg-gray-200' // No class
+    if (!attendance) return 'bg-gray-200' // Grey for no class scheduled
     switch (attendance.status) {
       case 'present':
         return 'bg-green-500' // Green for present
       case 'absent':
         return 'bg-red-500' // Red for absent
       case 'medical':
-        return 'bg-blue-500' // Blue for medical
+        return 'bg-blue-500' // Blue for medical leave
       case 'unmarked':
-        return 'bg-orange-400' // Orange for unmarked but scheduled
+        return 'bg-yellow-300' // Light yellow for class scheduled but attendance not marked
       default:
         return 'bg-gray-200'
     }
